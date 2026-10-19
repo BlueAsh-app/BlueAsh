@@ -1,0 +1,23 @@
+﻿Building BlueAsh from this source (Windows x64)
+
+BlueAsh is free software under the GNU General Public License, version 3 or later (LICENSE.txt). It includes code
+adapted from nvBrightness (https://github.com/pbatard/nvBrightness); see NOTICE.txt for every third-party part.
+
+Needs: Windows 10/11 x64, Git for Windows (for sh), MinGW-w64 GCC (tested with WinLibs GCC 16.2 UCRT:
+  winget install --id BrechtSanders.WinLibs.POSIX.UCRT), Windows PowerShell 5.1 with .NET Framework (for the C# helpers),
+  Node.js (only for the translation check), Inno Setup 6 (only for the setup program).
+
+1. Helper DLLs (C#, compiled with PowerShell's Add-Type):
+     powershell -ExecutionPolicy Bypass -File source/build-price.ps1
+     powershell -ExecutionPolicy Bypass -File source/build-companion.ps1
+2. BlueAsh.exe (C++17 Win32; the helpers, maps and scripts are embedded as resources):
+     cd source && sh build.sh            (writes ../BlueAsh.exe; set BLUEASH_OUT=<path> to write elsewhere)
+3. Optional checks:
+     node source/i18n_check.mjs
+     for t in source/*_tests.cpp; do g++ -std=c++17 -Wall -Wextra -Werror $t -o t.exe && ./t.exe; done
+4. Optional setup program: powershell -ExecutionPolicy Bypass -File source/build-installer.ps1
+
+Not included here: the update/notification server (a Cloudflare Worker; not part of the program you run) and data the
+program downloads at run time: OCR models, PUBG deep-zoom maps and the data pack (Fandom map pictures, markers and
+text translations, PUBG reference maps and labels; not open source, see NOTICE.txt). A build from this source fetches
+the same data pack, checked against the SHA-256 in source/datapack_id.h.

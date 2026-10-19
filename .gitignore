@@ -1,0 +1,24 @@
+# build intermediates
+*.o
+*.obj
+*_tests.exe
+t.exe
+# release archives
+*.zip
+source/.bundle/
+relay/.dev.vars
+relay/.wrangler/
+node_modules/
+.claude/settings.local.json
+relay/public/update/*/
+relay/public/source/
+relay/public/ocr/
+relay/public/pubg/
+installer/MicrosoftEdgeWebview2Setup.exe
+relay/public/quest-guide/
+source/guide-translate/work/
+
+# Not open source (Fandom maps and texts, PUBG references/labels, a CC BY icon): kept out of git and out of the exe;
+# source/build-datapack.ps1 packs them for the relay, BlueAsh downloads the pack at run time (source/datapack.h).
+data/
+relay/public/data/

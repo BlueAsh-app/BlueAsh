@@ -1,0 +1,2 @@
+# Keep every file byte-for-byte (UTF-8 BOM .ps1/.txt, LF build.sh, binaries)
+* -text

@@ -1,0 +1,1182 @@
+﻿{
+    "factory4_day":  {
+                         "extracts":  [
+                                          {
+                                              "name":  "Med Tent Gate",
+                                              "ko":  "Med Tent Gate",
+                                              "faction":  "pmc",
+                                              "switch":  false
+                                          },
+                                          {
+                                              "name":  "Cellars",
+                                              "ko":  "Cellars",
+                                              "faction":  "pmc",
+                                              "switch":  false
+                                          },
+                                          {
+                                              "name":  "Gate 3",
+                                              "ko":  "Gate 3",
+                                              "faction":  "scav",
+                                              "switch":  false
+                                          },
+                                          {
+                                              "name":  "Gate 3",
+                                              "ko":  "Gate 3",
+                                              "faction":  "pmc",
+                                              "switch":  false
+                                          },
+                                          {
+                                              "name":  "Smugglers\u0027 Passage",
+                                              "ko":  "Smugglers\u0027 Passage",
+                                              "faction":  "pmc",
+                                              "switch":  false
+                                          },
+                                          {
+                                              "name":  "Courtyard Gate",
+                                              "ko":  "Courtyard Gate",
+                                              "faction":  "pmc",
+                                              "switch":  false
+                                          },
+                                          {
+                                              "name":  "Camera Bunker Door",
+                                              "ko":  "Camera Bunker Door",
+                                              "faction":  "scav",
+                                              "switch":  false
+                                          },
+                                          {
+                                              "name":  "Gate 2",
+                                              "ko":  "Gate 2",
+                                              "faction":  "pmc",
+                                              "switch":  false
+                                          },
+                                          {
+                                              "name":  "Office Window",
+                                              "ko":  "Office Window",
+                                              "faction":  "scav",
+                                              "switch":  false
+                                          },
+                                          {
+                                              "name":  "Gate 0",
+                                              "ko":  "Gate 0",
+                                              "faction":  "pmc",
+                                              "switch":  false
+                                          }
+                                      ],
+                         "transits":  [
+                                          {
+                                              "ko":  "삼림으로 이동",
+                                              "desc":  "FAC_TRANSIT_12_DESC",
+                                              "conditions":  {
+
+                                                             },
+                                              "keys":  "id,description,map,position,outline,top,bottom"
+                                          },
+                                          {
+                                              "ko":  "세관으로 이동",
+                                              "desc":  "FAC_TRANSIT_13_DESC",
+                                              "conditions":  {
+
+                                                             },
+                                              "keys":  "id,description,map,position,outline,top,bottom"
+                                          },
+                                          {
+                                              "ko":  "연구소로 이동",
+                                              "desc":  "FAC_TRANSIT_14_DESC",
+                                              "conditions":  "TerraGroup Labs access keycard 필요함 (1)",
+                                              "keys":  "id,description,map,conditions,position,outline,top,bottom"
+                                          }
+                                      ]
+                     },
+    "bigmap":  {
+                   "extracts":  [
+                                    {
+                                        "name":  "Old Gas Station Gate",
+                                        "ko":  "Old Gas Station Gate",
+                                        "faction":  "scav",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Railroad to Milbase",
+                                        "ko":  "Railroad to Milbase",
+                                        "faction":  "scav",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Crossroads",
+                                        "ko":  "Crossroads",
+                                        "faction":  "pmc",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Administration Gate",
+                                        "ko":  "Administration Gate",
+                                        "faction":  "scav",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Old Road Gate",
+                                        "ko":  "Old Road Gate",
+                                        "faction":  "scav",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "RUAF Roadblock",
+                                        "ko":  "RUAF Roadblock",
+                                        "faction":  "pmc",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "RUAF Roadblock",
+                                        "ko":  "RUAF Roadblock",
+                                        "faction":  "scav",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Sniper Roadblock",
+                                        "ko":  "Sniper Roadblock",
+                                        "faction":  "scav",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Factory Shacks",
+                                        "ko":  "Factory Shacks",
+                                        "faction":  "scav",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Warehouse 4",
+                                        "ko":  "Warehouse 4",
+                                        "faction":  "scav",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Boiler Room Basement (Co-op)",
+                                        "ko":  "Boiler Room Basement (Co-op)",
+                                        "faction":  "shared",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Railroad Passage (Flare)",
+                                        "ko":  "Railroad Passage (조명탄 탈출구)",
+                                        "faction":  "pmc",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Railroad to Military Base",
+                                        "ko":  "Railroad To Military Base",
+                                        "faction":  "scav",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Railroad to Port",
+                                        "ko":  "Railroad To Port",
+                                        "faction":  "scav",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Gate Near Medblock",
+                                        "ko":  "Warehouse 17",
+                                        "faction":  "scav",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "ZB-1013",
+                                        "ko":  "ZB-1013",
+                                        "faction":  "pmc",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "ZB-1011",
+                                        "ko":  "ZB-1011",
+                                        "faction":  "pmc",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Railroad to Tarkov",
+                                        "ko":  "Railroad To Tarkov",
+                                        "faction":  "scav",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Scav Checkpoint",
+                                        "ko":  "Scav checkpoint",
+                                        "faction":  "scav",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Trailer Park",
+                                        "ko":  "Trailer Park",
+                                        "faction":  "pmc",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Dorms V-Ex",
+                                        "ko":  "Dorms V-Ex",
+                                        "faction":  "pmc",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Old Gas Station",
+                                        "ko":  "Old Gas Station",
+                                        "faction":  "pmc",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Passage Between Rocks",
+                                        "ko":  "Passage Between Rocks",
+                                        "faction":  "scav",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "ZB-1011",
+                                        "ko":  "Factory Far Corner",
+                                        "faction":  "scav",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Smugglers\u0027 Boat",
+                                        "ko":  "Smugglers\u0027 Boat",
+                                        "faction":  "pmc",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Trailer Park",
+                                        "ko":  "Trailer Park Workers\u0027 Shack",
+                                        "faction":  "scav",
+                                        "switch":  true
+                                    },
+                                    {
+                                        "name":  "Smugglers\u0027 Bunker (ZB-1012)",
+                                        "ko":  "Smugglers\u0027 Bunker (ZB-1012)",
+                                        "faction":  "pmc",
+                                        "switch":  true
+                                    }
+                                ],
+                   "transits":  [
+                                    {
+                                        "ko":  "리저브로 이동",
+                                        "desc":  "tr_customs_reserve_DESC",
+                                        "conditions":  {
+
+                                                       },
+                                        "keys":  "id,description,map,position,outline,top,bottom"
+                                    },
+                                    {
+                                        "ko":  "공장으로 이동",
+                                        "desc":  "tr_customs_factory_DESC",
+                                        "conditions":  {
+
+                                                       },
+                                        "keys":  "id,description,map,position,outline,top,bottom"
+                                    },
+                                    {
+                                        "ko":  "인터체인지로 이동",
+                                        "desc":  "tr_customs_interchange_DESC",
+                                        "conditions":  {
+
+                                                       },
+                                        "keys":  "id,description,map,position,outline,top,bottom"
+                                    },
+                                    {
+                                        "ko":  "해안선으로 이동",
+                                        "desc":  "tr_customs_shoreline_DESC",
+                                        "conditions":  {
+
+                                                       },
+                                        "keys":  "id,description,map,position,outline,top,bottom"
+                                    }
+                                ]
+               },
+    "woods":  {
+                  "extracts":  [
+                                   {
+                                       "name":  "ZB-016",
+                                       "ko":  "ZB-016",
+                                       "faction":  "pmc",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "UN Roadblock",
+                                       "ko":  "UN Roadblock",
+                                       "faction":  "scav",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "Old Railway Depot",
+                                       "ko":  "Old Railway Depot",
+                                       "faction":  "scav",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "Scav House",
+                                       "ko":  "Scav House",
+                                       "faction":  "scav",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "Eastern Rocks",
+                                       "ko":  "Eastern Rocks",
+                                       "faction":  "scav",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "Mountain Stash",
+                                       "ko":  "Mountain Stash",
+                                       "faction":  "scav",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "Power Line Passage (Flare)",
+                                       "ko":  "Power Line Passage (조명탄 탈출구)",
+                                       "faction":  "pmc",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "Outskirts",
+                                       "ko":  "Outskirts",
+                                       "faction":  "pmc",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "UN Roadblock",
+                                       "ko":  "UN Roadblock",
+                                       "faction":  "pmc",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "Scav Bunker",
+                                       "ko":  "Scav bunker",
+                                       "faction":  "scav",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "RUAF Roadblock",
+                                       "ko":  "RUAF Roadblock",
+                                       "faction":  "scav",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "Outskirts",
+                                       "ko":  "Outskirts",
+                                       "faction":  "scav",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "RUAF Gate",
+                                       "ko":  "RUAF Gate",
+                                       "faction":  "pmc",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "ZB-014",
+                                       "ko":  "ZB-014",
+                                       "faction":  "pmc",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "Dead Man\u0027s Place",
+                                       "ko":  "Dead Man\u0027s Place",
+                                       "faction":  "scav",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "Friendship Bridge (Co-Op)",
+                                       "ko":  "Friendship Bridge (Co-Op)",
+                                       "faction":  "shared",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "Boat",
+                                       "ko":  "The Boat",
+                                       "faction":  "scav",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "Railway Bridge to Tarkov",
+                                       "ko":  "Railway Bridge to Tarkov",
+                                       "faction":  "pmc",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "Northern UN Roadblock",
+                                       "ko":  "Northern UN Roadblock",
+                                       "faction":  "pmc",
+                                       "switch":  false
+                                   },
+                                   {
+                                       "name":  "Bridge V-Ex",
+                                       "ko":  "Bridge V-Ex",
+                                       "faction":  "pmc",
+                                       "switch":  false
+                                   }
+                               ],
+                  "transits":  [
+                                   {
+                                       "ko":  "공장으로 이동",
+                                       "desc":  "WOO_TRANSIT_15_DESC",
+                                       "conditions":  {
+
+                                                      },
+                                       "keys":  "id,description,map,position,outline,top,bottom"
+                                   },
+                                   {
+                                       "ko":  "리저브로 이동",
+                                       "desc":  "WOO_TRANSIT_16_DESC",
+                                       "conditions":  {
+
+                                                      },
+                                       "keys":  "id,description,map,position,outline,top,bottom"
+                                   },
+                                   {
+                                       "ko":  "등대로 이동",
+                                       "desc":  "WOO_TRANSIT_17_DESC",
+                                       "conditions":  {
+
+                                                      },
+                                       "keys":  "id,description,map,position,outline,top,bottom"
+                                   },
+                                   {
+                                       "ko":  "세관으로 이동",
+                                       "desc":  "WOO_TRANSIT_41_DESC",
+                                       "conditions":  {
+
+                                                      },
+                                       "keys":  "id,description,map,position,outline,top,bottom"
+                                   }
+                               ]
+              },
+    "lighthouse":  {
+                       "extracts":  [
+                                        {
+                                            "name":  "Armored Train",
+                                            "ko":  "Armored Train",
+                                            "faction":  "shared",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Southern Road",
+                                            "ko":  "Southern Road",
+                                            "faction":  "pmc",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Southern Road Landslide",
+                                            "ko":  "Southern Road Landslide",
+                                            "faction":  "scav",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Path to Shoreline",
+                                            "ko":  "Path to Shoreline",
+                                            "faction":  "scav",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Mountain Pass",
+                                            "ko":  "Mountain Pass",
+                                            "faction":  "pmc",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Passage by the Lake",
+                                            "ko":  "Passage by the Lake",
+                                            "faction":  "pmc",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Northern Checkpoint",
+                                            "ko":  "Northern Checkpoint",
+                                            "faction":  "pmc",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Hideout Under the Landing Stage",
+                                            "ko":  "Hideout Under the Landing Stage",
+                                            "faction":  "scav",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Scav Hideout at the Grotto",
+                                            "ko":  "Scav Hideout at the Grotto",
+                                            "faction":  "scav",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Industrial Zone Gates",
+                                            "ko":  "Industrial Zone Gates",
+                                            "faction":  "scav",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Side Tunnel (Co-Op)",
+                                            "ko":  "Side Tunnel (Co-Op)",
+                                            "faction":  "shared",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Path to Shoreline",
+                                            "ko":  "Path to Shoreline",
+                                            "faction":  "pmc",
+                                            "switch":  false
+                                        }
+                                    ],
+                       "transits":  [
+                                        {
+                                            "ko":  "해안선으로 지역이동",
+                                            "desc":  "tr_lighthouse_shoreline_DESC",
+                                            "conditions":  {
+
+                                                           },
+                                            "keys":  "id,description,map,position,outline,top,bottom"
+                                        },
+                                        {
+                                            "ko":  "리저브로 지역이동",
+                                            "desc":  "tr_lighthouse_reserve_DESC",
+                                            "conditions":  {
+
+                                                           },
+                                            "keys":  "id,description,map,position,outline,top,bottom"
+                                        },
+                                        {
+                                            "ko":  "삼림으로 지역이동",
+                                            "desc":  "tr_lighthouse_woods_DESC",
+                                            "conditions":  {
+
+                                                           },
+                                            "keys":  "id,description,map,position,outline,top,bottom"
+                                        },
+                                        {
+                                            "ko":  "쇄빙선으로 지역이동",
+                                            "desc":  "tr_lighthouse_icebreaker_DESC",
+                                            "conditions":  "\u0027Sudak-Tudak\u0027 공구 세트 (1)개 필요",
+                                            "keys":  "id,description,map,conditions,position,outline,top,bottom"
+                                        }
+                                    ]
+                   },
+    "shoreline":  {
+                      "extracts":  [
+                                       {
+                                           "name":  "Climber\u0027s Trail",
+                                           "ko":  "Climber\u0027s Trail",
+                                           "faction":  "pmc",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Admin Basement",
+                                           "ko":  "Admin Basement",
+                                           "faction":  "scav",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Tunnel",
+                                           "ko":  "Tunnel",
+                                           "faction":  "pmc",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Rock Passage",
+                                           "ko":  "Rock Passage",
+                                           "faction":  "pmc",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Lighthouse",
+                                           "ko":  "등대",
+                                           "faction":  "scav",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Smugglers\u0027 Path (Co-op)",
+                                           "ko":  "Smuggler\u0027s Path (Co-op)",
+                                           "faction":  "shared",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Svetliy Dead End",
+                                           "ko":  "Svetliy Dead End",
+                                           "faction":  "scav",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Path to Lighthouse",
+                                           "ko":  "Path to Lighthouse",
+                                           "faction":  "pmc",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Ruined Road",
+                                           "ko":  "Ruined Road",
+                                           "faction":  "scav",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "CCP Temporary",
+                                           "ko":  "CCP Temporary",
+                                           "faction":  "pmc",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Road to Customs",
+                                           "ko":  "Road to Customs",
+                                           "faction":  "scav",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "East Wing Gym Entrance",
+                                           "ko":  "RWing Gym Entrance",
+                                           "faction":  "scav",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Road to Customs",
+                                           "ko":  "Road to Customs",
+                                           "faction":  "pmc",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Railway Bridge",
+                                           "ko":  "Railway bridge",
+                                           "faction":  "pmc",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Ruined House Fence",
+                                           "ko":  "Ruined House Fence",
+                                           "faction":  "scav",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Pier Boat",
+                                           "ko":  "Pier Boat",
+                                           "faction":  "pmc",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Mountain Bunker",
+                                           "ko":  "Mountain Bunker",
+                                           "faction":  "pmc",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Road to North V-Ex",
+                                           "ko":  "Road to North V-Ex",
+                                           "faction":  "pmc",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Cliff Descent",
+                                           "ko":  "Cliff Descent",
+                                           "faction":  "pmc",
+                                           "switch":  false
+                                       }
+                                   ],
+                      "transits":  [
+                                       {
+                                           "ko":  "등대로 이동",
+                                           "desc":  "SHO_TRANSIT_24_DESC",
+                                           "conditions":  {
+
+                                                          },
+                                           "keys":  "id,description,map,position,outline,top,bottom"
+                                       },
+                                       {
+                                           "ko":  "터미널로 이동",
+                                           "desc":  "SHO_TRANSIT_25_DESC",
+                                           "conditions":  "Access is available from 21:00 to 6:00",
+                                           "keys":  "id,description,map,conditions,position,outline,top,bottom"
+                                       },
+                                       {
+                                           "ko":  "미궁?으로 지역이동",
+                                           "desc":  "SHO_TRANSIT_43_DESC",
+                                           "conditions":  "Labrys access keycard 필요함 (1)",
+                                           "keys":  "id,description,map,conditions,position,outline,top,bottom"
+                                       },
+                                       {
+                                           "ko":  "쇄빙선으로 지역이동",
+                                           "desc":  "SHO_TRANSIT_51_DESC",
+                                           "conditions":  {
+
+                                                          },
+                                           "keys":  "id,description,map,position,outline,top,bottom"
+                                       }
+                                   ]
+                  },
+    "rezervbase":  {
+                       "extracts":  [
+                                        {
+                                            "name":  "Armored Train",
+                                            "ko":  "Armored Train",
+                                            "faction":  "shared",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Heating Pipe",
+                                            "ko":  "Heating Pipe",
+                                            "faction":  "scav",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Exit to Woods",
+                                            "ko":  "Exit to Woods",
+                                            "faction":  "pmc",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Hole in the Wall by the Mountains",
+                                            "ko":  "Hole in the Wall by the Mountains",
+                                            "faction":  "scav",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Cliff Descent",
+                                            "ko":  "Cliff Descent",
+                                            "faction":  "pmc",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Sewer Manhole",
+                                            "ko":  "Sewer Manhole",
+                                            "faction":  "shared",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "D-2",
+                                            "ko":  "D-2",
+                                            "faction":  "pmc",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Checkpoint Fence",
+                                            "ko":  "Checkpoint Fence",
+                                            "faction":  "scav",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Bunker Hermetic Door",
+                                            "ko":  "Bunker hermetic door",
+                                            "faction":  "shared",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Scav Lands (Co-Op)",
+                                            "ko":  "Scav Lands (Co-Op)",
+                                            "faction":  "shared",
+                                            "switch":  false
+                                        },
+                                        {
+                                            "name":  "Depot Hermetic Door",
+                                            "ko":  "Depot Hermetic Door",
+                                            "faction":  "scav",
+                                            "switch":  false
+                                        }
+                                    ],
+                       "transits":  [
+                                        {
+                                            "ko":  "세관으로 이동",
+                                            "desc":  "REZ_TRANSIT_18_DESC",
+                                            "conditions":  {
+
+                                                           },
+                                            "keys":  "id,description,map,position,outline,top,bottom"
+                                        },
+                                        {
+                                            "ko":  "삼림으로 이동",
+                                            "desc":  "REZ_TRANSIT_19_DESC",
+                                            "conditions":  {
+
+                                                           },
+                                            "keys":  "id,description,map,position,outline,top,bottom"
+                                        },
+                                        {
+                                            "ko":  "등대로 이동",
+                                            "desc":  "REZ_TRANSIT_20_DESC",
+                                            "conditions":  {
+
+                                                           },
+                                            "keys":  "id,description,map,position,outline,top,bottom"
+                                        }
+                                    ]
+                   },
+    "interchange":  {
+                        "extracts":  [
+                                         {
+                                             "name":  "Railway Exfil",
+                                             "ko":  "Railway Exfil",
+                                             "faction":  "scav",
+                                             "switch":  false
+                                         },
+                                         {
+                                             "name":  "Saferoom Exfil",
+                                             "ko":  "Saferoom Exfil",
+                                             "faction":  "pmc",
+                                             "switch":  false
+                                         },
+                                         {
+                                             "name":  "Railway Exfil",
+                                             "ko":  "Railway Exfil",
+                                             "faction":  "pmc",
+                                             "switch":  false
+                                         },
+                                         {
+                                             "name":  "Emercom Checkpoint",
+                                             "ko":  "Emercom Checkpoint",
+                                             "faction":  "pmc",
+                                             "switch":  false
+                                         },
+                                         {
+                                             "name":  "Scav Camp (Co-Op)",
+                                             "ko":  "Scav Camp (Co-Op)",
+                                             "faction":  "shared",
+                                             "switch":  false
+                                         },
+                                         {
+                                             "name":  "Path to River (Flare)",
+                                             "ko":  "Path to River (조명탄 탈출구)",
+                                             "faction":  "pmc",
+                                             "switch":  false
+                                         },
+                                         {
+                                             "name":  "Emercom Checkpoint",
+                                             "ko":  "Emercom Checkpoint",
+                                             "faction":  "scav",
+                                             "switch":  false
+                                         },
+                                         {
+                                             "name":  "Power Station V-Ex",
+                                             "ko":  "Power Station V-Ex",
+                                             "faction":  "pmc",
+                                             "switch":  false
+                                         },
+                                         {
+                                             "name":  "Hole in the Fence",
+                                             "ko":  "Hole in fence",
+                                             "faction":  "pmc",
+                                             "switch":  false
+                                         }
+                                     ],
+                        "transits":  [
+                                         {
+                                             "ko":  "세관으로 이동",
+                                             "desc":  "tr_interchange_customs_DESC",
+                                             "conditions":  {
+
+                                                            },
+                                             "keys":  "id,description,map,position,outline,top,bottom"
+                                         },
+                                         {
+                                             "ko":  "타르코프 시내로 이동",
+                                             "desc":  "tr_interchange_streets_DESC",
+                                             "conditions":  {
+
+                                                            },
+                                             "keys":  "id,description,map,position,outline,top,bottom"
+                                         }
+                                     ]
+                    },
+    "tarkovstreets":  {
+                          "extracts":  [
+                                           {
+                                               "name":  "Collapsed Crane",
+                                               "ko":  "Collapsed Crane",
+                                               "faction":  "pmc",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Crash Site",
+                                               "ko":  "Crash Site",
+                                               "faction":  "pmc",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Damaged House",
+                                               "ko":  "Damaged House",
+                                               "faction":  "pmc",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Cardinal Apartment Complex Parking",
+                                               "ko":  "Cardinal Apartment Complex Parking",
+                                               "faction":  "scav",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Entrance to Catacombs",
+                                               "ko":  "Entrance to Catacombs",
+                                               "faction":  "scav",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Pinewood Basement (Co-Op)",
+                                               "ko":  "Pinewood Basement (Co-Op)",
+                                               "faction":  "shared",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Klimov Shopping Mall Exfil",
+                                               "ko":  "Klimov Shopping Mall Exfil",
+                                               "faction":  "scav",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Stylobate Building Elevator",
+                                               "ko":  "Stylobate Building Elevator",
+                                               "faction":  "pmc",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Klimov Street (Flare)",
+                                               "ko":  "Klimov Street (조명탄 탈출구)",
+                                               "faction":  "pmc",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Near Kamchatskaya Arch",
+                                               "ko":  "Near Kamchatskaya Arch",
+                                               "faction":  "scav",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Courtyard",
+                                               "ko":  "Courtyard",
+                                               "faction":  "pmc",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Ventilation Shaft",
+                                               "ko":  "Ventilation Shaft",
+                                               "faction":  "scav",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Expo Checkpoint",
+                                               "ko":  "Expo Checkpoint",
+                                               "faction":  "pmc",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Smugglers\u0027 Basement",
+                                               "ko":  "Smugglers\u0027 Basement",
+                                               "faction":  "pmc",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Sewer River",
+                                               "ko":  "Sewer River",
+                                               "faction":  "pmc",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Scav Checkpoint",
+                                               "ko":  "Scav Checkpoint",
+                                               "faction":  "pmc",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Primorsky Ave Taxi V-Ex",
+                                               "ko":  "Primorsky Ave Taxi V-Ex",
+                                               "faction":  "pmc",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Sewer Manhole",
+                                               "ko":  "Sewer Manhole",
+                                               "faction":  "scav",
+                                               "switch":  false
+                                           },
+                                           {
+                                               "name":  "Basement Entrance",
+                                               "ko":  "Basement Entrance",
+                                               "faction":  "scav",
+                                               "switch":  false
+                                           }
+                                       ],
+                          "transits":  [
+                                           {
+                                               "ko":  "그라운드 제로로 이동",
+                                               "desc":  "STR_TRANSIT_3_DESC",
+                                               "conditions":  {
+
+                                                              },
+                                               "keys":  "id,description,map,position,outline,top,bottom"
+                                           },
+                                           {
+                                               "ko":  "인터체인지로 이동",
+                                               "desc":  "STR_TRANSIT_4_DESC",
+                                               "conditions":  {
+
+                                                              },
+                                               "keys":  "id,description,map,position,outline,top,bottom"
+                                           },
+                                           {
+                                               "ko":  "연구소로 이동",
+                                               "desc":  "STR_TRANSIT_5_DESC",
+                                               "conditions":  "TerraGroup Labs access keycard 필요함 (1)",
+                                               "keys":  "id,description,map,conditions,position,outline,top,bottom"
+                                           }
+                                       ]
+                      },
+    "laboratory":  {
+                       "extracts":  [
+                                        {
+                                            "name":  "Hangar Gate",
+                                            "ko":  "Hangar Gate",
+                                            "faction":  "pmc",
+                                            "switch":  true
+                                        },
+                                        {
+                                            "name":  "Medical Block Elevator",
+                                            "ko":  "Medical Block Elevator",
+                                            "faction":  "shared",
+                                            "switch":  true
+                                        },
+                                        {
+                                            "name":  "Ventilation Shaft",
+                                            "ko":  "Ventilation Shaft",
+                                            "faction":  "pmc",
+                                            "switch":  true
+                                        },
+                                        {
+                                            "name":  "Cargo Elevator",
+                                            "ko":  "Cargo Elevator",
+                                            "faction":  "shared",
+                                            "switch":  true
+                                        },
+                                        {
+                                            "name":  "Main Elevator",
+                                            "ko":  "Main Elevator",
+                                            "faction":  "shared",
+                                            "switch":  true
+                                        },
+                                        {
+                                            "name":  "Parking Gate",
+                                            "ko":  "Parking Gate",
+                                            "faction":  "pmc",
+                                            "switch":  true
+                                        },
+                                        {
+                                            "name":  "Sewage Conduit",
+                                            "ko":  "Sewage Conduit",
+                                            "faction":  "pmc",
+                                            "switch":  true
+                                        }
+                                    ],
+                       "transits":  [
+                                        {
+                                            "ko":  "타르코프 시내로 이동",
+                                            "desc":  "LAB_TRANSIT_8_DESC",
+                                            "conditions":  {
+
+                                                           },
+                                            "keys":  "id,description,map,position,outline,top,bottom"
+                                        }
+                                    ]
+                   },
+    "sandbox":  {
+                    "extracts":  [
+                                     {
+                                         "name":  "Nakatani Basement Stairs",
+                                         "ko":  "Nakatani Basement Stairs",
+                                         "faction":  "shared",
+                                         "switch":  false
+                                     },
+                                     {
+                                         "name":  "Scav Checkpoint (Co-op)",
+                                         "ko":  "Scav Checkpoint (Co-op)",
+                                         "faction":  "shared",
+                                         "switch":  false
+                                     },
+                                     {
+                                         "name":  "Tartowers Sales Office",
+                                         "ko":  "Tartowers Sales Office",
+                                         "faction":  "pmc",
+                                         "switch":  false
+                                     },
+                                     {
+                                         "name":  "Pinewood Basement (Co-Op)",
+                                         "ko":  "Pinewood Basement (Co-Op)",
+                                         "faction":  "shared",
+                                         "switch":  false
+                                     },
+                                     {
+                                         "name":  "Mira Ave (Flare)",
+                                         "ko":  "Mira Ave (조명탄 탈출구)",
+                                         "faction":  "pmc",
+                                         "switch":  false
+                                     },
+                                     {
+                                         "name":  "UN Roadblock",
+                                         "ko":  "UN Roadblock",
+                                         "faction":  "pmc",
+                                         "switch":  false
+                                     },
+                                     {
+                                         "name":  "Emercom Checkpoint",
+                                         "ko":  "Emercom Checkpoint",
+                                         "faction":  "shared",
+                                         "switch":  false
+                                     },
+                                     {
+                                         "name":  "Scav Bunker",
+                                         "ko":  "Scav bunker",
+                                         "faction":  "scav",
+                                         "switch":  false
+                                     },
+                                     {
+                                         "name":  "Police Cordon V-Ex",
+                                         "ko":  "Police Cordon V-Ex",
+                                         "faction":  "pmc",
+                                         "switch":  false
+                                     }
+                                 ],
+                    "transits":  [
+                                     {
+                                         "ko":  "타르코프 시내로 이동",
+                                         "desc":  "SAN_TRANSIT_1_DESC",
+                                         "conditions":  {
+
+                                                        },
+                                         "keys":  "id,description,map,position,outline,top,bottom"
+                                     }
+                                 ]
+                },
+    "terminal":  {
+                     "extracts":  [
+
+                                  ],
+                     "transits":  [
+
+                                  ]
+                 },
+    "labyrinth":  {
+                      "extracts":  [
+                                       {
+                                           "name":  "The Way Up",
+                                           "ko":  "지상으로 향하는 길",
+                                           "faction":  "pmc",
+                                           "switch":  false
+                                       },
+                                       {
+                                           "name":  "Ariadne\u0027s Path",
+                                           "ko":  "아리아드네의 길",
+                                           "faction":  "pmc",
+                                           "switch":  false
+                                       }
+                                   ],
+                      "transits":  [
+
+                                   ]
+                  },
+    "icebreaker":  {
+                       "extracts":  [
+                                        {
+                                            "name":  "Helicopter",
+                                            "ko":  "헬리콥터",
+                                            "faction":  "pmc",
+                                            "switch":  false
+                                        }
+                                    ],
+                       "transits":  [
+
+                                    ]
+                   }
+}

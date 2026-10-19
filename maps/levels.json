@@ -1,0 +1,134 @@
+{
+ "_comment": "Maps drawn floor by floor side by side: one game x,z -> image transform per floor, chosen by the game height y (lowest floor first; 'below' = upper bound of y). The Lab: one scale/rotation for the three drawings, an offset per floor, least squares over its 8 exits/transit (tarkov.dev positions, floor by exit bottom) against the Fandom markers; error 0-98 px on the 3820 px image. An entry with 'area' [x0,z0,x1,z1] (game) applies only inside it; a point no entry takes uses the map's single transform (Interchange: the mall's parking / first / second floor drawings beside the outdoor map, same scale, fitted from 12 named locked doors and exits, 0-60 px; outside the mall the outdoor drawing).",
+ "laboratory": [
+  {
+   "below": -1.5,
+   "t": [
+    -0.00003216498237,
+    0.001585710006,
+    0.6695682756,
+    0.002748526352,
+    -0.0001170575575,
+    0.7795785862
+   ]
+  },
+  {
+   "below": 3,
+   "t": [
+    -0.00003826361609,
+    0.001576358458,
+    1.001778983,
+    0.002749918374,
+    0.000001461714592,
+    1.168978241
+   ]
+  },
+  {
+   "t": [
+    -0.0000419055735,
+    0.001619135518,
+    1.350777725,
+    0.002732986968,
+    -0.00001032367541,
+    0.7885501078
+   ]
+  }
+ ],
+ "factory4_day": [
+  {
+   "below": -0.5,
+   "t": [
+    0.00002116331628,
+    -0.001799243395,
+    0.855789377,
+    -0.003658891918,
+    -0.00001393639763,
+    0.4066488568
+   ]
+  },
+  {
+   "below": 3,
+   "t": [
+    0.00002116331628,
+    -0.001799243395,
+    0.6110147472,
+    -0.003658891918,
+    -0.00001393639763,
+    0.4027862546
+   ]
+  },
+  {
+   "below": 6.5,
+   "t": [
+    0.00002116331628,
+    -0.001799243395,
+    0.3680275288,
+    -0.003658891918,
+    -0.00001393639763,
+    0.4036110237
+   ]
+  },
+  {
+   "t": [
+    0.00002116331628,
+    -0.001799243395,
+    0.1250403104,
+    -0.003658891918,
+    -0.00001393639763,
+    0.4044357927
+   ]
+  }
+ ],
+ "interchange": [
+  {
+   "below": 25.5,
+   "area": [
+    -213.2,
+    -327.5,
+    127.1,
+    214.6
+   ],
+   "t": [
+    -0.0005229410496,
+    0.00001483199929,
+    0.6238577773,
+    0.000003738629417,
+    0.0009798686917,
+    0.5675402453
+   ]
+  },
+  {
+   "below": 33,
+   "area": [
+    -213.2,
+    -327.5,
+    127.1,
+    214.6
+   ],
+   "t": [
+    -0.0005229410496,
+    0.00001483199929,
+    0.7859489803,
+    0.000003738629417,
+    0.0009798686917,
+    0.5632085921
+   ]
+  },
+  {
+   "area": [
+    -213.2,
+    -327.5,
+    127.1,
+    214.6
+   ],
+   "t": [
+    -0.0005229410496,
+    0.00001483199929,
+    0.9528457495,
+    0.000003738629417,
+    0.0009798686917,
+    0.5580933245
+   ]
+  }
+ ]
+}

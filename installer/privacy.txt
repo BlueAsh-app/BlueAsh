@@ -1,0 +1,31 @@
+﻿BlueAsh 개인정보 안내 (요약) · Privacy summary
+
+[한국어]
+BlueAsh는 이름·이메일·게임 계정·닉네임을 수집하지 않고, 게임 메모리를 읽거나 바꾸지 않습니다.
+게임 로그와 게임 화면은 이 PC 안에서만 읽으며 서버로 보내지 않습니다.
+
+BlueAsh 서버로 보내는 것
+- 새 버전 확인: 공개 버전 파일만 읽습니다. 하루 한 번 임의 설치 번호와 앱 버전을 보내 사용자 수를 셉니다.
+- 프로그램 문제 자동 알림: 문제 종류·앱 버전·임의 설치 번호.
+  → 두 가지 모두 업데이트 화면의 "익명 사용 통계 보내기"를 끄면 보내지 않습니다.
+- 문제·건의 보내기, 휴대폰 알림: 직접 보내거나 연결한 경우에만.
+
+BlueAsh가 받아 오기만 하는 것 (보내는 정보 없음)
+- 타르코프 시세·퀘스트·지도 데이터(tarkov.dev, Fandom 위키), 지도 그림·배그 지도 데이터·글자 인식 모델(BlueAsh 서버)
+
+전체 안내: https://blueash.pages.dev/privacy.html
+
+[English]
+BlueAsh collects no names, emails, game accounts or nicknames, and never reads or changes game memory.
+Game logs and screen captures stay on this PC.
+
+Sent to the BlueAsh server
+- Update check: reads a public version file; once a day a random install number and the app version are sent to count users.
+- Automatic problem reports: the problem kind, app version and that random number.
+  -> Both stop when you turn off "Send anonymous usage stats" on the Update page.
+- Report a problem and phone alerts: only when you send them or connect a phone.
+
+Only downloaded (nothing sent)
+- Tarkov prices, quests and map data (tarkov.dev, Fandom wiki); map pictures, PUBG map data and text-recognition models (BlueAsh server)
+
+Full policy: https://blueash.pages.dev/privacy.html

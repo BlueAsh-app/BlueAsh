@@ -1,0 +1,9 @@
+BlueAsh 2.23.0 online update deployment (HTTPS).
+Stable feed: https://modepulse-relay.modepulse.workers.dev/update/manifest.json
+Beta feed: https://modepulse-relay.modepulse.workers.dev/update/beta.json
+Build, then run source/release.ps1 to publish beta first; verify installation on the developer PC before -Promote.
+The feed contains version, notes, size, SHA-256, URL and 8 MiB part paths.
+The online archive keeps ModePulse/ModePulse.exe for old updaters; BlueAsh installs it as BlueAsh.exe.
+The app validates archive paths, executable version and SHA-256 before requesting graceful shutdown.
+Replacement/startup failures attempt rollback to the preserved previous executable.
+The public server supplies the ZIP and manifest; their hash is an integrity check, not a digital signature.

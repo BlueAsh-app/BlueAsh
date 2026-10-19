@@ -1,0 +1,9 @@
+﻿BlueAsh 2.23.0 — non-open-source data moved to a downloaded data pack; asks before changing Tarkov settings files; installer privacy page (2026-10-20)
+Beta only; stable is 2.22.0. Built to a scratch path (the repository BlueAsh.exe is the running copy and was not replaced).
+Fandom map pictures/markers/text translations and PUBG references/labels moved from git and the exe to data/ (git-ignored); source/build-datapack.ps1 -> relay/public/data/datapack-90db976311c9.bin; datapack.h downloads it at start, checks SHA-256 (datapack_id.h), caches it and copies it into the runtime folder; bundle 69 -> 26 files, exe 24.7 -> 9.6 MB. gameConfigAllowed (tarkov_screen.h) asks once before Graphics.ini / screenshot-key changes. installer InfoBeforeFile privacy.txt.
+PASS: 11 C++ tests, i18n_check (503 keys), companion/control-binding/companion-language/update/flare/quest-mode PS tests, EXE --selftest; test copy downloaded the pack (43 files + marker), installed it into its runtime folder.
+EXE SHA256: ab6da66689d25610ae7b511909cef2df89585240cb11fa18e68b76319212db29
+EXE bytes: 9581535
+Source: https://modepulse-relay.modepulse.workers.dev/source/BlueAsh-2.23.0-source.zip (5481670 bytes)
+Beta ZIP: https://modepulse-relay.modepulse.workers.dev/update/BlueAsh-2.23.0.zip (4198105 bytes, SHA256 B893F41C560D770D80FA6F30D9A10F0587E21821576FAE769F89F037863EABDA)
+Beta deployment: 343f27e0-5a3c-43a3-9933-61dcb58e4f36

@@ -1,0 +1,62 @@
+# Builds BlueAsh.exe from this repository on GitHub's Windows runners: the C# helper DLLs, the exe (helpers and scripts
+# embedded), the unit tests and the exe's own self-test. The result is uploaded as a workflow artifact; release builds
+# come from tags (v*). Code signing (SignPath Foundation) is added to this workflow once the project is approved.
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: MinGW-w64 GCC (MSYS2 UCRT64)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: mingw-w64-ucrt-x86_64-gcc
+
+      - name: Helper DLLs (C#, .NET Framework)
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File source/build-price.ps1
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          powershell -NoProfile -ExecutionPolicy Bypass -File source/build-companion.ps1
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      - name: BlueAsh.exe
+        shell: msys2 {0}
+        run: sh source/build.sh
+
+      - name: Unit tests
+        shell: msys2 {0}
+        run: |
+          cd source
+          for t in *_tests.cpp; do g++ -std=c++17 -Wall -Wextra -Werror "$t" -o t.exe -lgdi32 -luser32 && ./t.exe; done
+
+      - name: Self-test (scripts parse, DLLs load)
+        shell: powershell
+        run: |
+          $p = Start-Process -FilePath .\BlueAsh.exe -ArgumentList "--selftest `"$env:RUNNER_TEMP\selftest`"" -Wait -PassThru
+          Get-Content "$env:RUNNER_TEMP\selftest\selftest.txt" -ErrorAction SilentlyContinue
+          if ($p.ExitCode) { exit $p.ExitCode }
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: BlueAsh
+          path: |
+            BlueAsh.exe
+            README.txt
+            LICENSE.txt
+            NOTICE.txt
