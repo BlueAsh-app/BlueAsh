@@ -1,4 +1,4 @@
-BlueAsh 2.23.0 online update deployment (HTTPS).
+BlueAsh 2.23.1 online update deployment (HTTPS).
 Stable feed: https://modepulse-relay.modepulse.workers.dev/update/manifest.json
 Beta feed: https://modepulse-relay.modepulse.workers.dev/update/beta.json
 Build, then run source/release.ps1 to publish beta first; verify installation on the developer PC before -Promote.

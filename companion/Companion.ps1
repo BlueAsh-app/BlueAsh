@@ -346,7 +346,8 @@ function Load-Map {
  # The key list beside the map (add / remove there; its Changed event redraws the map).
  $map.KeyList.Visible=[bool]$config.showKeys
  if($config.showKeys){try{$map.KeyList.Load([ModePulse.Quests]::CachePath($store,$mode),(Join-Path $store 'my-keys.json'),$mode,$row[0].id)}catch{}}
- if($config.showQuests){try{foreach($pin in [ModePulse.Quests]::Pins($row[0].id,$questLogs,$store,$markerShipped)){$map.Canvas.Pins.Add($pin)}}catch{}}
+ # Quest marks only on the PMC map: a Scav run cannot do PMC quests, the marks would only cover the map.
+ if($config.showQuests -and $row[0].role -ne 'SCAV'){try{foreach($pin in [ModePulse.Quests]::Pins($row[0].id,$questLogs,$store,$markerShipped)){$map.Canvas.Pins.Add($pin)}}catch{}}
  Set-Suggestions $row[0].id $row[0].role
  $exits=@($map.Canvas.Pins|Where-Object {$_.Kind -in 'exit','transit'}).Count
  $map.Canvas.Invalidate();$map.State.Text=T '탈출구 {0}곳 · 레이드 시작 시 자동 확인 · 확인 키로 재확인\n초록 비상구: 탈출구 · 두 사람: 협동 탈출구 · 주황 비상구: 트랜짓 · 미확인: 회색 · 신호탄 권총: 플레어 탈출' @($exits)

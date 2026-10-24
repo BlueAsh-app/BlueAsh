@@ -8,8 +8,10 @@
 # Makes ModePulse-<version>.zip (the layout updater/UpdateCore.ps1 accepts), splits it into 8 MiB parts under
 # relay/public/update/<version>/ (static assets are limited to 25 MiB a file), writes the channel file and deploys
 # the relay. Older version folders are left in place.
+# -Promote and -Direct also put the release on GitHub (publish-github.ps1: public copy, commit, tag v<version>) unless
+# -NoGitHub or -NoDeploy; the download site (blueash.pages.dev) reads check.txt, so it follows the relay by itself.
 # -Exe: publish a build made elsewhere (BLUEASH_OUT=... sh source/build.sh), e.g. while the running copy locks BlueAsh.exe.
-param([string[]]$Notes=@(),[switch]$NoDeploy,[string]$Exe='',[switch]$Promote,[switch]$Direct)
+param([string[]]$Notes=@(),[switch]$NoDeploy,[string]$Exe='',[switch]$Promote,[switch]$Direct,[switch]$NoGitHub)
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.IO.Compression,System.IO.Compression.FileSystem
 $root=Split-Path $PSScriptRoot -Parent
@@ -27,6 +29,8 @@ function CheckFiles{$u=New-Object Text.UTF8Encoding($false);if(Test-Path -Litera
  $b=$(if(Test-Path -LiteralPath $betaPath){$betaPath}else{$stablePath});if(Test-Path -LiteralPath $b){[IO.File]::WriteAllText((Join-Path $updates 'check-beta.txt'),(CheckText $b),$u)}}
 function Published($path){if(Test-Path -LiteralPath $path){return [version](Get-Content -LiteralPath $path -Raw -Encoding UTF8|ConvertFrom-Json).version};return [version]'0.0.0'}
 
+function GitHub($v){if($NoDeploy -or $NoGitHub){return};& (Join-Path $PSScriptRoot 'publish-github.ps1') -Version $v}
+
 if($Promote){
  if(!(Test-Path -LiteralPath $betaPath)){throw '베타로 올린 버전이 없습니다. 먼저 release.ps1 -Notes ... 로 베타를 올리세요.'}
  $beta=Get-Content -LiteralPath $betaPath -Raw -Encoding UTF8|ConvertFrom-Json
@@ -34,7 +38,7 @@ if($Promote){
  if([version]$beta.version -le (Published $stablePath)){throw "베타($($beta.version))가 지금 배포된 버전보다 새롭지 않습니다."}
  Copy-Item -LiteralPath $betaPath -Destination $stablePath -Force;Remove-Item -LiteralPath $betaPath
  "BlueAsh $($beta.version) → 모두에게 배포"
- Deploy;return
+ Deploy;GitHub $beta.version;return
 }
 
 # -File hands the list over as one string, so changes are separated by |.
@@ -77,3 +81,4 @@ if($Direct-and(Test-Path -LiteralPath $betaPath)){Remove-Item -LiteralPath $beta
 # GPL-3.0: the source of this exact build goes out with it (relay/public/source, linked from NOTICE.txt and README.txt).
 & (Join-Path $PSScriptRoot 'source-zip.ps1') -Version $version -Out (Join-Path $root 'relay\public\source')
 Deploy
+if($Direct){GitHub $version}
