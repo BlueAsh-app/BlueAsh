@@ -1,6 +1,7 @@
 # Builds BlueAsh.exe from this repository on GitHub's Windows runners: the C# helper DLLs, the exe (helpers and scripts
-# embedded), the unit tests and the exe's own self-test. The result is uploaded as a workflow artifact; release builds
-# come from tags (v*). Code signing (SignPath Foundation) is added to this workflow once the project is approved.
+# embedded), the unit tests and the exe's own self-test. The result is uploaded as a workflow artifact. It checks that
+# the public source builds; the setup .exe on each GitHub Release is attached by source/publish-github.ps1 (the same file
+# the update server ships). Code signing (SignPath Foundation) is added to this workflow once the project is approved.
 name: Build
 
 on:

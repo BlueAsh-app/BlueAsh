@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <map>
+#include <deque>
 #include <set>
 #include <functional>
 #include "profiles.h"
@@ -397,26 +398,6 @@ const wchar_t* featureNote(int id){
     case 39:return i18n::text(L"게임 중 지도 키로 지도를 열어 탈출구·퀘스트 위치를 봅니다");case 46:return i18n::text(L"지은 시설 레벨을 넣으면 시세 창에 남은 재료만 보여 줍니다");case 45:return i18n::text(L"기본 브라우저로 열립니다");
     case 47:return i18n::text(L"출발 카운트다운이 끝나 비행기에 타면 소리로 알려 줍니다");case 48:return i18n::text(L"M 지도 위에 비밀의 방·고정 차·고정 보트 표시 (지도에서 L로 켜고 끄기)");}return nullptr;
 }
-void trayMenu(){
-    if(editor){showWindow();return;}
-    HMENU menu=CreatePopupMenu();
-    AppendMenuW(menu,MF_STRING|(!fps?MF_CHECKED:0),1,(i18n::text(L"일반 모드     ")+profileText(profiles[0])).c_str());
-    AppendMenuW(menu,MF_STRING|(fps?MF_CHECKED:0),2,(i18n::text(L"게임 모드      ")+profileText(profiles[1])).c_str());
-    AppendMenuW(menu,MF_SEPARATOR,0,nullptr);
-    AppendMenuW(menu,MF_STRING,40,i18n::text(L"대시보드"));AppendMenuW(menu,MF_STRING,32,i18n::text(L"프로필"));
-    HMENU games=CreatePopupMenu(),tarkov=CreatePopupMenu(),pubg=CreatePopupMenu();
-    for(int id:{33,37,39}){AppendMenuW(tarkov,MF_STRING|(featureOn(id)?MF_CHECKED:0),id,featureTitle(id));}AppendMenuW(tarkov,MF_STRING,46,featureTitle(46));
-    AppendMenuW(pubg,MF_STRING|(pubgJoinOn?MF_CHECKED:0),47,featureTitle(47));AppendMenuW(pubg,MF_STRING|(pubgMapOn?MF_CHECKED:0),48,featureTitle(48));
-    AppendMenuW(games,MF_POPUP,(UINT_PTR)tarkov,i18n::text(L"타르코프"));AppendMenuW(games,MF_POPUP,(UINT_PTR)pubg,i18n::text(L"배그"));
-    AppendMenuW(menu,MF_POPUP,(UINT_PTR)games,i18n::text(L"게임 도우미"));AppendMenuW(menu,MF_STRING,44,i18n::text(L"알림"));AppendMenuW(menu,MF_STRING,38,updateReady?(i18n::text(L"업데이트 · 새 버전 ")+updateVersion).c_str():i18n::text(L"업데이트"));
-    AppendMenuW(menu,MF_STRING,50,i18n::text(L"설정"));
-    AppendMenuW(menu,MF_SEPARATOR,0,nullptr);
-    AppendMenuW(menu,MF_STRING,31,i18n::text(L"완전 종료 (일반 모드로 복귀)"));
-    POINT p;GetCursorPos(&p);SetForegroundWindow(win);
-    int command=TrackPopupMenu(menu,TPM_RETURNCMD|TPM_RIGHTBUTTON,p.x,p.y,0,win,nullptr);
-    DestroyMenu(menu);PostMessageW(win,WM_NULL,0,0);
-    if(command)SendMessageW(win,WM_COMMAND,command,0);
-}
 void darkControl(HWND c,const wchar_t* cls); // drop-downs drawn in the app's own style (after glyph below)
 HWND control(const wchar_t* cls,const wchar_t* text,DWORD style,int x,int y,int w,int h,int id=0){
     if(!_wcsicmp(cls,L"COMBOBOX"))style|=CBS_OWNERDRAWFIXED|CBS_HASSTRINGS; // items drawn in the theme (drawComboItem)
@@ -778,6 +759,7 @@ void reportProblem(const wchar_t* kind); // update_ui.h: anonymous problem count
 #include "game_art.h"
 #include "help_ui.h"
 #include "lang_menu.h"
+#include "tray_menu.h"
 #include "pubg_page.h"
 bool tarkovMapOn(){return regString(configPath,L"MapEnabled")!=L"0";}
 bool featureOn(int id){return id==33?raidWatch.enabled:id==37?priceWatch.autoMode:id==39?tarkovMapOn():id==198?tarkovScreen.enabled():id==217?usageStats():id==242?feedbackDiag:false;}
@@ -1045,7 +1027,9 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         bool footer=(HWND)lp==modeLabel||(HWND)lp==gammaLabel||(HWND)lp==audioLabel;SetBkColor(dc,footer?bg:panel);return staticBackground(dc,(HWND)lp,footer?backgroundBrush:panelBrush);
     }
     case WM_CTLCOLORLISTBOX:case WM_CTLCOLOREDIT:{HDC dc=(HDC)wp;SetTextColor(dc,ink);SetBkColor(dc,panel);return (LRESULT)panelBrush;}
-    case WM_DRAWITEM:drawButton((DRAWITEMSTRUCT*)lp);return TRUE;
+    case WM_ENTERIDLE:if(wp==MSGF_MENU){trayMenuWindow((HWND)lp);}break;
+    case WM_MEASUREITEM:if(((MEASUREITEMSTRUCT*)lp)->CtlType==ODT_MENU){trayMeasure((MEASUREITEMSTRUCT*)lp);return TRUE;}break;
+    case WM_DRAWITEM:if(((DRAWITEMSTRUCT*)lp)->CtlType==ODT_MENU){trayDraw((DRAWITEMSTRUCT*)lp);return TRUE;}drawButton((DRAWITEMSTRUCT*)lp);return TRUE;
     case WM_COMMAND:{
         int id=LOWORD(wp);
         if(id==60&&HIWORD(wp)==CBN_SELCHANGE){
@@ -1144,7 +1128,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,LPWSTR command,int show){
         HWND existing=FindWindowW(L"ModeSwitch",nullptr);
         if(existing&&!startHidden){
             wchar_t title[128]={};GetWindowTextW(existing,title,128);
-            if(std::wstring(title)!=L"BlueAsh 2.23.1")MessageBoxW(nullptr,i18n::text(L"이전 버전이 트레이에서 실행 중입니다. 이전 프로그램을 완전 종료한 뒤 BlueAsh.exe를 다시 실행하세요."),i18n::text(L"BlueAsh · 이전 버전 실행 중"),MB_OK|MB_ICONINFORMATION);
+            if(std::wstring(title)!=L"BlueAsh 2.24.0")MessageBoxW(nullptr,i18n::text(L"이전 버전이 트레이에서 실행 중입니다. 이전 프로그램을 완전 종료한 뒤 BlueAsh.exe를 다시 실행하세요."),i18n::text(L"BlueAsh · 이전 버전 실행 중"),MB_OK|MB_ICONINFORMATION);
             else{ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);}
         }
         CloseHandle(mutex);return 0;
@@ -1158,7 +1142,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,LPWSTR command,int show){
     RegisterClassW(&wc);
     DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_CLIPCHILDREN;
     RECT bounds={0,0,1160,780}; // the client is the whole window (WM_NCCALCSIZE)
-    HWND h=CreateWindowW(wc.lpszClassName,L"BlueAsh 2.23.1",style,CW_USEDEFAULT,CW_USEDEFAULT,bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,instance,nullptr);
+    HWND h=CreateWindowW(wc.lpszClassName,L"BlueAsh 2.24.0",style,CW_USEDEFAULT,CW_USEDEFAULT,bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,instance,nullptr);
     if(!h){painting::shutdown();CoUninitialize();CloseHandle(mutex);return 1;}
     {MARGINS shadow={0,0,0,1};DwmExtendFrameIntoClientArea(h,&shadow);SetWindowPos(h,nullptr,0,0,0,0,SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);} // keep the shadow without a frame
     if(wcsstr(command,L"--settings")){startHidden=false;selectMainPage(9);} // back from a language change

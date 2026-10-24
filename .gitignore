@@ -12,6 +12,7 @@ node_modules/
 .claude/settings.local.json
 relay/public/update/*/
 relay/public/source/
+relay/public/download/
 relay/public/ocr/
 relay/public/pubg/
 installer/MicrosoftEdgeWebview2Setup.exe

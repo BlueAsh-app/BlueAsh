@@ -73,7 +73,9 @@ try {
    else{[void](Fetch-Into $out ([string]$m.url) 0 ([long]$m.size) (U '새 버전을 받는 중…'))}
   }finally{$out.Dispose()}
   Report 'working' (U '받은 파일을 확인하는 중…') 1 ((Mb $m.size)+' · '+(U 'SHA-256 검사'))
-  if((Get-FileHash -LiteralPath $zipFile -Algorithm SHA256).Hash -ne $m.sha256){throw (U '받은 파일이 배포 정보와 다릅니다 (SHA-256 불일치). 다시 시도해 주세요.')}
+  # .NET, not Get-FileHash: that one is a script function of the Utility module and was missing in a user's PowerShell.
+  $fs=[IO.File]::OpenRead($zipFile);try{$hash=[BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash($fs)) -replace '-',''}finally{$fs.Dispose()}
+  if($hash -ne $m.sha256){throw (U '받은 파일이 배포 정보와 다릅니다 (SHA-256 불일치). 다시 시도해 주세요.')}
  }else{
   # BlueAsh picked the ZIP (its own file dialog) and passes the path.
   if(!$Zip -or !(Test-Path -LiteralPath $Zip)){throw (U 'ZIP 파일을 찾지 못했습니다.')}

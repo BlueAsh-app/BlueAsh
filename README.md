@@ -6,7 +6,8 @@ extracts, quests, bosses and keys; item prices; raid start alert) and PUBG (plan
 
 게임할 때 화면 색감과 브라우저 볼륨을 단축키 하나로 바꾸고, 타르코프·배그 보조 도구를 모은 무료 오픈소스 Windows 트레이 앱입니다.
 
-- Download: <https://blueash.pages.dev>
+- Download: <https://blueash.pages.dev> or [GitHub Releases](https://github.com/BlueAsh-app/BlueAsh/releases/latest)
+  — run `BlueAsh-Setup-<version>.exe` (the same file on both). 설치 파일 `BlueAsh-Setup-<버전>.exe`를 받아 실행하세요.
 - Privacy policy: <https://blueash.pages.dev/privacy.html>
 - Code signing policy: <https://blueash.pages.dev/code-signing.html>
 
@@ -15,7 +16,8 @@ on the PC and the screen through Windows screen capture. Not made or endorsed by
 
 ## Building
 
-See [source/BUILDING.txt](source/BUILDING.txt). Releases are built by [GitHub Actions](.github/workflows/build.yml).
+See [source/BUILDING.txt](source/BUILDING.txt). [GitHub Actions](.github/workflows/build.yml) builds and tests every push and
+tag; the setup program attached to each release is the one the update server ships.
 
 Some data BlueAsh uses is not open source (Fandom map pictures and texts, PUBG reference maps). It is not in this
 repository: BlueAsh downloads it at run time as a data pack whose SHA-256 is pinned in

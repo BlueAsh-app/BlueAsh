@@ -1,4 +1,4 @@
-﻿BlueAsh 2.23.1 — Windows x64
+﻿BlueAsh 2.24.0 — Windows x64
 자유 소프트웨어(GPL-3.0-or-later)입니다. 소스 코드: https://modepulse-relay.modepulse.workers.dev/source/BlueAsh-<버전>-source.zip (최신: .../source/BlueAsh-source-latest.zip). 자세한 출처는 NOTICE.txt.
 타르코프 시작 알림: 매칭 로그로 화면 감시를 시작하고, GET READY 배치 화면에서 감소하는 카운트다운이 1초 이하임을 확인하면 한 번 울립니다. 로그만으로는 울리지 않습니다. 게임은 최소화하지 말고 다른 창 뒤에 두세요. 매칭 취소·게임 종료·10분 제한·알림 완료 후에는 캡처를 중단합니다.
 타르코프 지도: 신호탄을 직접 쏴야 하는 플레어 탈출구는 초록 신호탄 권총·화살표 아이콘으로 표시합니다. 단순히 초록 불빛이 켜진 일반 탈출구는 기존 비상구 아이콘을 유지합니다.

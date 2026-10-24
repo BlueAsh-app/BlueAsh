@@ -8,7 +8,7 @@
 # Makes ModePulse-<version>.zip (the layout updater/UpdateCore.ps1 accepts), splits it into 8 MiB parts under
 # relay/public/update/<version>/ (static assets are limited to 25 MiB a file), writes the channel file and deploys
 # the relay. Older version folders are left in place.
-# -Promote and -Direct also put the release on GitHub (publish-github.ps1: public copy, commit, tag v<version>) unless
+# -Promote and -Direct also put the release on GitHub (publish-github.ps1: public copy, commit, tag v<version>, GitHub Release with the setup .exe) unless
 # -NoGitHub or -NoDeploy; the download site (blueash.pages.dev) reads check.txt, so it follows the relay by itself.
 # -Exe: publish a build made elsewhere (BLUEASH_OUT=... sh source/build.sh), e.g. while the running copy locks BlueAsh.exe.
 param([string[]]$Notes=@(),[switch]$NoDeploy,[string]$Exe='',[switch]$Promote,[switch]$Direct,[switch]$NoGitHub)
@@ -24,7 +24,7 @@ function Deploy{CheckFiles;if($NoDeploy){return}
  $pack=[regex]::Match([IO.File]::ReadAllText((Join-Path $PSScriptRoot 'datapack_id.h')),'DATAPACK_FILE L"([^"]+)"').Groups[1].Value;if(!$pack -or !(Test-Path (Join-Path $root "relay/public/data/$pack"))){throw "relay/public/data/$pack 가 없습니다. 먼저 powershell -File source/build-datapack.ps1 을 실행하세요."}
 # The app's regular update check reads these static files (served without running the worker, so free and unlimited):
 # check.txt = manifest.json, check-beta.txt = beta.json (or manifest.json without one), in /update/check's key=value text.
-function CheckText($path){$m=Get-Content -LiteralPath $path -Raw -Encoding UTF8|ConvertFrom-Json;$l=@("version=$($m.version)","date=$($m.date)","size=$($m.size)")+@(@($m.notes)|Where-Object {$_}|ForEach-Object {'note='+($_ -replace "[`r`n]+",' ')});return ($l -join "`n")+"`n"}
+function CheckText($path){$m=Get-Content -LiteralPath $path -Raw -Encoding UTF8|ConvertFrom-Json;$l=@("version=$($m.version)","date=$($m.date)","size=$($m.size)")+@(if(Test-Path -LiteralPath (Join-Path $root "relay\public\download\BlueAsh-Setup-$($m.version).exe")){"setup=/download/BlueAsh-Setup-$($m.version).exe"})+@(@($m.notes)|Where-Object {$_}|ForEach-Object {'note='+($_ -replace "[`r`n]+",' ')});return ($l -join "`n")+"`n"}
 function CheckFiles{$u=New-Object Text.UTF8Encoding($false);if(Test-Path -LiteralPath $stablePath){[IO.File]::WriteAllText((Join-Path $updates 'check.txt'),(CheckText $stablePath),$u)}
  $b=$(if(Test-Path -LiteralPath $betaPath){$betaPath}else{$stablePath});if(Test-Path -LiteralPath $b){[IO.File]::WriteAllText((Join-Path $updates 'check-beta.txt'),(CheckText $b),$u)}}
 function Published($path){if(Test-Path -LiteralPath $path){return [version](Get-Content -LiteralPath $path -Raw -Encoding UTF8|ConvertFrom-Json).version};return [version]'0.0.0'}
@@ -79,6 +79,8 @@ $target=$(if($Direct){$stablePath}else{$betaPath})
 if($Direct-and(Test-Path -LiteralPath $betaPath)){Remove-Item -LiteralPath $betaPath}
 "BlueAsh $version · $([Math]::Round($bytes.Length/1MB,1)) MB · $($parts.Count) parts · sha256 $sha · "+$(if($Direct){'모두에게 바로 배포'}else{'베타로 배포 (확인 뒤 release.ps1 -Promote)'})
 # GPL-3.0: the source of this exact build goes out with it (relay/public/source, linked from NOTICE.txt and README.txt).
+# The download site offers the setup program (an .exe), not the update ZIP (which keeps the old ModePulse layout for 2.8.x updaters).
+& (Join-Path $PSScriptRoot 'build-installer.ps1') -Out (Join-Path $root 'relay\public\download') -Exe $exe
 & (Join-Path $PSScriptRoot 'source-zip.ps1') -Version $version -Out (Join-Path $root 'relay\public\source')
 Deploy
 if($Direct){GitHub $version}
