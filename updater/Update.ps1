@@ -83,6 +83,10 @@ try {
  }
  Report 'working' (U '파일을 검사하는 중…') 1
  $plan=@(Get-UpdatePlan $zipFile (Join-Path $temp 'stage'))
+ # A setup install (its uninstaller next to the exe) shows only BlueAsh.exe: price/ is only for 2.8.x layouts, so it is
+ # left out unless already there, and the text files are hidden again after the copy.
+ $setupInstall=Test-Path -LiteralPath (Join-Path $Install 'unins000.exe')
+ if($setupInstall){$plan=@($plan|Where-Object {$_.Relative -notlike 'price/*' -or (Test-Path -LiteralPath (Join-Path $Install 'price'))})}
  # Compare major.minor.build: the exe's version string is "2.8.1" while FILEVERSION carries a 4th 0.
  $vi=[Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $temp 'stage/BlueAsh.exe'));$version=New-Object Version($vi.FileMajorPart,$vi.FileMinorPart,$vi.FileBuildPart)
  if($null -ne $expectedVersion -and $version -ne (New-Object Version($expectedVersion.Major,$expectedVersion.Minor,$expectedVersion.Build))){throw (U '실행 파일 버전과 배포 정보가 다릅니다.')}
@@ -100,6 +104,7 @@ try {
  function Test-NewWindow{$h=[ModeSwitchUpdateNative]::FindWindow('ModeSwitch',[NullString]::Value);if($h -eq [IntPtr]::Zero){return $false};$id=[uint32]0;[void][ModeSwitchUpdateNative]::GetWindowThreadProcessId($h,[ref]$id)
   try{return (Get-Process -Id $id -ErrorAction Stop).Path -ieq (Join-Path $Install 'BlueAsh.exe')}catch{return $false}}
  $changed=Apply-UpdatePlan $plan $Install $backup
+ if($setupInstall){foreach($t in 'README.txt','NOTICE.txt','LICENSE.txt'){$p=Join-Path $Install $t;if(Test-Path -LiteralPath $p){try{$i=Get-Item -LiteralPath $p -Force;$i.Attributes=$i.Attributes -bor [IO.FileAttributes]::Hidden}catch{}}}}
  # The new BlueAsh must open its window (class ModeSwitch) within 30 s and still have it 5 s later; if it never does,
  # the replaced files go back and the previous version starts again (backup kept under update-backups).
  Report 'working' (U '새 버전이 잘 켜지는지 확인하는 중…') 1

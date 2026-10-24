@@ -64,7 +64,7 @@ struct RaidWatch {
     void reset(){capture.stop();unsigned token=deployment.token+1;deployment={};deployment.token=token;captureRetry=0;auto pmc=context.pmc;context=raid::Context{};context.pmc=pmc;publishRaidContext(context);file.clear();offset=0;baseline=true;streams.clear();bytesRead=0;readFailures=0;lastAlert=0;lastRead=i18n::text(L"아직 없음");lastEvent=i18n::text(L"아직 없음");FILETIME t;GetSystemTimeAsFileTime(&t);startedAt=number(t);}
     static std::wstring clock(){SYSTEMTIME t;GetLocalTime(&t);wchar_t b[32];swprintf(b,32,L"%02u:%02u:%02u",t.wHour,t.wMinute,t.wSecond);return b;}
     std::wstring diagnostics(){
-        std::wstring d=i18n::text(L"BlueAsh 2.24.0\r\n알림: ")+std::wstring(enabled?L"ON":L"OFF")+i18n::text(L" / 볼륨: ")+std::to_wstring(loudness)+L"\r\nLogs: "+folder+
+        std::wstring d=i18n::text(L"BlueAsh 2.24.1\r\n알림: ")+std::wstring(enabled?L"ON":L"OFF")+i18n::text(L" / 볼륨: ")+std::to_wstring(loudness)+L"\r\nLogs: "+folder+
             i18n::text(L"\r\n상태: ")+status+i18n::text(L"\r\n최근 읽기: ")+lastRead+i18n::text(L" / 신규 읽은 바이트: ")+std::to_wstring(bytesRead)+i18n::text(L" / 읽기 오류: ")+std::to_wstring(readFailures)+
             i18n::text(L"\r\n최근 알림: ")+lastEvent+i18n::text(L"\r\n감시 파일 수: ")+std::to_wstring(streams.size());
         for(const auto& entry:streams)d+=L"\r\n"+entry.first+L" ["+std::to_wstring(entry.second.offset)+L" / "+std::to_wstring(entry.second.size)+L"]";

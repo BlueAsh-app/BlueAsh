@@ -36,7 +36,10 @@ VersionInfoDescription=BlueAsh Setup
 DefaultDirName={localappdata}\Programs\BlueAsh
 DefaultGroupName=BlueAsh
 DisableProgramGroupPage=yes
-DisableDirPage=auto
+; Always ask where to install (any drive or folder the user can write to; the updater replaces files there later).
+DisableDirPage=no
+AppPublisherURL=https://blueash.pages.dev
+AppSupportURL=https://github.com/BlueAsh-app/BlueAsh/issues
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
@@ -133,9 +136,10 @@ Name: "autostart"; Description: "{cm:StartWithWindows}"; Flags: unchecked
 
 [Files]
 Source: "{#ExeSource}"; DestDir: "{app}"; DestName: "BlueAsh.exe"; Flags: ignoreversion
-Source: "{#Root}\README.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#Root}\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#Root}\NOTICE.txt"; DestDir: "{app}"; Flags: ignoreversion
+; The install folder shows only BlueAsh.exe: the text files (and the uninstaller, CurStepChanged) are hidden.
+Source: "{#Root}\README.txt"; DestDir: "{app}"; Attribs: hidden; Flags: ignoreversion
+Source: "{#Root}\LICENSE.txt"; DestDir: "{app}"; Attribs: hidden; Flags: ignoreversion
+Source: "{#Root}\NOTICE.txt"; DestDir: "{app}"; Attribs: hidden; Flags: ignoreversion
 Source: "{#Root}\installer\MicrosoftEdgeWebview2Setup.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Check: NeedsWebView2
 
 [Icons]
@@ -217,6 +221,14 @@ begin
   MsgBox(CustomMessage('RemoveTask'), mbInformation, MB_OK);
   ShellExec('runas', ExpandConstant('{sys}\schtasks.exe'), '/Delete /TN "{#TaskName}" /F', '', SW_HIDE, ewWaitUntilTerminated, code);
   Result := not TaskExists();
+end;
+// The uninstaller (unins000.exe/.dat) is hidden too, so the install folder shows only BlueAsh.exe; Windows Settings and
+// the Control Panel still list BlueAsh and remove it.
+procedure CurStepChanged(CurStep: TSetupStep);
+var code: Integer;
+begin
+  if CurStep = ssDone then
+    Exec(ExpandConstant('{sys}\attrib.exe'), '+h "' + ExpandConstant('{app}') + '\unins000.*"', '', SW_HIDE, ewWaitUntilTerminated, code);
 end;
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var exe, v: String;

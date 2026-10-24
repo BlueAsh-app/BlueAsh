@@ -2,7 +2,7 @@
 #include "i18n.h"
 // Tarkov key bindings the player asked BlueAsh to set, written to Control.ini only while the game is closed
 // (it rewrites the file on exit). Only the named keyCode lists change; the first original is kept as
-// Control.ini.modepulse-backup.
+// Control.ini.blueash-backup (an older .modepulse-backup is renamed to it).
 //  - TarkovKeyMoves  "Binding:From>To;..."  one-time moves of a single-key binding (e.g. WeaponMounting:M>Comma),
 //                    dropped once applied or once the binding no longer is From.
 //  - MapScreenshotKey (map window option "지도 열 때 내 위치 갱신"): the map key also becomes the second
@@ -61,7 +61,7 @@ struct TarkovKeys{
         // A move the player picked in the key-conflict dialog was asked for; the screenshot key needs the one-time consent.
         if(text!=before&&want!=was&&!gameConfigAllowed()){text=before;added=was;std::string keep=was;pending=gamekeys::apply(text,moves,keep,added);}
         if(text!=before){
-            auto backup=file+L".modepulse-backup";CopyFileW(file.c_str(),backup.c_str(),TRUE);auto temp=file+L".modepulse-tmp";
+            auto backup=file+L".blueash-backup";MoveFileW((file+L".modepulse-backup").c_str(),backup.c_str());/* the original kept by ModePulse, renamed */CopyFileW(file.c_str(),backup.c_str(),TRUE);auto temp=file+L".blueash-tmp";
             HANDLE f=CreateFileW(temp.c_str(),GENERIC_WRITE,0,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);if(f==INVALID_HANDLE_VALUE)return;
             DWORD wrote=0;bool ok=WriteFile(f,text.data(),(DWORD)text.size(),&wrote,nullptr)&&wrote==text.size();CloseHandle(f);
             if(!ok||!MoveFileExW(temp.c_str(),file.c_str(),MOVEFILE_REPLACE_EXISTING)){DeleteFileW(temp.c_str());return;}

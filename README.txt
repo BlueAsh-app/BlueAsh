@@ -1,5 +1,5 @@
-﻿BlueAsh 2.24.0 — Windows x64
-자유 소프트웨어(GPL-3.0-or-later)입니다. 소스 코드: https://modepulse-relay.modepulse.workers.dev/source/BlueAsh-<버전>-source.zip (최신: .../source/BlueAsh-source-latest.zip). 자세한 출처는 NOTICE.txt.
+﻿BlueAsh 2.24.1 — Windows x64
+자유 소프트웨어(GPL-3.0-or-later)입니다. 소스 코드: https://github.com/BlueAsh-app/BlueAsh (버전마다 Releases의 Source code). 자세한 출처는 NOTICE.txt.
 타르코프 시작 알림: 매칭 로그로 화면 감시를 시작하고, GET READY 배치 화면에서 감소하는 카운트다운이 1초 이하임을 확인하면 한 번 울립니다. 로그만으로는 울리지 않습니다. 게임은 최소화하지 말고 다른 창 뒤에 두세요. 매칭 취소·게임 종료·10분 제한·알림 완료 후에는 캡처를 중단합니다.
 타르코프 지도: 신호탄을 직접 쏴야 하는 플레어 탈출구는 초록 신호탄 권총·화살표 아이콘으로 표시합니다. 단순히 초록 불빛이 켜진 일반 탈출구는 기존 비상구 아이콘을 유지합니다.
 지도 설정의 다섯 체크 항목은 새 설치·업데이트 후 처음 한 번 모두 켭니다(위치 스크린샷 자동 삭제 포함). 이후 체크를 풀고 저장한 선택은 다음 실행·업데이트에도 유지됩니다.
@@ -18,7 +18,6 @@ BlueAsh는 게임할 때 화면 색감과 브라우저 볼륨을 한 번에 바�
 1. 작업 표시줄 오른쪽 트레이의 BlueAsh를 우클릭 → 완전 종료합니다.
 2. ZIP을 새 폴더에 전부 압축 해제합니다. (BlueAsh.exe 하나만 옮겨도 모든 기능이 동작합니다.)
 3. BlueAsh.exe를 실행합니다. 기존 설정은 그대로 이어집니다.
-※ 2.9.0부터 ModePulse가 BlueAsh로 이름이 바뀌었습니다. 설정은 그대로 이어지고, 예전 ModePulse.exe는 지워도 됩니다.
 
 화면 구성 (왼쪽 메뉴)
 대시보드     일반 / 게임 모드 전환, 모니터·브라우저 선택, 감마·브라우저 볼륨 슬라이더, 게임 알림
@@ -45,7 +44,7 @@ BlueAsh는 게임할 때 화면 색감과 브라우저 볼륨을 한 번에 바�
   BlueAsh는 Battlestate Games·KRAFTON이 만들거나 승인한 프로그램이 아니며, 게임 약관·안티치트 정책은 바뀔 수 있습니다. 사용 여부는 각자 판단해 주세요.
 - 새 버전 확인은 공개된 버전 파일만 읽고, 하루 한 번 이 PC에서 만든 임의 번호와 앱 버전만 보냅니다 (사용자 수를 세는 용도, 이름·계정·IP는 저장하지 않음).
   업데이트 화면의 "익명 사용 통계 보내기"를 끄면 번호도 보내지 않습니다.
-  자세한 내용: https://modepulse-relay.modepulse.workers.dev/privacy.html
+  자세한 내용: https://blueash.pages.dev/privacy
 - 처음 실행할 때 "Windows의 PC 보호" 창이 뜨면 추가 정보 → 실행을 누르세요 (아직 코드 서명이 없는 개인 개발 프로그램).
 
 기능별 확인 정도와 미완성 기능은 인게임 지도 ⚙ → 기능 상태 보기 (companion/FEATURES.txt)에서 볼 수 있습니다.

@@ -4,7 +4,7 @@
 // So while Tarkov is closed, its saved screen mode is switched from fullscreen to borderless: the same value its
 // own settings menu writes (Graphics.ini "FullScreenMode": 0 fullscreen / 1 borderless / 2 windowed; checked on
 // this PC: mode 1 stays unminimised behind other windows). Never while the game runs (it rewrites the file
-// itself), only that one number changes, and the first original is kept as Graphics.ini.modepulse-backup.
+// itself), only that one number changes, and the first original is kept as Graphics.ini.blueash-backup (an older .modepulse-backup is renamed to it).
 // Registry TarkovBorderless (default on) turns it off for players who want fullscreen.
 // Changing the game's own settings files is asked once, right before the first change would be written (a Windows
 // message box that says what changes and that the original is kept). The answer is kept in GameConfigConsent: "0" stops
@@ -12,7 +12,7 @@
 inline bool gameConfigAllowed(){
     auto v=regString(configPath,L"GameConfigConsent");if(v==L"1"){return true;}if(v==L"0"){return false;}
     static bool asking=false;if(asking){return false;}asking=true;
-    int r=MessageBoxW(win,i18n::text(L"BlueAsh가 타르코프 설정 파일을 바꿔도 될까요?\n\n• 화면 모드: 전체화면이면 전체창모드로 (시세·지도가 게임 위에 보이도록)\n• 키 설정: 지도 키를 게임 스크린샷 키에도 추가 (지도에 내 위치 표시)\n\n게임이 꺼져 있을 때만 바꾸고, 원본은 .modepulse-backup 파일로 남깁니다. 아이템 시세 설정에서 언제든 끌 수 있습니다."),i18n::text(L"타르코프 설정 변경"),MB_YESNO|MB_ICONQUESTION|MB_SETFOREGROUND);
+    int r=MessageBoxW(win,i18n::text(L"BlueAsh가 타르코프 설정 파일을 바꿔도 될까요?\n\n• 화면 모드: 전체화면이면 전체창모드로 (시세·지도가 게임 위에 보이도록)\n• 키 설정: 지도 키를 게임 스크린샷 키에도 추가 (지도에 내 위치 표시)\n\n게임이 꺼져 있을 때만 바꾸고, 원본은 .blueash-backup 파일로 남깁니다. 아이템 시세 설정에서 언제든 끌 수 있습니다."),i18n::text(L"타르코프 설정 변경"),MB_YESNO|MB_ICONQUESTION|MB_SETFOREGROUND);
     asking=false;bool yes=r==IDYES;saveString(configPath,L"GameConfigConsent",yes?L"1":L"0");if(!yes){saveString(configPath,L"TarkovBorderless",L"0");}return yes;
 }
 struct TarkovScreen{
@@ -41,8 +41,8 @@ struct TarkovScreen{
         auto file=path();std::string text;if(!read(file,text))return;size_t at=modeAt(text);if(at==std::string::npos||text[at]!='0'){warned=false;return;}
         if(tarkovProcess()){if(!warned){warned=true;reportProblem(L"fullscreen");balloon(i18n::text(L"전체화면에서는 시세·지도가 게임 위에 보이지 않습니다. 게임을 끄면 전체창모드로 바꿔 둡니다."));}return;}
         if(!gameConfigAllowed()){return;}
-        auto backup=file+L".modepulse-backup";CopyFileW(file.c_str(),backup.c_str(),TRUE);
-        text[at]='1';auto temp=file+L".modepulse-tmp";
+        auto backup=file+L".blueash-backup";MoveFileW((file+L".modepulse-backup").c_str(),backup.c_str());/* the original kept by ModePulse, renamed */CopyFileW(file.c_str(),backup.c_str(),TRUE);
+        text[at]='1';auto temp=file+L".blueash-tmp";
         HANDLE f=CreateFileW(temp.c_str(),GENERIC_WRITE,0,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);if(f==INVALID_HANDLE_VALUE)return;
         DWORD wrote=0;bool ok=WriteFile(f,text.data(),(DWORD)text.size(),&wrote,nullptr)&&wrote==text.size();CloseHandle(f);
         if(!ok||!MoveFileExW(temp.c_str(),file.c_str(),MOVEFILE_REPLACE_EXISTING)){DeleteFileW(temp.c_str());return;}

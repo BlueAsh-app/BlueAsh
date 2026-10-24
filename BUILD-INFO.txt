@@ -1,3 +1,3 @@
-﻿BlueAsh 2.24.0 — Vanguard-style tray menu with a game-mode switch (2026-10-24)
+﻿BlueAsh 2.24.1 — tray game-mode switch slides without closing the menu; BlueAsh names everywhere users look (2026-10-24)
 Built to a scratch path (the repository BlueAsh.exe is the running copy and was not replaced).
-Tray menu (tray_menu.h): owner-drawn items on a near-black panel, BlueAsh mark and name on top, one 게임 모드 row with an on/off switch, small grey items, cobalt checks in the game submenus, round corners (DWM). Updater: SHA-256 with .NET (Get-FileHash was missing in a user's PowerShell). GitHub Release with the setup .exe on publish.
+Tray (tray_menu.h): the switch row is a disabled owner-drawn item; a WH_MSGFILTER hook catches the click / Enter / Space, a 180 ms ease-out slide is drawn straight onto the menu window (menus ignore InvalidateRect for owner-drawn rows) by a timer on the main window, and the mode changes when the slide ends. Tarkov setting backups .blueash-backup (old .modepulse-backup renamed), README/NOTICE/site source links to GitHub, privacy link to blueash.pages.dev, download button to the GitHub Release setup .exe.

@@ -8,8 +8,8 @@
 402 RCDATA "assets/fonts/Pretendard-Bold.otf"
 1 RT_MANIFEST "app.manifest"
 1 VERSIONINFO
-FILEVERSION 2,24,0,0
-PRODUCTVERSION 2,24,0,0
+FILEVERSION 2,24,1,0
+PRODUCTVERSION 2,24,1,0
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0x0L
 FILEOS VOS_NT_WINDOWS32
@@ -21,11 +21,11 @@ BEGIN
     BLOCK "040904B0"
     BEGIN
       VALUE "FileDescription", "BlueAsh - Display and browser audio controller\0"
-      VALUE "FileVersion", "2.24.0\0"
+      VALUE "FileVersion", "2.24.1\0"
       VALUE "InternalName", "ModeSwitch\0"
       VALUE "OriginalFilename", "BlueAsh.exe\0"
       VALUE "ProductName", "BlueAsh\0"
-      VALUE "ProductVersion", "2.24.0\0"
+      VALUE "ProductVersion", "2.24.1\0"
       VALUE "LegalCopyright", "GPL-3.0-or-later. See NOTICE.txt\0"
     END
   END
