@@ -21,11 +21,11 @@ inline void pubgMarkBoarded(){pubgBoarded=true;}
 // Alert sound volume for PUBG (PubgAudioVolume, kept from the old plane-sound settings).
 unsigned pubgLoudness=50;
 inline bool pubgSound(){unsigned old=raidWatch.loudness;raidWatch.loudness=pubgLoudness;bool ok=raidWatch.sound();raidWatch.loudness=old;return ok;}
-// One line per step of the boarding alert in %LOCALAPPDATA%\ModeSwitch\pubg-board.log (restarted when over 256 KB).
+// One line per step of the boarding alert in %LOCALAPPDATA%\BlueAsh\pubg-board.log (restarted when over 256 KB).
 void phoneAlert(const char* kind); // phone_game.h: PUBG away alert to the paired phone when the PC is idle
 inline void pubgNote(const std::wstring& s){
     wchar_t local[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local)))return;
-    std::wstring p=std::wstring(local)+L"\\ModeSwitch\\pubg-board.log";WIN32_FILE_ATTRIBUTE_DATA a;
+    std::wstring p=std::wstring(local)+dataSub()+L"\\pubg-board.log";WIN32_FILE_ATTRIBUTE_DATA a;
     bool big=GetFileAttributesExW(p.c_str(),GetFileExInfoStandard,&a)&&a.nFileSizeLow>262144;FILE* f=_wfopen(p.c_str(),big?L"wb":L"ab");if(!f)return;
     SYSTEMTIME t;GetLocalTime(&t);wchar_t c[32];swprintf(c,32,L"%02u:%02u:%02u ",t.wHour,t.wMinute,t.wSecond);std::wstring line=c+s+L"\r\n";
     int n=WideCharToMultiByte(CP_UTF8,0,line.c_str(),(int)line.size(),nullptr,0,nullptr,nullptr);std::string u(n,0);WideCharToMultiByte(CP_UTF8,0,line.c_str(),(int)line.size(),&u[0],n,nullptr,nullptr);fwrite(u.data(),1,u.size(),f);fclose(f);

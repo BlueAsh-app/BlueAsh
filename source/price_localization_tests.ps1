@@ -1,12 +1,9 @@
 ﻿$ErrorActionPreference='Stop'
 $root=Join-Path $PSScriptRoot '../price'
-Add-Type -Path @((Join-Path $root 'PriceCore.cs'),(Join-Path $root 'PriceWindow.cs'),(Join-Path $root 'PriceCatalog.cs'),(Join-Path $root 'PriceLanguage.cs')) -ReferencedAssemblies System.Windows.Forms,System.Drawing,System.Net.Http,System.Web.Extensions
+. (Join-Path $PSScriptRoot 'helper_test_load.ps1')
 function Assert($ok,[string]$name){if(!$ok){throw $name}}
-. (Join-Path $root 'PriceCore.ps1')
-$workerAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'PriceWorker.ps1'),[ref]$null,[ref]$null)
-$bridge=$workerAst.Find({param($a)$a -is [Management.Automation.Language.FunctionDefinitionAst] -and $a.Name -eq 'P'},$true)
-Assert ($null -ne $bridge) 'price PowerShell bridge missing'
-Invoke-Expression $bridge.Extent.Text
+# The worker's P(...) strings are in the price catalog (PriceApp.cs).
+function P([string]$Source,[object[]]$Values=@()){return [ModeSwitchPrice.Language]::T($Source,$Values)}
 $keys=[ModeSwitchPrice.Language]::Keys
 Assert ($keys.Count -ge 40) 'price strings missing'
 foreach($code in [ModeSwitchPrice.Language]::Codes){
@@ -54,11 +51,8 @@ foreach($code in [ModeSwitchPrice.Language]::Codes){
 Assert ([ModeSwitchPrice.Language]::Normalize('ZH-cn') -eq 'zh-CN') 'locale case normalization'
 Assert ([ModeSwitchPrice.Language]::Normalize('unsupported') -eq 'ko') 'unknown language fallback'
 [ModeSwitchPrice.Language]::Code='ko'
-foreach($f in Get-ChildItem $root -Filter '*.ps1'){$t=$null;$e=$null;$null=[Management.Automation.Language.Parser]::ParseFile($f.FullName,[ref]$t,[ref]$e);Assert ($e.Count -eq 0) ($e|Out-String)}
-foreach($command in $workerAst.FindAll({param($a)$a -is [Management.Automation.Language.CommandAst] -and $a.GetCommandName() -eq 'P'},$true)){
- $key=$command.CommandElements[1].Value;Assert ([ModeSwitchPrice.Language]::Contains($key)) ('missing price worker translation: '+$key)
-}
-foreach($file in 'PriceCatalog.cs','PriceWindow.cs'){
+foreach($m in [regex]::Matches((Price-Source),'(?<![.\w])P\("([^"]+)"')){Assert ([ModeSwitchPrice.Language]::Contains($m.Groups[1].Value)) ('missing price worker translation: '+$m.Groups[1].Value)}
+foreach($file in 'PriceCatalog.cs','PriceWindow.cs','PriceApp.cs'){
  foreach($m in [regex]::Matches([IO.File]::ReadAllText((Join-Path $root $file)),'\bLanguage\.T\("([^"]+)"')){Assert ([ModeSwitchPrice.Language]::Contains($m.Groups[1].Value)) ('missing C# translation: '+$m.Groups[1].Value)}
 }
 'PASS: price five-language coverage, format placeholders, Korean OCR catalog independence, localized display names, quest/hideout needs, cache isolation, overlay font/render bounds, script parsing.'

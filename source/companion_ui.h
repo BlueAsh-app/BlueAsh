@@ -3,7 +3,7 @@
 #include <shlobj.h>
 HANDLE companionProcess=nullptr,companionJob=nullptr;
 bool companionEnabled(){return regString(configPath,L"CompanionEnabled")==L"1";}
-std::wstring companionStateFile(){wchar_t dir[MAX_PATH]={};SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,dir);std::wstring root=std::wstring(dir)+L"\\ModeSwitch";CreateDirectoryW(root.c_str(),nullptr);return root+L"\\raid-state.txt";}
+std::wstring companionStateFile(){wchar_t dir[MAX_PATH]={};SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,dir);std::wstring root=std::wstring(dir)+dataSub();CreateDirectoryW(root.c_str(),nullptr);return root+L"\\raid-state.txt";}
 void publishRaidContext(const raid::Context& c){
  // Keep the start time across duplicate log streams and later role/map updates. Old seven-line readers still work.
  static unsigned serial=0;static std::string phase;static ULONGLONG entered=0;
@@ -25,7 +25,7 @@ bool tarkovProcess(){
  if(Process32FirstW(snapshot,&entry))do{if(gameId(entry.szExeFile)==3){found=true;tarkovPid=entry.th32ProcessID;}}while(!found&&Process32NextW(snapshot,&entry));
  if(!found){tarkovPid=0;}CloseHandle(snapshot);return last=found;
 }
-// The helpers run without a window: what PowerShell prints when it fails goes to %LOCALAPPDATA%\ModeSwitch\<name>-error.log
+// The helpers run without a window: what PowerShell prints when it fails goes to %LOCALAPPDATA%\BlueAsh\<name>-error.log
 // (rewritten at every start) for the diagnostics file; standard output is dropped.
 std::wstring helperLogPath(const wchar_t* name){auto p=companionStateFile();return p.substr(0,p.find_last_of(L"\\/"))+L"\\"+name+L"-error.log";}
 struct HelperIo {
@@ -56,10 +56,10 @@ void openCompanionPage(const wchar_t* page){
 void openCompanion(bool silent=false){
  if(companionProcess&&WaitForSingleObject(companionProcess,0)==WAIT_TIMEOUT)return;
  stopCompanion();
- wchar_t system[MAX_PATH]={};GetSystemDirectoryW(system,MAX_PATH);std::wstring root=bundleRoot();if(root.empty())return;
- auto script=root+L"\\companion\\Companion.ps1";if(GetFileAttributesW(script.c_str())==INVALID_FILE_ATTRIBUTES){problem(i18n::text(L"내장 도우미 파일을 찾지 못했습니다."));return;}
- auto shell=std::wstring(system)+L"\\WindowsPowerShell\\v1.0\\powershell.exe";
- auto args=L"\""+shell+L"\" -NoProfile -STA -ExecutionPolicy Bypass -File \""+script+L"\" -ParentId "+std::to_wstring(GetCurrentProcessId())+(silent?L" -Hidden":L"");
+ std::wstring root=bundleRoot();if(root.empty())return;
+ // The helpers are one .NET Framework program (companion/BlueAshHelper.exe, source/build-helper.ps1), not PowerShell scripts.
+ auto shell=root+L"\\companion\\BlueAshHelper.exe";if(GetFileAttributesW(shell.c_str())==INVALID_FILE_ATTRIBUTES){problem(i18n::text(L"내장 도우미 파일을 찾지 못했습니다."));return;}
+ auto args=L"\""+shell+L"\" --companion -ParentId "+std::to_wstring(GetCurrentProcessId())+(silent?L" -Hidden":L"");
  companionJob=CreateJobObjectW(nullptr,nullptr);JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits={};limits.BasicLimitInformation.LimitFlags=JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
  if(!companionJob||!SetInformationJobObject(companionJob,JobObjectExtendedLimitInformation,&limits,sizeof(limits))){stopCompanion();problem(i18n::text(L"도우미 프로세스 보호 설정 실패"));return;}
  STARTUPINFOW si={};si.cb=sizeof(si);PROCESS_INFORMATION pi={};HelperIo io(L"companion",si);

@@ -13,7 +13,7 @@ namespace ModeSwitchPrice {
  // PaddleOCR PP-OCRv5 text-line recognition (one model per game text language), run with ONNX Runtime through its
  // C API (no managed wrapper or extra .NET assemblies). The runtime and the model are not in BlueAsh.exe: the first
  // time a language needs them they are downloaded from BlueAsh's own server in the background, checked against
- // manifest.json (SHA-256) and kept in %LOCALAPPDATA%\ModeSwitch\ocr. Until then, and whenever anything fails,
+ // manifest.json (SHA-256) and kept in %LOCALAPPDATA%\BlueAsh\ocr. Until then, and whenever anything fails,
  // callers keep using Windows OCR. Sources: relay/public/ocr, built by source/ocr-models.mjs.
  public static class OcrModels {
   public const string BaseUrl="https://modepulse-relay.modepulse.workers.dev/ocr/";

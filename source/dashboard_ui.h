@@ -8,7 +8,8 @@ inline int value(int id){const auto& p=profiles[profileIndex()];return id==62?(i
 constexpr int trackLeft=40,valueWidth=64;
 inline int fromPoint(int id,int x,int width){int span=std::max(1,width-valueWidth-trackLeft);return std::clamp(low(id)+(x-trackLeft)*(high(id)-low(id))/span,low(id),high(id));}
 inline bool commit(int id,int value,int index=-1){
- if(index<0){index=profileIndex();}bool apply=active&&appliedProfileIndex==index;auto before=profiles[index];if(id==62)settings::allGamma(profiles[index],(unsigned)value);else profiles[index].volume=(unsigned)value;
+ // The profile shown right now always applies at once, also before any mode was picked (then it is 일반 모드).
+ if(index<0){index=profileIndex();}bool apply=index==profileIndex();auto before=profiles[index];if(id==62)settings::allGamma(profiles[index],(unsigned)value);else profiles[index].volume=(unsigned)value;
  if(apply&&!changeMode(index!=0,index)){profiles[index]=before;return false;}
  if(!saveString(configPath,L"ProfilesV2",settings::encodeV2(profiles,autoGame))){profiles[index]=before;if(apply&&!changeMode(index!=0,index)){problem(std::wstring(i18n::text(L"설정을 저장하지 못했습니다."))+i18n::text(L" 복원에도 실패했습니다. NVIDIA 앱에서 컬러를 확인하세요."));}else problem(i18n::text(L"설정을 저장하지 못했습니다."));return false;}
  for(int controlId:{1,2,61,62}){InvalidateRect(GetDlgItem(win,controlId),nullptr,FALSE);}refreshStatus();return true;

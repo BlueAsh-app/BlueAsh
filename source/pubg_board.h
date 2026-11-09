@@ -7,7 +7,7 @@
 // that the PUBG window is read once a second (Windows.Graphics.Capture, works behind other windows but not when
 // minimized), the countdown below the screen centre is OCR'd (white text only) and tracked (countdown.h); the alarm
 // comes 2 s after it shows 1, or 2 s after its label disappears at 5 or less. Minimized, nothing can be read (a one-time tip says so).
-// Each match's readings go to %LOCALAPPDATA%\ModeSwitch\pubg-countdown.log for checking. Screen pixels stay local.
+// Each match's readings go to %LOCALAPPDATA%\BlueAsh\pubg-countdown.log for checking. Screen pixels stay local.
 // One frame of the starting-island countdown (real game, 4K screenshots): "게임 시작까지 남은 시간" at 50~57 % of the
 // height, +-12 % around the centre; the number under it at 56~64 %, +-6 %. Only white text counts, and in the digit
 // crop only digit-sized blobs (3.5~7.5 % of the height), so sky and clouds drop out. Windows OCR misses the tall,
@@ -111,7 +111,7 @@ public:
 };
 struct BoardWatch {
     BoardCapture capture;ULONGLONG retryAt=0;bool warned=false,noWindow=false;ULONGLONG seenMatch=0;
-    std::wstring logPath(){wchar_t local[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local)))return L"";return std::wstring(local)+L"\\ModeSwitch\\pubg-countdown.log";}
+    std::wstring logPath(){wchar_t local[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local)))return L"";return std::wstring(local)+dataSub()+L"\\pubg-countdown.log";}
     void poll(){
         if(seenMatch!=pubgMatchAt){seenMatch=pubgMatchAt;warned=false;retryAt=0;capture.stop();}
         ULONGLONG now=GetTickCount64();

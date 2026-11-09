@@ -2,7 +2,7 @@
 // AI 번역기 (모드 번역): a small language model run on this PC's graphics card, so translating costs nothing and no text
 // leaves the PC. llama.cpp's Vulkan build (MIT; NVIDIA, AMD and Intel cards, the processor when there is none) and
 // Qwen3-4B-Instruct-2507 (Apache-2.0, 4-bit, 2.5 GB) are fetched once from their publishers, checked against pinned
-// SHA-256, kept in %LOCALAPPDATA%\ModeSwitch\ai, and run hidden on 127.0.0.1 only while a translation runs (in a job
+// SHA-256, kept in %LOCALAPPDATA%\BlueAsh\ai, and run hidden on 127.0.0.1 only while a translation runs (in a job
 // object, so it ends with BlueAsh; an elevated BlueAsh starts it as the signed-in user, like the updater).
 // Measured here (RTX 5080, Vulkan): load ~15 s, ~300 characters of mod text a second.
 #include <functional>
@@ -14,7 +14,7 @@ const char* llamaSha="80adeed888c397b252ce9677d237c426fd4f7317ee1f16a45ebcca5ce8
 const wchar_t* modelUrl=L"https://huggingface.co/unsloth/Qwen3-4B-Instruct-2507-GGUF/resolve/main/Qwen3-4B-Instruct-2507-Q4_K_M.gguf";
 const char* modelSha="3605803b982cb64aead44f6c1b2ae36e3acdb41d8e46c8a94c6533bc4c67e597";const ULONGLONG modelSize=2497281120ull;
 enum Error {Ok=0,Network=-10,Disk=-11,Start=-12,Mismatch=-13};
-inline std::wstring dir(){wchar_t d[MAX_PATH]={};SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,d);std::wstring r=std::wstring(d)+L"\\ModeSwitch";CreateDirectoryW(r.c_str(),nullptr);r+=L"\\ai";CreateDirectoryW(r.c_str(),nullptr);return r;}
+inline std::wstring dir(){wchar_t d[MAX_PATH]={};SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,d);std::wstring r=std::wstring(d)+dataSub();CreateDirectoryW(r.c_str(),nullptr);r+=L"\\ai";CreateDirectoryW(r.c_str(),nullptr);return r;}
 inline std::wstring modelPath(){return dir()+L"\\Qwen3-4B-Instruct-2507-Q4_K_M.gguf";}
 inline std::wstring serverPath(){return dir()+L"\\llama-b12065\\llama-server.exe";}
 inline ULONGLONG fileSize(const std::wstring& p){WIN32_FILE_ATTRIBUTE_DATA a;if(!GetFileAttributesExW(p.c_str(),GetFileExInfoStandard,&a)){return 0;}return ((ULONGLONG)a.nFileSizeHigh<<32)|a.nFileSizeLow;}
@@ -90,9 +90,9 @@ inline std::wstring chat(const Server& s,const std::wstring& system,const std::w
     DWORD st;std::string r=request(s.port,L"POST",L"/v1/chat/completions",body,st,180000);std::wstring t;if(st!=200||!modtr::fromUtf8(r,t)){return L"";}
     size_t k=t.find(L"\"content\"");if(k==std::wstring::npos){return L"";}size_t q=t.find(L'"',t.find(L':',k)+1);if(q==std::wstring::npos){return L"";}
     size_t e=q+1;while(e<t.size()&&t[e]!=L'"'){if(t[e]==L'\\')e++;e++;}return modtr::jsonUnescape(t.substr(q+1,e-q-1));}
-// The map helper (Companion.ps1, quest and key cards) translates wiki text with the same model and server files, but the
+// The map helper (BlueAshHelper.exe, quest and key cards) translates wiki text with the same model and server files, but the
 // download and its checks live here: it posts WM_APP+207 and follows ai-progress.txt (state=working part=0..1 | done |
-// error=<code>) in %LOCALAPPDATA%\ModeSwitch.
+// error=<code>) in %LOCALAPPDATA%\BlueAsh.
 inline void fetchForHelper(){static std::atomic<bool> busy{false};if(busy.exchange(true)){return;}
     std::thread([]{std::wstring file=dir();file=file.substr(0,file.find_last_of(L'\\'))+L"\\ai-progress.txt";
         auto write=[&](const std::string& t){HANDLE h=CreateFileW(file.c_str(),GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_DELETE,nullptr,CREATE_ALWAYS,0,nullptr);if(h!=INVALID_HANDLE_VALUE){DWORD n;WriteFile(h,t.data(),(DWORD)t.size(),&n,nullptr);CloseHandle(h);}};

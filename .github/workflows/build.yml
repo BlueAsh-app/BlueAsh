@@ -1,4 +1,4 @@
-# Builds BlueAsh.exe from this repository on GitHub's Windows runners: the C# helper DLLs, the exe (helpers and scripts
+# Builds BlueAsh.exe from this repository on GitHub's Windows runners: the C# helper program, the exe (helpers and scripts
 # embedded), the unit tests and the exe's own self-test. The result is uploaded as a workflow artifact. It checks that
 # the public source builds; the setup .exe on each GitHub Release is attached by source/publish-github.ps1 (the same file
 # the update server ships). Code signing (SignPath Foundation) is added to this workflow once the project is approved.
@@ -27,12 +27,10 @@ jobs:
           update: true
           install: mingw-w64-ucrt-x86_64-gcc
 
-      - name: Helper DLLs (C#, .NET Framework)
+      - name: Helper program (C#, .NET Framework)
         shell: powershell
         run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File source/build-price.ps1
-          if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          powershell -NoProfile -ExecutionPolicy Bypass -File source/build-companion.ps1
+          powershell -NoProfile -ExecutionPolicy Bypass -File source/build-helper.ps1
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
       - name: BlueAsh.exe
@@ -45,7 +43,7 @@ jobs:
           cd source
           for t in *_tests.cpp; do g++ -std=c++17 -Wall -Wextra -Werror "$t" -o t.exe -lgdi32 -luser32 -lbcrypt -lwintrust -lcrypt32 -lversion -lwinhttp -lole32 -loleaut32 -lwbemuuid -lpowrprof -lpdh -ld3d11 -ldxgi -lwinmm -luuid -lshell32 -lpsapi && ./t.exe; done
 
-      - name: Self-test (scripts parse, DLLs load)
+      - name: Self-test (scripts parse, helper checks itself)
         shell: powershell
         run: |
           $p = Start-Process -FilePath .\BlueAsh.exe -ArgumentList "--selftest `"$env:RUNNER_TEMP\selftest`"" -Wait -PassThru

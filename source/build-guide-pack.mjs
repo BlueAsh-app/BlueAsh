@@ -1,6 +1,6 @@
 // Translation packs for the quest and key cards: relay/public/quest-guide/tr/<lang>.json, one file per language that the app
 // downloads (a static file: no worker run, no database read) and keeps a day. Made on the developer's PC with the same
-// local translator as 모드 번역 (llama.cpp + Qwen3-4B in %LOCALAPPDATA%\ModeSwitch\ai), so users neither download the
+// local translator as 모드 번역 (llama.cpp + Qwen3-4B in %LOCALAPPDATA%\BlueAsh\ai), so users neither download the
 // model nor load their graphics card for this.
 //   guides  quest id (and "<id>-b" briefings) -> text: the server's translations (reviewed ones first) as they are;
 //           only those the server lacks are translated here, line by line with the whole text as context
@@ -35,7 +35,7 @@ function namesIn(lang, text) { const hits = [], taken = [];
     if (hits.length >= 40) break; }
   return hits.join("; "); }
 // The local translator: llama-server on a port of its own, on the graphics card.
-const ai = path.join(os.homedir(), "AppData/Local/ModeSwitch/ai");
+const ai = (fs.existsSync(path.join(os.homedir(),"AppData/Local/BlueAsh"))?path.join(os.homedir(),"AppData/Local/BlueAsh/ai"):path.join(os.homedir(),"AppData/Local/ModeSwitch/ai")) /* data folder renamed to BlueAsh in 2.28 */;
 const port = 51891, base = `http://127.0.0.1:${port}`;
 async function up() { try { return (await fetch(base + "/health")).ok; } catch { return false; } }
 let server_ = null;

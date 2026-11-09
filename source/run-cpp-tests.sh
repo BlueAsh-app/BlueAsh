@@ -11,7 +11,7 @@ tests="$*"; [ -n "$tests" ] || tests=$(ls *_tests.cpp)
 failed=0
 for t in $tests; do
   exe="$out/${t%.cpp}.exe"; rm -f "$exe"
-  if ! g++ -std=c++17 -Wall -Wextra -Werror "$t" -o "$exe" -lole32 -lwindowsapp -lbcrypt -lwintrust -lcrypt32 -lversion -lwinhttp -lgdi32 -luser32 -loleaut32 -lwbemuuid -lpowrprof -lpdh -ld3d11 -ldxgi -lwinmm -luuid -lshell32 -lpsapi >"$out/build.log" 2>&1; then
+  if ! g++ -std=c++17 -Wall -Wextra -Werror "$t" -o "$exe" -lole32 -lwindowsapp -lbcrypt -lwintrust -lcrypt32 -lversion -lwinhttp -lgdi32 -luser32 -loleaut32 -lwbemuuid -lpowrprof -lpdh -ld3d11 -ldxgi -lwinmm -luuid -lshell32 -lpsapi -lwevtapi >"$out/build.log" 2>&1; then
     echo "FAIL (build) $t"; grep -m5 error "$out/build.log"; failed=1; continue; fi
   if "$exe" >"$out/run.log" 2>&1; then echo "PASS $t"; else echo "FAIL $t"; tail -5 "$out/run.log"; failed=1; fi
 done

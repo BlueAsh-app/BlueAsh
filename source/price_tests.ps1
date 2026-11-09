@@ -1,13 +1,8 @@
 ﻿$ErrorActionPreference='Stop'
 $root=Join-Path $PSScriptRoot '../price'
-Add-Type -Path @((Join-Path $root 'PriceCore.cs'),(Join-Path $root 'PriceWindow.cs'),(Join-Path $root 'PriceCatalog.cs'),(Join-Path $root 'PriceLanguage.cs')) -ReferencedAssemblies System.Windows.Forms,System.Drawing,System.Net.Http,System.Web.Extensions
+. (Join-Path $PSScriptRoot 'helper_test_load.ps1')
 [ModeSwitchPrice.Language]::Code='ko'
-. (Join-Path $root 'PriceCore.ps1')
 function Assert($condition,$message){if(!$condition){throw $message}}
-foreach($f in Get-ChildItem $root -Filter '*.ps1'){
- $t=$null;$errors=$null;$null=[System.Management.Automation.Language.Parser]::ParseFile($f.FullName,[ref]$t,[ref]$errors)
- Assert ($errors.Count -eq 0) ($errors | Out-String)
-}
 Assert ([ModeSwitchPrice.Core]::Mode('1.2.0 | B3FNNW | PvE') -eq 'pve') 'PvE mode'
 Assert ([ModeSwitchPrice.Core]::Mode('1.2.0 | PvP S') -eq 'pvp-season') 'Season mode'
 Assert ([ModeSwitchPrice.Core]::Mode('PvP') -eq '') 'Never substitute regular'

@@ -27,7 +27,7 @@ bool checked(HWND h,int id){HWND c=GetDlgItem(h,id);if(c&&isSwitch(c))return Get
 // dragged or moved with the arrow keys; an empty box (the channels differ) shows no knob.
 namespace valueSlider{
 struct Range{int low,high;bool gamma;};
-inline Range range(int id){switch(id){case 150:case 151:return {0,199,false};case 152:return {50,300,true};case 154:return {0,359,false};default:return {0,100,false};}}
+inline Range range(int id){switch(id){case 150:return {30,150,false};case 151:return {0,199,false}; /* brightness: under 30 the driver ignores it, over 150 the screen washes out white */case 152:return {50,300,true};case 154:return {0,359,false};default:return {0,100,false};}}
 inline bool read(HWND s,int& v){wchar_t b[32]={};GetDlgItemTextW(GetParent(s),GetDlgCtrlID(s)-100,b,32);unsigned u=0;auto r=range(GetDlgCtrlID(s));if(!(r.gamma?settings::parseGamma(b,u):settings::integer(b,u)))return false;v=std::clamp((int)u,r.low,r.high);return true;}
 inline void write(HWND s,int v){auto r=range(GetDlgCtrlID(s));v=std::clamp(v,r.low,r.high);SetDlgItemTextW(GetParent(s),GetDlgCtrlID(s)-100,(r.gamma?settings::gammaText((unsigned)v):std::to_wstring(v)).c_str());}
 constexpr int pad=9;
@@ -82,7 +82,7 @@ bool collectColorEditor(HWND h){
         SetDlgItemTextW(h,59,i18n::text(L"선명도·볼륨은 0~100, 색조는 0~359 사이로 넣어 주세요."));return false;
     }
     for(int c=0;c<3;c++)if(!editChannel||c==editChannel-1){
-        if(colorDirty[0])p.brightness[c]=values[0];
+        if(colorDirty[0])p.brightness[c]=std::clamp(values[0],30u,150u);
         if(colorDirty[1])p.contrast[c]=values[1];
         if(colorDirty[2])settings::setGamma(p,c,values[2]);
     }
@@ -100,8 +100,9 @@ void storeColorEditor(HWND h){
     gameProfiles=keep;gameswitch::setDirs();
     profiles=draft;autoGame=automatic;fillColorEditor(h);
     for(int id:{1,2,61,62}){InvalidateRect(GetDlgItem(win,id),nullptr,TRUE);}
-    bool ok=!active||changeMode(fps,appliedProfileIndex);
-    SetDlgItemTextW(h,59,ok?(active?i18n::text(L"저장했습니다. 지금 모드에도 바로 적용했습니다."):i18n::text(L"저장했습니다. 모드를 바꿀 때 적용됩니다.")):i18n::text(L"저장은 했지만 적용하지 못했습니다. 컨트롤 센터의 오류 문구를 확인하세요."));
+    // Applied right away, also before any mode was applied this run (the normal mode is shown selected from the start).
+    bool ok=changeMode(fps,active?appliedProfileIndex:-1);
+    SetDlgItemTextW(h,59,ok?i18n::text(L"저장했습니다. 지금 모드에도 바로 적용했습니다."):i18n::text(L"저장은 했지만 적용하지 못했습니다. 컨트롤 센터의 오류 문구를 확인하세요."));
 }
 // 모드 설정 has two tabs, each its own page: switching asks the main window to open the other one (90 -> 32, 91 -> 34).
 // The tabs sit above the page's panels, on the window backdrop (2.21).

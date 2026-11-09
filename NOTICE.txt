@@ -18,7 +18,7 @@ https://github.com/pbatard/nvBrightness/blob/master/src/nvDisplay.cpp
 https://github.com/pbatard/nvBrightness/blob/master/src/nvapi.h
 
 This utility is not affiliated with or endorsed by NVIDIA, Microsoft or Brave.
-Source code (GPL-3.0-or-later) for BlueAsh 2.27.1: https://modepulse-relay.modepulse.workers.dev/source/BlueAsh-2.27.1-source.zip
+Source code (GPL-3.0-or-later) for BlueAsh 2.28.0: https://modepulse-relay.modepulse.workers.dev/source/BlueAsh-2.28.0-source.zip
 Public repository: https://github.com/BlueAsh-app/BlueAsh; build steps in source/BUILDING.txt.
 No warranty; see LICENSE.txt.
 

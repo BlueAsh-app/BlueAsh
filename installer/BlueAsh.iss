@@ -1,7 +1,7 @@
 ﻿; BlueAsh setup (Inno Setup 6). Build with: powershell -ExecutionPolicy Bypass -File source/build-installer.ps1
 ; Per-user install (no administrator prompt) into %LOCALAPPDATA%\Programs\BlueAsh: the in-app updater replaces
 ; BlueAsh.exe there, so the folder must stay writable for the user. Settings (HKCU\Software\ModeSwitch,
-; %LOCALAPPDATA%\ModeSwitch) are kept on uninstall unless the user says to remove them.
+; %LOCALAPPDATA%\BlueAsh, ModeSwitch before 2.28) are kept on uninstall unless the user says to remove them.
 #ifndef AppVersion
   #error AppVersion is passed by build-installer.ps1
 #endif
@@ -18,7 +18,11 @@
 #endif
 ; The same for BlueAsh's data folder and its administrator task (the defaults are the real ones).
 #ifndef DataDir
-  #define DataDir "{localappdata}\ModeSwitch"
+  #define DataDir "{localappdata}\BlueAsh"
+#endif
+; Up to 2.27 the data folder was ModeSwitch (BlueAsh renames it at start; an install never started since keeps the old one).
+#ifndef OldDataDir
+  #define OldDataDir "{localappdata}\ModeSwitch"
 #endif
 #ifndef TaskName
   #define TaskName "\BlueAsh\Elevated"
@@ -181,9 +185,27 @@ begin
     HasWebView2(HKLM, 'SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}') or
     HasWebView2(HKCU, 'Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}'));
 end;
-// BlueAsh language code for the setup language (Inno names cannot contain "-").
+// The language picked on the download site rides in the file name: BlueAsh-Setup-2.28.0-de.exe (the site's /download
+// function names it; a browser may add " (1)"). Tags have no "-" so the last "-" part is the tag. Empty when absent.
+function SiteLanguage(): String;
+var n: String; i: Integer;
+begin
+  Result := '';
+  n := Lowercase(ExtractFileName(ExpandConstant('{srcexe}')));
+  if Copy(n, Length(n) - 3, 4) = '.exe' then n := Copy(n, 1, Length(n) - 4);
+  i := Pos(' (', n); if i > 0 then n := Copy(n, 1, i - 1);
+  n := Trim(n);
+  i := Length(n); while (i > 0) and (n[i] <> '-') do i := i - 1;
+  if i = 0 then exit;
+  n := Copy(n, i + 1, Length(n));
+  if n = 'zhcn' then Result := 'zh-CN' else if n = 'zhtw' then Result := 'zh-TW' else if n = 'ptbr' then Result := 'pt-BR'
+  else if (n = 'ko') or (n = 'en') or (n = 'ja') or (n = 'ru') or (n = 'es') or (n = 'de') or (n = 'fr') or (n = 'it') or (n = 'pl') or (n = 'tr') then Result := n;
+end;
+// BlueAsh language code: the download site's choice first, else the setup language (Inno names cannot contain "-").
 function UiLanguage(Param: String): String;
 begin
+  Result := SiteLanguage();
+  if Result <> '' then exit;
   if ActiveLanguage = 'ptbr' then Result := 'pt-BR' else Result := ActiveLanguage;
 end;
 
@@ -242,7 +264,7 @@ begin
     Exec(ExpandConstant('{sys}\attrib.exe'), '+h "' + ExpandConstant('{app}') + '\unins000.*"', '', SW_HIDE, ewWaitUntilTerminated, code);
 end;
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
-var exe, v: String;
+var exe, v, d: String; i: Integer;
     code: Integer;
 begin
   // Before BlueAsh.exe is removed: put every game BlueAsh applied DLSS 5 to back to its own files (from the backups).
@@ -260,12 +282,16 @@ begin
     if RegQueryStringValue(HKCU, 'Software\ModeSwitch', 'ElevatedTaskPath', v) and (Lowercase(v) = exe) then
       if RemoveElevatedTask() then RegDeleteValue(HKCU, 'Software\ModeSwitch', 'ElevatedTaskPath');
     // Program copies, not user data: the files BlueAsh unpacks from its exe and the backup of the exe an update replaced.
-    DelTree(ExpandConstant('{#DataDir}\runtime'), True, True, True);
-    DelTree(ExpandConstant('{#DataDir}\update-backups'), True, True, True);
-    DelTree(ExpandConstant('{#DataDir}\ai'), True, True, True); // the downloaded AI translator for 모드 번역 (2.5 GB)
+    for i := 0 to 1 do begin
+      if i = 0 then d := ExpandConstant('{#DataDir}') else d := ExpandConstant('{#OldDataDir}');
+      DelTree(d + '\runtime', True, True, True);
+      DelTree(d + '\update-backups', True, True, True);
+      DelTree(d + '\ai', True, True, True); // the downloaded AI translator for 모드 번역 (2.5 GB)
+    end;
     if (not UninstallSilent) and (MsgBox(CustomMessage('RemoveSettings'), mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES) then begin
       RegDeleteKeyIncludingSubkeys(HKCU, 'Software\ModeSwitch');
       DelTree(ExpandConstant('{#DataDir}'), True, True, True);
+      DelTree(ExpandConstant('{#OldDataDir}'), True, True, True);
     end;
   end;
 end;

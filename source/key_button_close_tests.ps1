@@ -11,15 +11,13 @@ $work=Join-Path $PSScriptRoot ('.bundle/key-button-close-test-'+[Guid]::NewGuid(
 [void][IO.Directory]::CreateDirectory($work)
 $probePath=Join-Path $work 'KeyButtonProbe.cs'
 [IO.File]::WriteAllText($probePath,$probe)
-Add-Type -Path @((Join-Path $root 'PriceCore.cs'),(Join-Path $root 'PriceWindow.cs'),(Join-Path $root 'PriceCatalog.cs'),(Join-Path $root 'PriceLanguage.cs'),$probePath) -ReferencedAssemblies System.Windows.Forms,System.Drawing,System.Net.Http,System.Web.Extensions
+Add-Type -Path @((Join-Path $root 'PriceCore.cs'),(Join-Path $root 'PriceWindow.cs'),(Join-Path $root 'PriceCatalog.cs'),(Join-Path $root 'PriceLanguage.cs'),(Join-Path $root '../companion/UiFont.cs'),$probePath) -ReferencedAssemblies System.Windows.Forms,System.Drawing,System.Net.Http,System.Web.Extensions
 [ModeSwitchPrice.Language]::Code='ko'
 function Assert($ok,$why){if(!$ok){throw $why}}
-# Load the worker's real close path without starting its capture loop.
-$tokens=$null;$errors=$null
-$ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'PriceWorker.ps1'),[ref]$tokens,[ref]$errors)
-Assert (!$errors.Count) 'Worker syntax'
-$fn=$ast.Find({param($n)$n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Hide-Slot'},$true)
-Invoke-Expression $fn.Extent.Text
+# The worker's close path (PriceApp.HideSlot): the price tag (with its linked quest/hideout tags) and the key button hide together.
+$src=[IO.File]::ReadAllText((Join-Path $root 'PriceApp.cs'))
+Assert ($src.Contains('void HideSlot(Slot s){s.Price.Hide();s.Key.Hide();s.Shown=null;s.Covered=false;')) 'Worker hides price and key button together'
+function Hide-Slot($s){$s.price.Hide();$s.key.Hide();$s.shown=$null;$s.covered=$false}
 $script:zc=0
 $keys=Join-Path $work 'my-keys.json'
 $price=New-Object ModeSwitchPrice.PriceTag;$quest=New-Object ModeSwitchPrice.PriceTag;$hideout=New-Object ModeSwitchPrice.PriceTag;$key=New-Object KeyButtonProbe

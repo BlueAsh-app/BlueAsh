@@ -2,7 +2,7 @@
 // Two tabs shown: PC 진단 (perf_hw.h) and FPS 측정·진단 (perf_trace.h + perf_core.h); upgrade advice lives in 윈도우 최적화
 // (pc_check.h). Work that takes time (WMI, the 20 s measurement, the 2 s process sample) runs on worker threads and
 // posts its result (WM_APP+170..175); a page closed meanwhile drops it. Records stay on this PC: perf-history.tsv,
-// boost.txt (the restore journal) and per game target.txt under %LOCALAPPDATA%\ModeSwitch\dlss.
+// boost.txt (the restore journal) and per game target.txt under %LOCALAPPDATA%\BlueAsh\dlss.
 // Button ids 380-384 tabs, 385 measure, 386 restart as administrator, 387-391 target chips, 392-394 direction,
 // 395 apply power plan, 396 restore, 397/398 open Windows settings, 399 refresh background list, 400-403 close a
 // program, 404 start comparison, 405 keep.

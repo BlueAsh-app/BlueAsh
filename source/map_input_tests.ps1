@@ -1,29 +1,19 @@
 ﻿$ErrorActionPreference='Stop';function Assert($ok,$why){if(!$ok){throw $why}}
-$repo=Split-Path $PSScriptRoot -Parent
-Assert (Test-Path ($repo+'/companion/MapInput.ps1')) 'Map opening needs a cancellable search-screen check'
-. ($repo+'/companion/ExitCapture.ps1');. ($repo+'/companion/MapInput.ps1')
-Add-Type -TypeDefinition @'
-using System;using System.Threading.Tasks;
-public class MapTestResource:IDisposable{public int Closed;public void Dispose(){Closed++;}}
-public static class MapTestTask{public static TaskCompletionSource<object> Pending(){return new TaskCompletionSource<object>();}public static Task<object> Done(bool blocked){return Task.FromResult<object>(blocked);}}
-'@
-$script:mapsOn=$true;$script:opened=0;$script:closed=0
-$map=New-Object PSObject -Property @{Visible=$false};$map|Add-Member ScriptMethod ShowOver {$script:opened++};$map|Add-Member ScriptMethod HideMap {$script:closed++}
-function Load-Map{};function Status($s){};function Get-MapReadBlocked($job,$result){return [bool]$result}
-function Job($task){@{task=$task;stage='recognize';game=[IntPtr]12;until=[DateTime]::UtcNow.AddSeconds(2);discard=$false;image=(New-Object MapTestResource);bitmap=(New-Object MapTestResource);stream=(New-Object MapTestResource)}}
-$pending=[MapTestTask]::Pending();$script:mapRead=Job $pending.Task;$watch=[Diagnostics.Stopwatch]::StartNew()
-1..1000|ForEach-Object {Poll-MapRead ([IntPtr]12)}
-Assert ($watch.ElapsedMilliseconds -lt 1000 -and $script:mapRead -and !$script:opened) 'Pending OCR never blocks the helper or opens the map early'
-$buffers=$script:mapRead;$pending.SetResult($true);Poll-MapRead ([IntPtr]12)
-Assert (!$script:mapRead -and !$script:opened -and $buffers.image.Closed -eq 1 -and $buffers.bitmap.Closed -eq 1) 'Flea/item search blocks only this map request and releases capture buffers'
-$script:mapRead=Job ([MapTestTask]::Done($false));Poll-MapRead ([IntPtr]12)
-Assert ($script:opened -eq 1) 'Ordinary inventory/trader/quest screens still open the map'
-$script:mapRead=Job ([MapTestTask]::Done($false));Poll-MapRead ([IntPtr]13)
-Assert ($script:opened -eq 1) 'Switching away from the captured game discards the delayed request'
-$script:mapsOn=$false;$script:mapRead=Job ([MapTestTask]::Done($false));Poll-MapRead ([IntPtr]12)
-Assert ($script:opened -eq 1) 'Disabled maps cannot open from a pending result'
-$script:mapsOn=$true;$script:mapRead=Job ([MapTestTask]::Done($false));$script:mapRead.until=[DateTime]::UtcNow.AddSeconds(-1);Poll-MapRead ([IntPtr]12)
-Assert ($script:opened -eq 1 -and !$script:mapRead) 'An expired result cannot open a stale map'
-$map.Visible=$true;Request-MapOpen ([IntPtr]12)
-Assert ($script:closed -eq 1) 'Closing a visible map never waits for screen recognition'
-Write-Output 'PASS: nonblocking pending OCR, search-only block, normal menu allowance, foreground/disabled/timeout cancellation, immediate map close'
+. (Join-Path $PSScriptRoot 'helper_test_load.ps1')
+# The map key's search-screen check (flea market / item search take the key): RequestMapOpen / PollMapRead in the helper.
+$src=Helper-Source
+$poll=[regex]::Match($src,'(?s)void PollMapRead\(IntPtr foreground\)\{.*?\n  \}').Value;$open=[regex]::Match($src,'(?s)void RequestMapOpen\(IntPtr game\)\{.*?\n  \}').Value
+Assert ($poll -and $open) 'Map opening has a cancellable search-screen check'
+Assert ($open.Contains('if(map.Visible){map.HideMap();return;}')) 'Closing a visible map never waits for screen recognition'
+Assert ($open.Contains('job.Task=Task.Run(()=>WinOcr.Read(e,bytes))')) 'The screen is read on a pool thread: pending OCR never blocks the helper'
+Assert ($open.Contains('if(raidPhase=="started"&&!ClickTrigger.CursorShown()){LoadMap();map.ShowOver(game);return;}')) 'In a raid without a cursor the map opens at once'
+Assert ($poll.Contains('if(!mapsOn||foreground!=job.Game||map.Visible||DateTime.UtcNow>job.Until)job.Discard=true;')) 'Switching away, disabled maps, an open map or an expired result discard the request'
+Assert ($poll.Contains('if(!job.Task.IsCompleted)return;')) 'A pending result is only polled'
+Assert ($poll.Contains('bool blocked=MapSearch.Blocked(') -and $poll.Contains('if(!blocked&&mapsOn&&!map.Visible&&foreground==job.Game&&foreground!=IntPtr.Zero){LoadMap();map.ShowOver(foreground);}')) 'Flea/item search blocks only this request; ordinary screens open the map'
+Assert ($poll.Contains('finally{DisposeMapRead(job);}')) 'The captured screen is released whatever happens'
+# Real non-blocking OCR task on a small image.
+$engine=[ModePulse.WinOcr]::Engine('en');if(!$engine){$engine=[ModePulse.WinOcr]::Engine('ko')}
+$im=New-Object Drawing.Bitmap(320,80);$g=[Drawing.Graphics]::FromImage($im);$g.Clear([Drawing.Color]::White);$g.DrawString('ITEM SEARCH',(New-Object Drawing.Font('Arial',20)),[Drawing.Brushes]::Black,10,20);$ms=New-Object IO.MemoryStream;$im.Save($ms,[Drawing.Imaging.ImageFormat]::Png);$g.Dispose();$im.Dispose()
+$w=[Diagnostics.Stopwatch]::StartNew();$t=[ModePulse.WinOcr]::Read($engine,$ms.ToArray());$back=$w.ElapsedMilliseconds
+Assert ($back -lt 100) ('Starting the read returns at once: '+$back+' ms');$null=$t.Wait(10000);Assert ($t.Result.Text -match 'SEARCH') ('Read finishes on its own: '+$t.Result.Text)
+Write-Output 'PASS: nonblocking OCR, search-only block, normal menu allowance, foreground/disabled/timeout cancellation, immediate map close'

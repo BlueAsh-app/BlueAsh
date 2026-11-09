@@ -15,7 +15,7 @@ int pick=0,gameScroll=0,modScroll=0,hoverGame=-1,hoverMod=-1;bool barHover=false
 // While translating: 0 gathering, 1 fetching the AI translator (MB), 2 starting it, 3 translating (lines).
 std::atomic<int> phase{0},dlDone{0},dlTotal{0},doneN{0},totalN{0};std::atomic<bool> needDl{false};std::wstring note;COLORREF noteColor=0;
 const RECT refreshRect={782,20,816,56},strip={36,60,816,144},list={36,194,816,544};const int cardW=246,cardGap=21,rowH=46;
-std::wstring store(){wchar_t d[MAX_PATH]={};SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,d);std::wstring r=std::wstring(d)+L"\\ModeSwitch";CreateDirectoryW(r.c_str(),nullptr);r+=L"\\mod-translate";CreateDirectoryW(r.c_str(),nullptr);return r;}
+std::wstring store(){wchar_t d[MAX_PATH]={};SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,d);std::wstring r=std::wstring(d)+dataSub();CreateDirectoryW(r.c_str(),nullptr);r+=L"\\mod-translate";CreateDirectoryW(r.c_str(),nullptr);return r;}
 int target(){return modtr::uiIndex(i18n::languageCode());}
 void count(Row& r,const std::vector<modtr::Record>& recs){r.ready=r.lines=r.done=r.native=0;std::wstring lang=modtr::langs()[std::max(0,target())].ui;
     for(auto& m:r.mods){m.done=modtr::translatedFiles(m,recs,lang);if(m.strings){r.ready++;r.lines+=m.strings;}if(m.done)r.done++;if(m.native)r.native++;}}
@@ -181,7 +181,7 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         if(busy){double k=progress();shownK+=(k-shownK)*.18;if(std::abs(k-shownK)<.002)shownK=k;InvalidateRect(GetDlgItem(h,261),nullptr,FALSE);}if(scanning)InvalidateRect(h,nullptr,FALSE);}return 0;
     case WM_ERASEBKGND:return 1; // WM_PAINT draws the whole page off-screen
     case WM_DRAWITEM:{auto* ds=(DRAWITEMSTRUCT*)lp;if(ds->CtlID==261&&busy)drawProgress(ds);else drawButton(ds);return TRUE;}
-    case WM_DESTROY:page=nullptr;return 0;
+    case WM_DESTROY:page=nullptr;scanning=false;return 0; // a scan cut short by leaving: the next page scans again
     case WM_CLOSE:DestroyWindow(h);return 0;
     }return DefWindowProcW(h,msg,wp,lp);
 }

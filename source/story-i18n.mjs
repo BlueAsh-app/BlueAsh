@@ -1,7 +1,7 @@
 // Merges hand-made story translations into companion/story.<lang>.tsv and the story UI rows of companion/Localization.tsv.
 //   node source/story-i18n.mjs <lang> <file>
 // <file>: one line per English source, in this order: every story line of companion/story.ko.tsv, then the story UI
-// strings (STORY_UI below, Korean keys of Localization.tsv), then the FEATURES.txt story line. Checked: line count,
+// strings (STORY_UI below, Korean keys of Localization.tsv). Checked: line count,
 // numbers and {n} placeholders equal to the English, so a shifted line is caught.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -19,14 +19,13 @@ const STORY_UI = ['지도에서 위치 보기', '다음 목표', '진행 중', '
   '되돌릴 수 없습니다 (게임 데이터상 함께 완료 불가).', '보상', '미확인', '우호도·엔딩 영향', '난이도 요소 비교 (어느 쪽이 쉽다고 단정하지 않습니다)', '선택한 쪽', '엔딩', '목표가 확인된 길', '목표 데이터 없음', '출처 메모', '출처', '확인 날짜',
   '위키에서 챕터 보기', '진행도는 이 PC에만 저장되며 모드별로 따로 기록됩니다.', "보상·우호도·엔딩 영향은 확인된 데이터가 없으면 '미확인'으로 표시합니다.", 'PvP·PvE 공통 데이터로 공개돼 있습니다. 모드별 차이는 확인되지 않았습니다.', '챕터 보상', '시작 전', '잠김',
   '이 지도에서 이 목표의 위치를 찾지 못했습니다.', '일반 퀘스트', '스토리 퀘스트', '완료 숨기기', '미완료 챕터만', '분기 관련만', '챕터', '스포일러 보호', '필터'];
-const FEATURE = '  · 스토리 챕터 도우미(10개 챕터): 지도에 챕터별 색·기호 마커, 상세 카드(공략·진행도·분기·보상), 진행은 직접 체크(모드별 저장). 좌표가 확인된 목표만 표시하고, 위치·보상·분기 데이터가 없으면 미확인으로 표시. 실게임 확인 필요';
 
 const read = (f) => fs.readFileSync(f, 'utf8').replace(/^﻿/, '');
 const english = read(path.join(root, 'companion', 'story.ko.tsv')).split(/\r?\n/).filter((l) => l && !l.startsWith('#')).map((l) => l.split('\t')[0]);
 const locPath = path.join(root, 'companion', 'Localization.tsv');
 let loc = read(locPath); const nl = loc.includes('\r\n') ? '\r\n' : '\n';
 const rows = loc.split(/\r?\n/); const byKey = new Map(rows.map((r, i) => [r.split('\t')[0], i]));
-const keys = [...STORY_UI, FEATURE];
+const keys = [...STORY_UI];
 const sources = [...english, ...keys.map((k) => rows[byKey.get(k)].split('\t')[1])];
 const lines = read(file).split(/\r?\n/).filter((l) => l.trim().length);
 if (lines.length !== sources.length) throw new Error(`${lang}: ${lines.length} lines, expected ${sources.length}`);
@@ -35,6 +34,6 @@ const bad = [];
 lines.forEach((t, i) => { if (marks(t) !== marks(sources[i])) bad.push(`${i + 1}: ${sources[i]}  =>  ${t}`); });
 if (bad.length) throw new Error(`${lang}: numbers differ\n` + bad.join('\n'));
 fs.writeFileSync(path.join(root, 'companion', `story.${lang}.tsv`), '﻿# English story text (tarkov-data-overlay) <TAB> ' + lang + ', translated for BlueAsh\n' + english.map((e, i) => e + '\t' + lines[i]).join('\n') + '\n');
-keys.forEach((k, j) => { const r = rows[byKey.get(k)].split('\t'); const v = lines[english.length + j]; r[col] = k === FEATURE && !v.startsWith('  · ') ? '  · ' + v.trim() : v; rows[byKey.get(k)] = r.join('\t'); });
+keys.forEach((k, j) => { const r = rows[byKey.get(k)].split('\t'); const v = lines[english.length + j]; r[col] = v; rows[byKey.get(k)] = r.join('\t'); });
 fs.writeFileSync(locPath, String.fromCharCode(0xfeff) + rows.join(nl));
 console.log(`${lang}: ${english.length} story lines, ${keys.length} UI rows`);

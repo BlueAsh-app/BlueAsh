@@ -4,7 +4,7 @@ $ErrorActionPreference='Stop';function Assert($ok,$name){if(!$ok){throw $name}}
 $work=Join-Path ([IO.Path]::GetTempPath()) ([Guid]::NewGuid().ToString('N'));[void][IO.Directory]::CreateDirectory($work)
 try{
  $dll=Join-Path $work 'CompanionUI.dll'
- Add-Type -Path @((Join-Path $PSScriptRoot '../companion/CompanionUI.cs'),(Join-Path $PSScriptRoot '../companion/MapSearch.cs')) -ReferencedAssemblies System.Windows.Forms,System.Drawing,System.Core,System.Net.Http,System.Web.Extensions,(Join-Path $PSScriptRoot '../companion/Microsoft.Web.WebView2.Core.dll'),(Join-Path $PSScriptRoot '../companion/Microsoft.Web.WebView2.WinForms.dll') -OutputAssembly $dll -OutputType Library
+ Add-Type -Path @((Join-Path $PSScriptRoot '../companion/CompanionUI.cs'),(Join-Path $PSScriptRoot '../companion/MapSearch.cs'),(Join-Path $PSScriptRoot '../companion/UiFont.cs')) -ReferencedAssemblies System.Windows.Forms,System.Drawing,System.Core,System.Net.Http,System.Web.Extensions,(Join-Path $PSScriptRoot '../companion/Microsoft.Web.WebView2.Core.dll'),(Join-Path $PSScriptRoot '../companion/Microsoft.Web.WebView2.WinForms.dll') -OutputAssembly $dll -OutputType Library
  Add-Type -Path $dll
  $logs=Join-Path $work 'Logs'
  function Unix($local){[long]([DateTime]::Parse($local).ToUniversalTime()-[DateTime]'1970-01-01').TotalSeconds}

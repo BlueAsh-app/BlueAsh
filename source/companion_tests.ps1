@@ -1,7 +1,6 @@
 ﻿$ErrorActionPreference='Stop'
-. (Join-Path $PSScriptRoot '../companion/CompanionCore.ps1')
+. (Join-Path $PSScriptRoot 'helper_test_load.ps1')
 function Assert($ok,$name){if(!$ok){throw $name}}
-foreach($f in Get-ChildItem (Join-Path $PSScriptRoot '../companion') -Filter '*.ps1'){$t=$null;$e=$null;$null=[Management.Automation.Language.Parser]::ParseFile($f.FullName,[ref]$t,[ref]$e);Assert ($e.Count -eq 0) ($e|Out-String)}
 Assert (Valid-Webhook 'https://discord.com/api/webhooks/123/abc_DEF-123') 'valid webhook'
 Assert (!(Valid-Webhook 'https://discord.com.evil.test/api/webhooks/123/abc')) 'host confusion'
 Assert (!(Valid-Webhook 'http://discord.com/api/webhooks/123/abc')) 'HTTPS required'
@@ -27,4 +26,4 @@ $hits=@(Match-Exits @('탈출지점 03 7+1이1','탈출지점02 z바101로~') @(
 Assert ($hits.Count -eq 1 -and $hits[0] -eq 'ZB-1011') ('look-alike digits: '+($hits -join ', '))
 $hits=@(Match-Exits @('탈출지점04 Old Gas Station','탈출지점01 Railroad') @([pscustomobject]@{Name='ZB-1011'},[pscustomobject]@{Name='ZB-1013'}))
 Assert ($hits.Count -eq 0) ('words are not digits: '+($hits -join ', '))
-'PASS: script parsing, webhook restriction, notice state classification, extraction-name matching (OCR-tolerant)'
+'PASS: webhook restriction, notice state classification, extraction-name matching (OCR-tolerant)'

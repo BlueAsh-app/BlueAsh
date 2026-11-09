@@ -6,7 +6,8 @@ $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Net.Http,System.IO.Compression.FileSystem
 Add-Type -TypeDefinition 'using System;using System.Runtime.InteropServices;public static class ModeSwitchUpdateNative{[DllImport("user32.dll")]public static extern bool PostMessage(IntPtr h,uint m,IntPtr w,IntPtr l);[DllImport("user32.dll",CharSet=CharSet.Unicode)]public static extern IntPtr FindWindow(string c,string t);[DllImport("user32.dll")]public static extern uint GetWindowThreadProcessId(IntPtr h,out uint pid);}'
 . (Join-Path $PSScriptRoot 'UpdateCore.ps1')
-$store=Join-Path $env:LOCALAPPDATA 'ModeSwitch';[void][IO.Directory]::CreateDirectory($store)
+# BlueAsh's data folder: BlueAsh (ModeSwitch up to 2.27, renamed by the app at start; same rule as source/data_dir.h)
+$store=Join-Path $env:LOCALAPPDATA 'BlueAsh';$oldStore=Join-Path $env:LOCALAPPDATA 'ModeSwitch';if(!(Test-Path -LiteralPath $store) -and (Test-Path -LiteralPath $oldStore)){$store=$oldStore};[void][IO.Directory]::CreateDirectory($store)
 $progressFile=Join-Path $store 'update-progress.txt'
 $guard=New-Object Threading.Mutex($false,'Local\ModeSwitch-Updater')
 $locked=$false;$temp=$null;$http=$null;$closed=$false;$newVersion=''
@@ -99,7 +100,7 @@ try {
  $parent=Get-Process -Id $ParentId -ErrorAction SilentlyContinue
  if($parent -and !$parent.WaitForExit(20000)){throw (U 'BlueAsh가 닫히지 않아 업데이트를 멈췄습니다. 화면 오류 문구를 확인하세요.')}
  $closed=$true
- $backup=Join-Path $env:LOCALAPPDATA ('ModeSwitch\update-backups\'+[DateTime]::Now.ToString('yyyyMMdd-HHmmss'))
+ $backup=Join-Path $store ('update-backups\'+[DateTime]::Now.ToString('yyyyMMdd-HHmmss'))
  # The BlueAsh window must belong to the exe just installed (not, say, a copy run from elsewhere).
  function Test-NewWindow{$h=[ModeSwitchUpdateNative]::FindWindow('ModeSwitch',[NullString]::Value);if($h -eq [IntPtr]::Zero){return $false};$id=[uint32]0;[void][ModeSwitchUpdateNative]::GetWindowThreadProcessId($h,[ref]$id)
   try{return (Get-Process -Id $id -ErrorAction Stop).Path -ieq (Join-Path $Install 'BlueAsh.exe')}catch{return $false}}

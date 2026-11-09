@@ -221,8 +221,10 @@ inline void skeleton(HDC dc,RECT r,int diameter,int left,int right,COLORREF base
  g.FillRectangle(&lb,cx-band,(float)r.top,2*band,(float)(r.bottom-r.top));}
 // Colour between a and b (t 0..1).
 inline COLORREF mixColor(COLORREF a,COLORREF b,double t){auto m=[t](int x,int y){return (int)std::lround(x+(y-x)*t);};return RGB(m(GetRValue(a),GetRValue(b)),m(GetGValue(a),GetGValue(b)),m(GetBValue(a),GetBValue(b)));}
-inline bool drawLogo(HDC dc,RECT r){
+// red: the same mark in red (Stability Guard's warning), red and blue channels swapped and green toned down.
+inline bool drawLogo(HDC dc,RECT r,bool red=false){
  if(!logo){return false;}Gdiplus::Graphics g(dc);g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);g.SetCompositingQuality(Gdiplus::CompositingQualityHighQuality);
- Gdiplus::ImageAttributes attributes;attributes.SetWrapMode(Gdiplus::WrapModeTileFlipXY);return g.DrawImage(logo,Gdiplus::Rect(r.left,r.top,r.right-r.left,r.bottom-r.top),0,0,logo->GetWidth(),logo->GetHeight(),Gdiplus::UnitPixel,&attributes)==Gdiplus::Ok;
+ Gdiplus::ImageAttributes attributes;attributes.SetWrapMode(Gdiplus::WrapModeTileFlipXY);
+ if(red){Gdiplus::ColorMatrix m={{{0,0,1,0,0},{0,.62f,0,0,0},{1,0,0,0,0},{0,0,0,1,0},{0,0,0,0,1}}};attributes.SetColorMatrix(&m);}return g.DrawImage(logo,Gdiplus::Rect(r.left,r.top,r.right-r.left,r.bottom-r.top),0,0,logo->GetWidth(),logo->GetHeight(),Gdiplus::UnitPixel,&attributes)==Gdiplus::Ok;
 }
 }

@@ -9,6 +9,11 @@ using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
 namespace ModePulse {
+ // BlueAsh's data folder: %LOCALAPPDATA%\BlueAsh (ModeSwitch up to 2.27). Same rule as source/data_dir.h: BlueAsh if it exists,
+ // else ModeSwitch if it exists, else BlueAsh. The main app renames the old folder at start, before it starts this helper.
+ public static class DataDir {
+  public static string Folder{get{var l=Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);var n=System.IO.Path.Combine(l,"BlueAsh");var o=System.IO.Path.Combine(l,"ModeSwitch");return System.IO.Directory.Exists(n)||!System.IO.Directory.Exists(o)?n:o;}}
+ }
  public static class I18n {
   // Codes first: static fields initialise in order and ReadLanguage needs it.
   public static readonly string[] Codes={"ko","en","zh-CN","ja","ru","es","pt-BR","de","fr","it","pl","tr","zh-TW"};
@@ -17,7 +22,8 @@ namespace ModePulse {
   public static string ApiLocale{get{return Language=="zh-CN"||Language=="zh-TW"?"zh":Language=="pt-BR"?"pt":Language;}}
   public static string FontName{get{return Language=="ko"?"Malgun Gothic":Language=="ja"?"Yu Gothic UI":Language=="zh-CN"?"Microsoft YaHei UI":Language=="zh-TW"?"Microsoft JhengHei UI":"Segoe UI";}}
   static readonly Dictionary<string,string> words=Load();
-  static string ReadLanguage(){var value=Microsoft.Win32.Registry.GetValue("HKEY_CURRENT_USER\\Software\\ModeSwitch","Language","ko") as string;return value!=null&&Array.IndexOf(Codes,value)>0?value:"ko";}
+  // BLUEASH_TEST_LANGUAGE: the language for one test process (map_page_layout_tests checks the pages in all thirteen).
+  static string ReadLanguage(){var value=Environment.GetEnvironmentVariable("BLUEASH_TEST_LANGUAGE")??Microsoft.Win32.Registry.GetValue("HKEY_CURRENT_USER\\Software\\ModeSwitch","Language","ko") as string;return value!=null&&Array.IndexOf(Codes,value)>0?value:"ko";}
   static string Decode(string s){return s.Replace("\\r\\n","\r\n").Replace("\\n","\n").Replace("\\u0020"," ");}
   static Dictionary<string,string> Load(){
    var result=new Dictionary<string,string>();int col=Math.Max(0,Array.IndexOf(Codes,Language));
@@ -154,9 +160,9 @@ namespace ModePulse {
    if(f.IsHandleCreated)set(f,EventArgs.Empty);else f.HandleCreated+=set;
   }
  }
- // Shows a form inside a BlueAsh main-window page (another process): borderless child at x,y,w,h.
- // BlueAsh.exe is DPI-unaware while this helper is DPI-aware, so the form's windows are created unaware
- // (per-thread context, Windows 10 1607+); otherwise sizes and coordinates disagree on scaled displays.
+ // Shows a form inside a BlueAsh main-window page (another process): a borderless child filling the box BlueAsh made for
+ // it (BlueAshEmbedHost). Both processes are system-DPI aware, so the box's client is in real pixels and the page, laid out
+ // at the system scale (CompanionApp), draws sharp. Without that box (an older BlueAsh) x,y,w,h are main-window units.
  public static class Embed {
   [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern bool SetProp(IntPtr h,string name,IntPtr value);
   public static void Identify(Form f,string page){EventHandler tag=delegate{SetProp(f.Handle,"BlueAsh.Page."+page,new IntPtr(1));};if(f.IsHandleCreated)tag(f,EventArgs.Empty);else f.HandleCreated+=tag;}
@@ -167,22 +173,18 @@ namespace ModePulse {
   [DllImport("user32.dll")] static extern bool IsWindow(IntPtr h);
   [StructLayout(LayoutKind.Sequential)] struct Rect{public int Left,Top,Right,Bottom;}
   [DllImport("user32.dll")] static extern bool GetClientRect(IntPtr h,out Rect rect);
-  [DllImport("user32.dll")] static extern IntPtr SetThreadDpiAwarenessContext(IntPtr context);
   [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern int GetClassName(IntPtr h,System.Text.StringBuilder name,int max);
+  // The system scale (system DPI / 96) that the helper's page layout uses.
+  public static float Scale{get{using(var g=Graphics.FromHwnd(IntPtr.Zero))return g.DpiX/96f;}}
   public static bool Attach(Form f,IntPtr host,int x,int y,int w,int height){
    if(host==IntPtr.Zero||!IsWindow(host))return false;
-   // The whole attach runs unaware: window creation and the x,y,w,h (main-window units) both depend on it.
-   IntPtr old=IntPtr.Zero;try{old=SetThreadDpiAwarenessContext(new IntPtr(-1));}catch(EntryPointNotFoundException){}
-   try{
-    f.Hide();f.SuspendLayout();f.FormBorderStyle=FormBorderStyle.None;f.ShowInTaskbar=false;f.StartPosition=FormStartPosition.Manual;
-    // BlueAsh 2.27+ hands over a box made for the page (BlueAshEmbedHost): fill it. Older builds hand over the main window.
-    var cls=new System.Text.StringBuilder(64);GetClassName(host,cls,64);Rect rect;
-    if(cls.ToString()=="BlueAshEmbedHost"&&GetClientRect(host,out rect)){x=0;y=0;w=rect.Right;height=rect.Bottom;}
-    else if(GetClientRect(host,out rect)){w=Math.Max(420,rect.Right-308);height=Math.Max(200,Math.Min(height,rect.Bottom-158));}
-    var hwnd=f.Handle;int style=GetWindowLong(hwnd,-16);
-    style=unchecked((int)(((uint)style&~0x80000000u&~0x00C00000u&~0x00040000u)|0x40000000u));SetWindowLong(hwnd,-16,style);
-    SetParent(hwnd,host);SetWindowPos(hwnd,IntPtr.Zero,x,y,w,height,0x0004|0x0020);f.ResumeLayout(true);f.Show();f.Update();return true;
-   }finally{if(old!=IntPtr.Zero)SetThreadDpiAwarenessContext(old);}
+   f.Hide();f.SuspendLayout();f.FormBorderStyle=FormBorderStyle.None;f.ShowInTaskbar=false;f.StartPosition=FormStartPosition.Manual;
+   var cls=new System.Text.StringBuilder(64);GetClassName(host,cls,64);Rect rect;float k=Scale;
+   if(cls.ToString()=="BlueAshEmbedHost"&&GetClientRect(host,out rect)){x=0;y=0;w=rect.Right;height=rect.Bottom;}
+   else if(GetClientRect(host,out rect)){x=(int)(x*k);y=(int)(y*k);w=Math.Max((int)(420*k),rect.Right-(int)(308*k));height=Math.Max((int)(200*k),Math.Min((int)(height*k),rect.Bottom-(int)(158*k)));}
+   var hwnd=f.Handle;int style=GetWindowLong(hwnd,-16);
+   style=unchecked((int)(((uint)style&~0x80000000u&~0x00C00000u&~0x00040000u)|0x40000000u));SetWindowLong(hwnd,-16,style);
+   SetParent(hwnd,host);SetWindowPos(hwnd,IntPtr.Zero,x,y,w,height,0x0004|0x0020);f.ResumeLayout(true);f.Show();f.Update();return true;
   }
  }
  public static class Input {
@@ -908,7 +910,7 @@ namespace ModePulse {
   public static string Focus="";
   public static readonly Dictionary<string,string> MapEnglish=new Dictionary<string,string>{{"bigmap","Customs"},{"woods","Woods"},{"shoreline","Shoreline"},{"interchange","Interchange"},{"rezervbase","Reserve"},{"lighthouse","Lighthouse"},{"tarkovstreets","Streets of Tarkov"},{"laboratory","The Lab"},{"sandbox","Ground Zero"},{"factory4_day","Factory"},{"labyrinth","The Labyrinth"},{"icebreaker","Icebreaker"},{"terminal","Terminal"}};
   public static Chapter Find(string id){foreach(var c in Chapters)if(c.Id==id)return c;return null;}
-  // ---- Progress and view settings: %LOCALAPPDATA%\ModeSwitch\story-progress.json ----
+  // ---- Progress and view settings: %LOCALAPPDATA%\BlueAsh\story-progress.json ----
   public static string ProgressFile="";static string readFile;
   static readonly Dictionary<string,HashSet<string>> done=new Dictionary<string,HashSet<string>>();
   // Spoiler level of the branch tab: hide (default), hint, guide, all.
@@ -1097,7 +1099,7 @@ namespace ModePulse {
     if(sameView)g.DrawImageUnscaled(cache,(int)Math.Round(PanX-cachePanX),(int)Math.Round(PanY-cachePanY));
    }
    g.SmoothingMode=SmoothingMode.AntiAlias;g.TextRenderingHint=System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-   if(pinFont==null){pinFont=new Font(I18n.FontName,9.5f,FontStyle.Bold);tipFont=new Font(I18n.FontName,9.5f);tipBold=new Font(I18n.FontName,10.5f,FontStyle.Bold);}
+   if(pinFont==null){pinFont=BlueAshUi.UiFont.New(I18n.FontName,9.5f,FontStyle.Bold);tipFont=BlueAshUi.UiFont.New(I18n.FontName,9.5f);tipBold=BlueAshUi.UiFont.New(I18n.FontName,10.5f,FontStyle.Bold);}
    DrawInfo(g);DrawStoryChip(g);
    if(Pins.Count==0&&!MeShown){DrawKeyTip(g);return;}
    float big=Radius,small=big*0.42f;
@@ -1148,7 +1150,7 @@ namespace ModePulse {
    using(var halo=new Pen(Color.FromArgb(215,0,0,0),4.2f))g.DrawEllipse(halo,cx-hr,cy-hr,2*hr,2*hr);
    using(var fill=new SolidBrush(QuestBlue))g.FillEllipse(fill,cx-hr,cy-hr,2*hr,2*hr);
    using(var rim=new Pen(Color.White,1.8f))g.DrawEllipse(rim,cx-hr,cy-hr,2*hr,2*hr);
-   float size=Math.Max(9f,hr*1.4f);if(badgeFont==null||badgeFont.Size!=size){if(badgeFont!=null)badgeFont.Dispose();badgeFont=new Font(I18n.FontName,size,FontStyle.Bold,GraphicsUnit.Pixel);}
+   float size=Math.Max(9f,hr*1.4f);if(badgeFont==null||badgeFont.Size!=size){if(badgeFont!=null)badgeFont.Dispose();badgeFont=BlueAshUi.UiFont.New(I18n.FontName,size,FontStyle.Bold,GraphicsUnit.Pixel);}
    using(var sf=new StringFormat{Alignment=StringAlignment.Center,LineAlignment=StringAlignment.Center})g.DrawString(count>1?count.ToString():"!",badgeFont,Brushes.White,new RectangleF(cx-hr,cy-hr+hr*0.06f,2*hr,2*hr),sf);
    if(!pulse.Enabled)pulse.Start();
   }
@@ -1364,7 +1366,7 @@ namespace ModePulse {
  }
  // "My keys and keycards" beside the map: a search box to add, the list of what was added (icon, name, where it opens),
  // an x to remove. Hovering a row highlights that key's locks on the map. Stored per mode in my-keys.json; nothing is
- // read from the game. Icons are tarkov.dev's 64 px item icons, cached under %LOCALAPPDATA%\ModeSwitch\icons.
+ // read from the game. Icons are tarkov.dev's 64 px item icons, cached under %LOCALAPPDATA%\BlueAsh\icons.
  public class KeyLocationEventArgs:EventArgs{public readonly string Id,MapId;public KeyLocationEventArgs(string id,string map){Id=id;MapId=map;}}
  public class KeyPanel:Panel {
   public event EventHandler Changed,HoverChanged;
@@ -1459,7 +1461,7 @@ namespace ModePulse {
     var tmp=myKeysPath+".tmp";System.IO.File.WriteAllText(tmp,js.Serialize(root));if(System.IO.File.Exists(myKeysPath))System.IO.File.Replace(tmp,myKeysPath,null);else System.IO.File.Move(tmp,myKeysPath);}catch{return false;}
    if(Changed!=null)Changed(this,EventArgs.Empty);return true;
   }
-  static string IconDir{get{return System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"ModeSwitch","icons");}}
+  static string IconDir{get{return System.IO.Path.Combine(DataDir.Folder,"icons");}}
   // Every key icon once, in the background (211 icons, about 0.5 MB): the list then never shows an empty frame.
   static bool prefetched;
   void Prefetch(){
@@ -1471,7 +1473,7 @@ namespace ModePulse {
   }
   Image Icon(string id){
    Image img;if(icons.TryGetValue(id,out img))return img;
-   var dir=System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"ModeSwitch","icons");var file=System.IO.Path.Combine(dir,id+".jpg");
+   var dir=System.IO.Path.Combine(DataDir.Folder,"icons");var file=System.IO.Path.Combine(dir,id+".jpg");
    if(System.IO.File.Exists(file)){try{using(var s=new System.IO.MemoryStream(System.IO.File.ReadAllBytes(file)))img=new Bitmap(Image.FromStream(s));icons[id]=img;return img;}catch{}}
    if(fetching.Add(id)){var t=new System.Threading.Thread(()=>{try{var bytes=FandomMarkers.GetBytes("https://assets.tarkov.dev/"+id+"-icon.jpg");System.IO.Directory.CreateDirectory(dir);System.IO.File.WriteAllBytes(file,bytes);
      if(IsHandleCreated)BeginInvoke((Action)(()=>{list.Invalidate();found.Invalidate();}));}catch{}});t.IsBackground=true;t.Start();}
@@ -1523,7 +1525,7 @@ namespace ModePulse {
  public class PinEventArgs:EventArgs{public readonly Pin Pin;public PinEventArgs(Pin p){Pin=p;}}
  // This PC's AI translator for wiki text the server has no translation of (quest guides and briefings, picture captions,
  // where a key is found): the same model and llama.cpp server as 모드 번역 (source/local_ai.h downloads and checks them
- // into %LOCALAPPDATA%\ModeSwitch\ai; asked by WM_APP+207 to the main window, progress in ai-progress.txt). Run here
+ // into %LOCALAPPDATA%\BlueAsh\ai; asked by WM_APP+207 to the main window, progress in ai-progress.txt). Run here
  // only while translating: started hidden at below-normal priority on 127.0.0.1, stopped after two idle minutes.
  // Every line translated is kept in ai-cache\<lang>.txt (hash of the English, tab, translation), so the same text is
  // translated once on this PC. Not used from an elevated helper (the server is a program in the user's folder).
@@ -1610,7 +1612,7 @@ namespace ModePulse {
   static readonly JavaScriptSerializer js=new JavaScriptSerializer{MaxJsonLength=int.MaxValue};
  }
  // Fandom wiki guide of a quest: the text of its Guide section and its pictures (URLs and captions). The page comes from the
- // wiki's API when a quest card opens (kept a week in %LOCALAPPDATA%\ModeSwitch\quest-wiki). The pictures are not downloaded
+ // wiki's API when a quest card opens (kept a week in %LOCALAPPDATA%\BlueAsh\quest-wiki). The pictures are not downloaded
  // here: the wiki's image server answers non-browser clients with a bot check. The browser card (HtmlQuestCard, Edge
  // WebView2) shows them as any browser does; without it the card opens the page. Content: Escape from Tarkov Wiki (Fandom), CC BY-SA.
  // The translation pack of the UI language (relay/public/quest-guide/tr/<lang>.json, made on the developer's PC by
@@ -1720,7 +1722,7 @@ namespace ModePulse {
    var html=Convert.ToString(((IDictionary)root["parse"])["text"]);System.IO.File.WriteAllText(cache,html);return html;}
  }
  // Pictures of where a key's lock is and what is behind it: the Lock Location and Behind the Lock sections of the key's
- // wiki page (kept a week in %LOCALAPPDATA%\ModeSwitch\key-wiki). Shown by HtmlKeyTip; the pictures load in the browser.
+ // wiki page (kept a week in %LOCALAPPDATA%\BlueAsh\key-wiki). Shown by HtmlKeyTip; the pictures load in the browser.
  public static class KeyWiki {
   public class Result{public List<QuestWiki.Picture> Lock=new List<QuestWiki.Picture>(),Inside=new List<QuestWiki.Picture>();public bool Failed;}
   static readonly Dictionary<string,Result> known=new Dictionary<string,Result>();
@@ -1749,12 +1751,12 @@ namespace ModePulse {
   float K{get{return DeviceDpi/96f;}}
   int Inner{get{return Math.Max(80,body.ClientSize.Width-(int)(28*K));}}
   protected override void OnPaint(PaintEventArgs e){base.OnPaint(e);using(var edge=new Pen(Theme.Border))e.Graphics.DrawRectangle(edge,0,0,Width-1,Height-1);using(var bar=new SolidBrush(Theme.Accent))e.Graphics.FillRectangle(bar,0,0,(int)(3*K),Height);}
-  protected override void OnLayout(LayoutEventArgs e){base.OnLayout(e);int s=(int)(34*K);close.SetBounds(Width-s-4,4,s,s);if(close.Font.Size!=11f)close.Font=new Font(I18n.FontName,11f);close.BringToFront();body.Padding=new Padding((int)(14*K),(int)(10*K),(int)(8*K),(int)(10*K));}
-  Label Line(string text,float size,FontStyle style,Color color,int top=0){var l=new Label{Text=text,AutoSize=true,ForeColor=color,BackColor=Theme.Panel,Font=new Font(I18n.FontName,size,style),Margin=new Padding(0,top,0,(int)(2*K)),UseMnemonic=false};l.MaximumSize=new Size(Inner,0);return l;}
+  protected override void OnLayout(LayoutEventArgs e){base.OnLayout(e);int s=(int)(34*K);close.SetBounds(Width-s-4,4,s,s);if(close.Font.Size!=11f)close.Font=BlueAshUi.UiFont.New(I18n.FontName,11f);close.BringToFront();body.Padding=new Padding((int)(14*K),(int)(10*K),(int)(8*K),(int)(10*K));}
+  Label Line(string text,float size,FontStyle style,Color color,int top=0){var l=new Label{Text=text,AutoSize=true,ForeColor=color,BackColor=Theme.Panel,Font=BlueAshUi.UiFont.New(I18n.FontName,size,style),Margin=new Padding(0,top,0,(int)(2*K)),UseMnemonic=false};l.MaximumSize=new Size(Inner,0);return l;}
   // quests: (quest id, quest data) for each quest on the marker; traders: their trader names; map: this map's id.
   public void ShowText(string title,string text,string button,Action click){generation++;body.SuspendLayout();foreach(Control c in body.Controls)c.Dispose();body.Controls.Clear();
    body.Controls.Add(Line(title,12.5f,FontStyle.Bold,Theme.Ink,(int)(2*K)));body.Controls.Add(Line(text,9.5f,FontStyle.Regular,Theme.Muted,(int)(8*K)));
-   var b=new ThemeButton{Text=button,AutoSize=false,FlatStyle=FlatStyle.Flat,BackColor=Theme.Accent,ForeColor=Theme.Ink,Cursor=Cursors.Hand,TabStop=false,Font=new Font(I18n.FontName,9.5f),Margin=new Padding(0,(int)(10*K),0,0)};b.FlatAppearance.BorderColor=Theme.Accent;b.Size=new Size(Math.Min(Inner,(int)(220*K)),(int)(34*K));b.Click+=delegate{click();};body.Controls.Add(b);
+   var b=new ThemeButton{Text=button,AutoSize=false,FlatStyle=FlatStyle.Flat,BackColor=Theme.Accent,ForeColor=Theme.Ink,Cursor=Cursors.Hand,TabStop=false,Font=BlueAshUi.UiFont.New(I18n.FontName,9.5f),Margin=new Padding(0,(int)(10*K),0,0)};b.FlatAppearance.BorderColor=Theme.Accent;b.Size=new Size(Math.Min(Inner,(int)(220*K)),(int)(34*K));b.Click+=delegate{click();};body.Controls.Add(b);
    body.ResumeLayout();Visible=true;BringToFront();}
   public void Show(List<KeyValuePair<string,IDictionary>> quests,List<string> traders,string map,string store){
    generation++;int gen=generation;body.SuspendLayout();foreach(Control c in body.Controls)c.Dispose();body.Controls.Clear();
@@ -1769,9 +1771,9 @@ namespace ModePulse {
      foreach(var k in ks)body.Controls.Add(Line("• "+Convert.ToString(k["name"])+(Convert.ToString(k["need"])=="optional"?" "+I18n.Text("(선택)"):Convert.ToString(k["need"])=="unknown"?" "+I18n.Text("(필요 여부 확인)"):"")+(Convert.ToString(k["map"]).Length>0?" · "+k["map"]:"")+(Convert.ToBoolean(k["mine"])?"  ✓ "+I18n.Text("내 열쇠에 있음"):""),9.5f,FontStyle.Regular,Convert.ToBoolean(k["mine"])?Theme.AccentText:Theme.Muted));}}
     var wiki=q.Contains("wiki")?Convert.ToString(q["wiki"]):"";if(wiki.Length==0)continue;
     var status=Line(I18n.Text("위키 안내를 불러오는 중…"),9f,FontStyle.Regular,Theme.Muted,(int)(10*K));body.Controls.Add(status);
-    var open=new ThemeButton{Text=I18n.Text("위키에서 사진 보기"),AutoSize=false,FlatStyle=FlatStyle.Flat,BackColor=Theme.Field,ForeColor=Theme.Ink,Cursor=Cursors.Hand,TabStop=false,Font=new Font(I18n.FontName,9.5f),Margin=new Padding(0,(int)(8*K),0,0)};
+    var open=new ThemeButton{Text=I18n.Text("위키에서 사진 보기"),AutoSize=false,FlatStyle=FlatStyle.Flat,BackColor=Theme.Field,ForeColor=Theme.Ink,Cursor=Cursors.Hand,TabStop=false,Font=BlueAshUi.UiFont.New(I18n.FontName,9.5f),Margin=new Padding(0,(int)(8*K),0,0)};
     open.FlatAppearance.BorderColor=Theme.Border;open.Size=new Size(Math.Min(Inner,(int)(220*K)),(int)(32*K));var page=GuidePack.Page(wiki);open.Click+=delegate{try{System.Diagnostics.Process.Start(page);}catch{}};body.Controls.Add(open);
-    if(InstallBrowser!=null&&qi==0){var install=new ThemeButton{Text=I18n.Text("지도에서 사진 보기 설치 (Microsoft WebView2)"),AutoSize=false,FlatStyle=FlatStyle.Flat,BackColor=Theme.Accent,ForeColor=Theme.Ink,Cursor=Cursors.Hand,TabStop=false,Font=new Font(I18n.FontName,9.5f),Margin=new Padding(0,(int)(6*K),0,0)};
+    if(InstallBrowser!=null&&qi==0){var install=new ThemeButton{Text=I18n.Text("지도에서 사진 보기 설치 (Microsoft WebView2)"),AutoSize=false,FlatStyle=FlatStyle.Flat,BackColor=Theme.Accent,ForeColor=Theme.Ink,Cursor=Cursors.Hand,TabStop=false,Font=BlueAshUi.UiFont.New(I18n.FontName,9.5f),Margin=new Padding(0,(int)(6*K),0,0)};
      install.FlatAppearance.BorderColor=Theme.Accent;install.Size=new Size(Inner,(int)(32*K));install.Click+=delegate{install.Enabled=false;install.Text=I18n.Text("설치 프로그램을 받는 중…");InstallBrowser(install);};body.Controls.Add(install);}
     var id=quests[qi].Key;
     System.Threading.ThreadPool.QueueUserWorkItem(_=>{var guide=QuestWiki.Load(store,id,wiki);
@@ -2236,10 +2238,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();
   Button Flat(string text){var b=new ThemeButton{Text=text,FlatStyle=FlatStyle.Flat,BackColor=Theme.Field,ForeColor=Theme.Ink,Cursor=Cursors.Hand,TabStop=false};b.FlatAppearance.BorderColor=Line;b.FlatAppearance.MouseOverBackColor=Theme.Hover;b.FlatAppearance.MouseDownBackColor=Theme.Accent;return b;}
   public MapWindow(){
    Text=I18n.Text("BlueAsh · 지도");FormBorderStyle=FormBorderStyle.None;StartPosition=FormStartPosition.Manual;ShowInTaskbar=false;TopMost=true;KeyPreview=true;
-   BackColor=Line;Padding=new Padding(1);Font=new Font(I18n.FontName,10f);ForeColor=Theme.Ink;Size=new Size(1150,820);
+   BackColor=Line;Padding=new Padding(1);Font=BlueAshUi.UiFont.New(I18n.FontName,10f);ForeColor=Theme.Ink;Size=new Size(1150,820);
    // Header: map title, map/role pickers, fit, edit toggle, close.
    header.Dock=DockStyle.Top;header.BackColor=HeaderBg;header.Height=40;
-   title.AutoSize=false;title.AutoEllipsis=true;title.Dock=DockStyle.Fill;title.TextAlign=ContentAlignment.MiddleLeft;title.Padding=new Padding(12,0,0,0);title.Font=new Font(I18n.FontName,12f,FontStyle.Bold);title.ForeColor=Theme.Ink;
+   title.AutoSize=false;title.AutoEllipsis=true;title.Dock=DockStyle.Fill;title.TextAlign=ContentAlignment.MiddleLeft;title.Padding=new Padding(12,0,0,0);title.Font=BlueAshUi.UiFont.New(I18n.FontName,12f,FontStyle.Bold);title.ForeColor=Theme.Ink;
    var tools=new FlowLayoutPanel{Dock=DockStyle.Right,AutoSize=true,WrapContents=false,BackColor=HeaderBg,Padding=new Padding(0,5,4,0)};
    Maps.DropDownStyle=ComboBoxStyle.DropDownList;Role.DropDownStyle=ComboBoxStyle.DropDownList;Role.Items.AddRange(new object[]{"PMC","SCAV"});Role.SelectedIndex=0;
    // Owner-drawn so the pickers stay dark (a flat DropDownList still paints a white box).

@@ -1,2 +1,2 @@
-﻿BlueAsh 2.27.1 — 업데이트·모드 번역 화면의 새로고침을 누르면 화면 크기가 틀어지던 문제 수정 (2026-11-09)
+﻿BlueAsh 2.28.0 — PC 안정성·스태빌리티 가드, 데이터 폴더 BlueAsh로, 창 크기 고정, 대시보드 바로 적용 (2026-11-10)
 Built to a scratch path (the repository BlueAsh.exe is the running copy and was not replaced).

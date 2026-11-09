@@ -10,8 +10,10 @@ tmp=$(mktemp -d);trap 'rm -rf "$tmp" .bundle' EXIT
 echo "" | "$CXX" -x c -c - -o "$tmp/default-manifest.o"
 "$WINDRES" resources.rc -O coff -o "$tmp/resources.o"
 # Embed the helper folders (bundle.h unpacks them per build id) so BlueAsh.exe runs on its own.
-# Paths stay relative/ASCII for windres; C# sources are build inputs, not runtime files.
-files=$(cd .. && find price companion maps updater -type f ! -name '*.cs' | LC_ALL=C sort)
+# Paths stay relative/ASCII for windres; C# sources are build inputs, not runtime files: the helpers run as one program,
+# companion/BlueAshHelper.exe (build-helper.ps1). Developer files the app never reads stay out: the test/tool library
+# CompanionUI.dll, the feature status list (companion/FEATURES.txt) and the deployment notes (updater/DEPLOY.txt).
+files=$(cd .. && find companion maps updater -type f ! -name '*.cs' ! -name 'CompanionUI.dll' ! -name 'FEATURES.txt' ! -name 'DEPLOY.txt' | LC_ALL=C sort)
 id=$(cd .. && cat $files | sha256sum | cut -c1-16)
 rm -rf .bundle;mkdir .bundle
 { echo "$id";for f in $files;do echo "$f";done; } > .bundle/list.txt
@@ -19,5 +21,5 @@ rm -rf .bundle;mkdir .bundle
 "$WINDRES" .bundle/bundle.rc -O coff -o "$tmp/bundle.o"
 "$CXX" -B"$tmp/" -std=c++17 -O2 -Wall -Wextra -Werror -municode -mwindows \
   -static -static-libgcc -static-libstdc++ ModeSwitch.cpp "$tmp/resources.o" "$tmp/bundle.o" \
-  -lole32 -luuid -luser32 -lgdi32 -ladvapi32 -lshell32 -ldwmapi -lwinhttp -lcomdlg32 -lwinmm -ld3d11 -ldxgi -lruntimeobject -lgdiplus -lcomctl32 -lbcrypt -lcrypt32 -lversion -lwintrust -lwbemuuid -lpowrprof -lpdh -loleaut32 -o "${BLUEASH_OUT:-../BlueAsh.exe}"
+  -lole32 -luuid -luser32 -lgdi32 -ladvapi32 -lshell32 -ldwmapi -lwinhttp -lcomdlg32 -lwinmm -ld3d11 -ldxgi -lruntimeobject -lgdiplus -lcomctl32 -lbcrypt -lcrypt32 -lversion -lwintrust -lwbemuuid -lpowrprof -lpdh -loleaut32 -lwevtapi -lurlmon -o "${BLUEASH_OUT:-../BlueAsh.exe}"
 echo "bundle $id: $(echo "$files" | wc -l) files"

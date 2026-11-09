@@ -26,6 +26,7 @@
 #include <set>
 #include <functional>
 #include "dpi.h"
+#include "data_dir.h"
 #include "profiles.h"
 #include "i18n.h"
 #include "ui_paint.h"
@@ -274,7 +275,7 @@ bool languageRestart=false,languageToSettings=true;HWND languageBox=nullptr; // 
 MaintenanceState maintenance;HWND maintenanceMenu=nullptr;
 int mainPage=0,selectedGame=0;bool pubgJoinOn=true,pubgMapOn=true;
 // Set by the update check (update_ui.h): a newer version exists; the sidebar and tray show it. balloonUpdateAt = when the "new version" notice went up.
-bool updateReady=false;ULONGLONG balloonUpdateAt=0;std::wstring updateVersion;
+bool updateReady=false;ULONGLONG balloonUpdateAt=0,balloonStabilityAt=0;std::wstring updateVersion;
 UINT taskbarCreated=0;
 constexpr UINT trayMessage=WM_APP+1;
 std::wstring activeDisplay,activeBrowser,lastProblem;
@@ -378,6 +379,7 @@ bool changeMode(bool targetFps,int pinnedProfile=-1) {
         auto gamma=effective.gamma;auto vol=effective.volume;
         effective=profiles[0];effective.extended=true;settings::allGamma(effective,gamma);effective.volume=vol;
     }
+    for(auto& v:effective.brightness)v=std::clamp(v,30u,150u); /* also profiles saved before the limit */
     try{nv.apply(display,effective);}catch(const std::wstring& e){problem(e);return false;}
     appliedProfile=effective;appliedProfileIndex=profileIndex;
     active=true;fps=targetFps;gammaTouched=true;activeDisplay=display;activeBrowser=browsers[b];lastProblem.clear();statusNotice.clear();
@@ -537,7 +539,7 @@ int modeTab=0;
 // One icon from Segoe Fluent Icons (Windows 11) or Segoe MDL2 Assets (Windows 10), centred in r.
 void glyph(HDC dc,wchar_t g,RECT r,HFONT f,COLORREF c){wchar_t s[2]={g,0};textAt(dc,s,r,f,c,DT_CENTER|DT_VCENTER|DT_SINGLELINE);}
 // Sidebar icons per menu id: home, sliders, gamepad, bell, download, power.
-wchar_t navGlyph(int id){return id==88?0xE945:id==86?0xE7F4:id==40?0xE80F:id==32?0xE9E9:id==41?0xE7FC:id==44?0xEA8F:id==38?0xE896:id==31?0xE7E8:id==50?0xE713:0;}
+wchar_t navGlyph(int id){return id==89?0xE9D9:id==88?0xE945:id==86?0xE7F4:id==40?0xE80F:id==32?0xE9E9:id==41?0xE7FC:id==44?0xEA8F:id==38?0xE896:id==31?0xE7E8:id==50?0xE713:0;}
 HWND tips=nullptr; // one dark tooltip for the footer icons and the icon buttons (iconButton)
 void footerTooltips(){
  INITCOMMONCONTROLSEX init={sizeof(init),ICC_WIN95_CLASSES};if(!InitCommonControlsEx(&init))return;
@@ -724,7 +726,7 @@ void drawButtonTo(DRAWITEMSTRUCT* ds){
     {HBRUSH surface=buttonSurface(ds->hwndItem);POINT inWin={};MapWindowPoints(ds->hwndItem,win,&inWin,1);bool canvas=(home&&(surface==backgroundBrush||surface==sidebarBrush))||(!home&&(id==90||id==91));
         if(!(canvas&&copyBackdrop(dc,r,inWin))){SetBrushOrgEx(dc,-origin.x,-origin.y,nullptr);FillRect(dc,&r,surface);}}
     bool gameCard=home&&(id==42||id==43||id==45),card=id==1||id==2||gameCard;
-    int navPage=id==40?0:id==41?1:id==32?2:id==38?4:id==44?5:id==50?9:id==74?10:id==81?12:id==86?14:id==88?15:-1;bool tab=!home&&(id==90||id==91);
+    int navPage=id==40?0:id==41?1:id==32?2:id==38?4:id==44?5:id==50?9:id==74?10:id==81?12:id==86?14:id==88?15:id==89?17:-1;bool tab=!home&&(id==90||id==91);
     // GWLP_USERDATA 1 marks a page's main action (저장): filled cobalt.
     bool nav=(home&&navPage>=0)||tab,primary=!home&&GetWindowLongPtrW(ds->hwndItem,GWLP_USERDATA)==1;
     bool selected=tab?modeTab==id-90:gameCard?(id==45?mainPage==16:selectedGame==(id==43?1:0)&&mainPage!=16):(nav?(mainPage==navPage||(navPage==1&&((mainPage>=6&&mainPage<=8)||mainPage==11||mainPage==13||mainPage==16))):(card&&(active?(id==2)==fps:id==1)));COLORREF accent=blue;
@@ -900,6 +902,7 @@ void reportProblem(const wchar_t* kind); // update_ui.h: anonymous problem count
 #include "pubg_map_page.h"
 #include "dlss_ui.h"
 #include "mod_page.h"
+#include "stability_ui.h"
 bool tarkovMapOn(){return regString(configPath,L"MapEnabled")!=L"0";}
 bool featureOn(int id){return id==33?raidWatch.enabled:id==37?priceWatch.autoMode:id==39?tarkovMapOn():id==198?tarkovScreen.enabled():id==217?usageStats():id==242?feedbackDiag:false;}
 // The dashboard's 현재 상태 tiles and status line: redrawn when what they show changes (checked every second and after
@@ -909,7 +912,7 @@ void refreshStatus(){
     if(now==last||!win){return;}last=now;for(int id=271;id<=274;id++)if(HWND t=GetDlgItem(win,id)){InvalidateRect(t,nullptr,FALSE);} // never InvalidateRect(nullptr): that repaints every window
     invalidateContent({252,636,1120,684});
 }
-// Row click switches the feature; the gear opens its settings. The map switch is read live by the helper (Companion.ps1).
+// Row click switches the feature; the gear opens its settings. The map switch is read live by the helper (BlueAshHelper.exe).
 void toggleFeature(int id){
     if(id==33){raidWatch.enabled=!raidWatch.enabled;raidWatch.reset();if(!raidWatch.save())problem(i18n::text(L"설정을 저장하지 못했습니다."));raidWatch.status=raidWatch.enabled?i18n::text(L"출격 신호 감시 중"):i18n::text(L"알림 꺼짐");raidWatch.nextDiscovery=0;}
     else if(id==37){bool on=!priceWatch.autoMode;priceWatch.setAuto(on);if(!on&&priceWatch.running())priceWatch.stop();}
@@ -921,12 +924,12 @@ void closePage();
 // mainPage: 0 컨트롤 센터, 1 게임별 기능, 2 모드 설정 (탭: 컬러 & 사운드 / 단축키), 4 업데이트, 5 디스코드 알림,
 // 6~8 타르코프 도구 설정 (레이드 시작 알림 / 아이템 시세 / 인게임 지도, opened by the gears; 닫기 returns to 게임별 기능).
 // Every page shares the header box drawn by the main window: a title and one line saying what the page is for.
-const wchar_t* pageTitle(){const wchar_t* t[]={i18n::text(L"게임에 집중하세요."),i18n::text(L"게임 도우미"),i18n::text(L"프로필"),L"",i18n::text(L"업데이트"),i18n::text(L"자리 비움 알림"),i18n::text(L"레이드 시작 알림"),i18n::text(L"아이템 시세"),i18n::text(L"인게임 지도"),i18n::text(L"설정"),i18n::text(L"문제·건의 보내기"),i18n::text(L"비행기 탑승 알림"),i18n::text(L"커피 한 잔 후원"),i18n::text(L"지도 표시"),i18n::text(L"그래픽 설정"),i18n::text(L"윈도우 최적화"),i18n::text(L"모드 번역")};return t[mainPage];}
+const wchar_t* pageTitle(){const wchar_t* t[]={i18n::text(L"게임에 집중하세요."),i18n::text(L"게임 도우미"),i18n::text(L"프로필"),L"",i18n::text(L"업데이트"),i18n::text(L"자리 비움 알림"),i18n::text(L"레이드 시작 알림"),i18n::text(L"아이템 시세"),i18n::text(L"인게임 지도"),i18n::text(L"설정"),i18n::text(L"문제·건의 보내기"),i18n::text(L"비행기 탑승 알림"),i18n::text(L"커피 한 잔 후원"),i18n::text(L"지도 표시"),i18n::text(L"그래픽 설정"),i18n::text(L"윈도우 최적화"),i18n::text(L"모드 번역"),i18n::text(L"PC 안정성")};return t[mainPage];}
 const wchar_t* pageNote(){
     switch(mainPage){case 0:return i18n::text(L"화면과 소리, 게임 알림을 한곳에서 관리하세요.");case 1:return i18n::text(L"게임을 고르고, 쓰고 싶은 도구를 켜세요.");
     case 2:return modeTab?i18n::text(L"일반 ↔ 게임 모드를 바꾸는 단축키를 정합니다."):i18n::text(L"모드마다 화면 색감과 브라우저 볼륨을 정합니다.");case 4:return i18n::text(L"새 버전으로 바꿔도 설정은 그대로 남습니다.");
     case 5:return i18n::text(L"게임이 시작될 때 자리에 없으면 휴대폰으로 알려 줍니다.");case 6:return i18n::text(L"타르코프 · 배치 카운트다운 1초 전에 소리로 알려 줍니다.");
-    case 7:return i18n::text(L"타르코프 · 아이템을 조사하면 시세·필요한 퀘스트·은신처 재료를 띄웁니다.");case 8:return i18n::text(L"타르코프 · 지도 키로 지도를 열어 탈출구와 퀘스트 위치를 봅니다.");case 9:return i18n::text(L"언어와 프로그램 실행 방식을 설정합니다.");case 15:return i18n::text(L"게임하기 전에 PC 상태를 점검하고, 병목과 업그레이드할 곳을 확인합니다.");case 10:return i18n::text(L"버그나 바라는 점을 개발자에게 바로 보냅니다.");case 11:return i18n::text(L"배그 · 탑승 카운트다운이 끝나면 소리로 알려 줍니다.");case 12:return i18n::text(L"BlueAsh가 도움이 됐다면 커피 한 잔으로 응원해 주세요.");case 13:return i18n::text(L"배그 · M 지도에 띄울 표시와 표시를 켜고 끄는 키를 정합니다.");case 14:return i18n::text(L"화질 향상(DLSS 5), 프레임 설정, 성능 분석을 게임별로 합니다.");case 16:return i18n::text(L"설치한 게임의 모드에서 영어 글을 찾아 지금 언어로 번역합니다.");}return L"";
+    case 7:return i18n::text(L"타르코프 · 아이템을 조사하면 시세·필요한 퀘스트·은신처 재료를 띄웁니다.");case 8:return i18n::text(L"타르코프 · 지도 키로 지도를 열어 탈출구와 퀘스트 위치를 봅니다.");case 9:return i18n::text(L"언어와 프로그램 실행 방식을 설정합니다.");case 15:return i18n::text(L"게임하기 전에 PC 상태를 점검하고, 병목과 업그레이드할 곳을 확인합니다.");case 10:return i18n::text(L"버그나 바라는 점을 개발자에게 바로 보냅니다.");case 11:return i18n::text(L"배그 · 탑승 카운트다운이 끝나면 소리로 알려 줍니다.");case 12:return i18n::text(L"BlueAsh가 도움이 됐다면 커피 한 잔으로 응원해 주세요.");case 13:return i18n::text(L"배그 · M 지도에 띄울 표시와 표시를 켜고 끄는 키를 정합니다.");case 14:return i18n::text(L"화질 향상(DLSS 5), 프레임 설정, 성능 분석을 게임별로 합니다.");case 16:return i18n::text(L"설치한 게임의 모드에서 영어 글을 찾아 지금 언어로 번역합니다.");case 17:return i18n::text(L"갑자기 꺼짐·블루스크린·그래픽 오류·게임 충돌 기록을 찾아 원인과 해결 방법을 알려 줍니다.");}return L"";
 }
 HWND pageWindow=nullptr;bool embedSeen=false;extern HWND embedHost;void placeEmbedHost();
 // Resized or maximized: the sidebar runs the full height with its footer icons at the bottom, the window buttons stay top
@@ -1015,21 +1018,18 @@ void selectMainPage(int page,int game=-1){
 // Settings pages open inside the main window under the shared header: the settings procs run as a child filling
 // the box right of the sidebar. Their 닫기 destroys the child, which returns to 컨트롤 센터 (게임별 기능 for 6~8).
 // 디스코드 알림 (5) and 인게임 지도 (8) are the companion's windows, re-parented into ours (they live in the helper process).
-// The helper's forms are DPI-unaware windows of another process, so dpi.h cannot scale them. They go into a box window
-// made DPI-unaware (mixed hosting): Windows scales that box and everything in it as one picture, as before. The box
-// keeps the helper's size contract: its client is the page's design size, and the helper fills it (Embed.Attach).
+// The helper's forms are windows of another process, so dpi.h cannot scale them. They go into a box window made in real
+// pixels (dpi::Raw): the helper (BlueAshHelper.exe) is system-DPI aware like BlueAsh and lays its page out at the same
+// scale, so it is drawn sharp. The helper fills the box (Embed.Attach) and follows its size.
 HWND embedHost=nullptr;
-LRESULT CALLBACK embedHostProc(HWND h,UINT m,WPARAM w,LPARAM l){ // runs in the box's own (unaware) coordinates
+LRESULT CALLBACK embedHostProc(HWND h,UINT m,WPARAM w,LPARAM l){ // runs in real pixels (a raw window)
     if(m==WM_SIZE){if(HWND c=GetWindow(h,GW_CHILD)){(SetWindowPos)(c,nullptr,0,0,LOWORD(l),HIWORD(l),SWP_NOZORDER|SWP_NOACTIVATE);}return 0;}
     if(m==WM_ERASEBKGND){RECT r;(GetClientRect)(h,&r);FillRect((HDC)w,&r,panelBrush);return 1;}
     return (DefWindowProcW)(h,m,w,l);}
 HWND ensureEmbedHost(){if(embedHost)return embedHost;
     static bool registered=false;if(!registered){WNDCLASSW wc={};wc.lpfnWndProc=embedHostProc;wc.hInstance=GetModuleHandleW(nullptr);wc.lpszClassName=L"BlueAshEmbedHost";wc.hCursor=LoadCursor(nullptr,IDC_ARROW);RegisterClassW(&wc);registered=true;}
-    using SetContext=HANDLE(WINAPI*)(HANDLE);using SetHosting=int(WINAPI*)(int);SetContext setContext=nullptr;SetHosting setHosting=nullptr;HMODULE user=GetModuleHandleW(L"user32.dll");
-    FARPROC a=GetProcAddress(user,"SetThreadDpiAwarenessContext"),b=GetProcAddress(user,"SetThreadDpiHostingBehavior");memcpy(&setContext,&a,sizeof(a));memcpy(&setHosting,&b,sizeof(b));
-    int oldHosting=setHosting?setHosting(1):0;HANDLE oldContext=setContext?setContext((HANDLE)-1):nullptr; // DPI_HOSTING_BEHAVIOR_MIXED, then unaware
     {dpi::Raw raw;embedHost=CreateWindowExW(WS_EX_CONTROLPARENT,L"BlueAshEmbedHost",L"",WS_CHILD|WS_CLIPCHILDREN,0,0,852,622,win,nullptr,GetModuleHandleW(nullptr),nullptr);}
-    if(setContext&&oldContext){setContext(oldContext);}if(setHosting){setHosting(oldHosting);}return embedHost;}
+    return embedHost;}
 RECT embedBox(int page);
 void placeEmbedHost(){if(!embedHost)return;RECT b=embedBox(mainPage==8?8:5);dpi::up(b);(SetWindowPos)(embedHost,HWND_TOP,b.left,b.top,b.right-b.left,b.bottom-b.top,SWP_NOACTIVATE);}
 HWND embeddedWindow(int page){const wchar_t* prop=page==8?L"BlueAsh.Page.Map":L"BlueAsh.Page.Discord";
@@ -1051,7 +1051,7 @@ void openPage(WNDPROC callback,const wchar_t* className,int page){
     // The same page is already open (its icon clicked again): keep it as it is (typed text, a loaded QR) instead of rebuilding it.
     if(pageWindow&&mainPage==page){wchar_t open[64]={};GetClassNameW(pageWindow,open,64);if(!wcscmp(open,className)){showWindow();return;}}
     closePage();
-    pageProcs[className]=callback;WNDCLASSW wc={};wc.lpfnWndProc=page==14||page==15?callback:pageProc;wc.hInstance=GetModuleHandleW(nullptr);wc.lpszClassName=className;wc.hCursor=LoadCursor(nullptr,IDC_ARROW);wc.hbrBackground=backgroundBrush;RegisterClassW(&wc);
+    pageProcs[className]=callback;WNDCLASSW wc={};wc.lpfnWndProc=page==14||page==15||page==17?callback:pageProc;wc.hInstance=GetModuleHandleW(nullptr);wc.lpszClassName=className;wc.hCursor=LoadCursor(nullptr,IDC_ARROW);wc.hbrBackground=backgroundBrush;RegisterClassW(&wc);
     selectMainPage(page);showWindow();
     pageWindow=CreateWindowExW(WS_EX_CONTROLPARENT,className,L"",WS_CHILD|WS_CLIPCHILDREN,260,118,852,622,win,nullptr,wc.hInstance,nullptr);
     if(!pageWindow){selectMainPage(0);problem(i18n::text(L"설정 화면을 열지 못했습니다."));return;}
@@ -1127,7 +1127,7 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         control(L"BUTTON",i18n::text(L"알림"),BS_OWNERDRAW|WS_TABSTOP,12,224,196,48,44);
         control(L"BUTTON",i18n::text(L"프로필"),BS_OWNERDRAW|WS_TABSTOP,12,280,196,48,32);
         control(L"BUTTON",i18n::text(L"업데이트"),BS_OWNERDRAW|WS_TABSTOP,12,336,196,48,38);
-        control(L"BUTTON",i18n::text(L"그래픽 설정"),BS_OWNERDRAW|WS_TABSTOP,12,392,196,48,86);control(L"BUTTON",i18n::text(L"윈도우 최적화"),BS_OWNERDRAW|WS_TABSTOP,12,448,196,48,88);
+        control(L"BUTTON",i18n::text(L"그래픽 설정"),BS_OWNERDRAW|WS_TABSTOP,12,392,196,48,86);control(L"BUTTON",i18n::text(L"윈도우 최적화"),BS_OWNERDRAW|WS_TABSTOP,12,448,196,48,88);control(L"BUTTON",i18n::text(L"PC 안정성"),BS_OWNERDRAW|WS_TABSTOP,12,504,196,48,89);
         control(L"BUTTON",i18n::text(L"타르코프"),BS_OWNERDRAW|WS_TABSTOP,246,128,286,124,42);
         control(L"BUTTON",i18n::text(L"배그"),BS_OWNERDRAW|WS_TABSTOP,544,128,286,124,43);
         control(L"BUTTON",i18n::text(L"모드 번역"),BS_OWNERDRAW|WS_TABSTOP,842,128,286,124,45);
@@ -1147,8 +1147,8 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         control(L"BUTTON",i18n::text(L"‹  게임 도우미"),BS_OWNERDRAW|WS_TABSTOP,906,56,214,40,49);
         // Top right, in place of the Windows title bar: language, minimize, close.
         {std::wstring code=i18n::languageCode();for(auto& c:code)c=towupper(c);HDC sdc=dpi::getDC(h);auto of=SelectObject(sdc,boldFont);SIZE ts={};GetTextExtentPoint32W(sdc,code.c_str(),(int)code.size(),&ts);SelectObject(sdc,of);ReleaseDC(h,sdc);
-            int w=std::max(88,(int)ts.cx+56);control(L"BUTTON",i18n::text(L"언어"),BS_OWNERDRAW|WS_TABSTOP,1010-w,12,w,34,82);control(L"BUTTON",i18n::text(L"알림"),BS_OWNERDRAW|WS_TABSTOP,964-w,12,40,34,87);} // as wide as its code (ZH-CN, PT-BR), right edge fixed
-        control(L"BUTTON",L"",BS_OWNERDRAW,1020,12,40,34,83);control(L"BUTTON",L"",BS_OWNERDRAW,1064,12,40,34,85);control(L"BUTTON",L"",BS_OWNERDRAW,1108,12,40,34,84);
+            int w=std::max(88,(int)ts.cx+56);control(L"BUTTON",i18n::text(L"언어"),BS_OWNERDRAW|WS_TABSTOP,1054-w,12,w,34,82);control(L"BUTTON",i18n::text(L"알림"),BS_OWNERDRAW|WS_TABSTOP,1008-w,12,40,34,87);} // as wide as its code (ZH-CN, PT-BR), right edge fixed
+        control(L"BUTTON",L"",BS_OWNERDRAW,1064,12,40,34,83);control(L"BUTTON",L"",BS_OWNERDRAW,1108,12,40,34,84);
         // Sidebar footer, always the same four: 커피 한 잔 후원 · 설정 · 버그 제보 · 완전 종료. (The coffee icon used to appear a few
         // seconds after start and shift the others, which left half-drawn icons behind.)
         control(L"BUTTON",i18n::text(L"커피 한 잔 후원"),BS_OWNERDRAW|WS_TABSTOP,8,724,48,48,81);
@@ -1196,7 +1196,7 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         if(HMODULE ux=LoadLibraryExW(L"uxtheme.dll",nullptr,LOAD_LIBRARY_SEARCH_SYSTEM32)){typedef int(WINAPI*AppMode)(int);typedef void(WINAPI*Flush)();
             FARPROC a=GetProcAddress(ux,MAKEINTRESOURCEA(135)),f=GetProcAddress(ux,MAKEINTRESOURCEA(136));AppMode setMode=nullptr;Flush flush=nullptr;memcpy(&setMode,&a,sizeof(a));memcpy(&flush,&f,sizeof(f));
             if(setMode){setMode(2);}if(flush){flush();}}
-        SetTimer(h,1,1000,nullptr);std::thread(datapack::fetch).detach(); // the data pack (map pictures etc.), once
+        SetTimer(h,1,1000,nullptr);std::thread(datapack::fetch).detach();stabcollect::recorder.start();stabui::checkAtStart(); // the data pack (map pictures etc.), once
         if(companionEnabled()){openCompanion(true);}
         return 0;
     }
@@ -1279,7 +1279,7 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         if(HIWORD(wp)==BN_CLICKED){
             if(id==1||id==2){if(!changeMode(id==2))showWindow();}
             else if(id==50){selectMainPage(9);showWindow();}
-            else if(id==72)writeDiagnostics();else if(id==73)restartAsAdmin();else if(id==74)openPage(feedbackProc,L"BlueAshFeedback",10);else if(id==81)openPage(donateProc,L"BlueAshDonate",12);else if(id==86)openPage(dlssui::proc,L"BlueAshDlss",14);else if(id==88)openPage(dlssui::proc,L"BlueAshOpt",15);
+            else if(id==72)writeDiagnostics();else if(id==73)restartAsAdmin();else if(id==74)openPage(feedbackProc,L"BlueAshFeedback",10);else if(id==81)openPage(donateProc,L"BlueAshDonate",12);else if(id==86)openPage(dlssui::proc,L"BlueAshDlss",14);else if(id==88)openPage(dlssui::proc,L"BlueAshOpt",15);else if(id==89)openPage(stabui::proc,L"BlueAshStability",17);
             else if(id==83)ShowWindow(h,SW_MINIMIZE);else if(id==85)ShowWindow(h,IsZoomed(h)?SW_RESTORE:SW_MAXIMIZE);else if(id==84)PostMessageW(h,WM_CLOSE,0,0);
             else if(id==82)showLanguageMenu();else if(id==87)showMaintenanceMenu();
             else if(id==63){toggleFeature(33);InvalidateRect(GetDlgItem(win,63),nullptr,TRUE);}
@@ -1314,9 +1314,14 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         else if(lp==NIN_BALLOONUSERCLICK&&balloonAdminAt&&GetTickCount64()-balloonAdminAt<60000){balloonAdminAt=0;elevateWithPrompt(true);}
         else if(lp==NIN_BALLOONUSERCLICK&&priceWatch.balloonOcrAt&&GetTickCount64()-priceWatch.balloonOcrAt<60000){priceWatch.balloonOcrAt=0;priceWatch.installOcr();}
         else if(lp==NIN_BALLOONUSERCLICK&&balloonUpdateAt&&GetTickCount64()-balloonUpdateAt<60000){balloonUpdateAt=0;openPage(updateProc,L"ModeSwitchUpdate",4);}
+        else if(lp==NIN_BALLOONUSERCLICK&&balloonStabilityAt&&GetTickCount64()-balloonStabilityAt<120000){balloonStabilityAt=0;ShowWindow(win,SW_SHOW);SetForegroundWindow(win);openPage(stabui::proc,L"BlueAshStability",17);}
         else if(lp==WM_RBUTTONUP||lp==WM_CONTEXTMENU)trayMenu();
         return 0;
-    case WM_PARENTNOTIFY:if(LOWORD(wp)==WM_DESTROY&&pageWindow&&(HWND)lp==pageWindow){pageWindow=nullptr;selectMainPage(mainPage==10?9:mainPage==12||mainPage==14||mainPage==15?0:mainPage>=6?1:0);}return 0;
+    case WM_PARENTNOTIFY:if(LOWORD(wp)==WM_DESTROY&&pageWindow&&(HWND)lp==pageWindow){pageWindow=nullptr;selectMainPage(mainPage==10?9:mainPage==12||mainPage==14||mainPage==15||mainPage==17?0:mainPage>=6?1:0);}return 0;
+    // Stability Guard: a power loss / blue screen found at start (230) or a crash Windows just recorded (232) -> the warning window.
+    case WM_APP+230:{std::unique_ptr<stability::Incident> c((stability::Incident*)lp);stabui::showAlert(*c);return 0;}
+    case WM_APP+233:gameart::arrived((int)wp);return 0; // a game cover finished downloading
+    case WM_APP+232:stabui::recorded((stability::Event*)lp);return 0;
     case WM_APP+182:raidWatch.deployed((unsigned)wp);return 0;
     case WM_APP+183:donateWatch.remember(wp);return 0;
     case WM_APP+184:maintenanceDone((int)wp);return 0;
@@ -1327,20 +1332,18 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
     case WM_CLOSE:if(closeToTray)hideToTray();else quit();return 0;
     // Minimize goes to the taskbar like any window; only X (WM_CLOSE) hides to the tray.
     case WM_SIZE:if(wp!=SIZE_MINIMIZED){placeContent();if(HWND m=GetDlgItem(h,85))InvalidateRect(m,nullptr,FALSE);}return 0;
-    case WM_GETMINMAXINFO:((MINMAXINFO*)lp)->ptMinTrackSize={1160,780};return 0; // never smaller than the design
+    case WM_GETMINMAXINFO:((MINMAXINFO*)lp)->ptMinTrackSize={1160,780};((MINMAXINFO*)lp)->ptMaxTrackSize={1160,780};return 0; // fixed design size (resizing and maximize removed: more bugs than use)
     // No Windows title bar: the client covers the whole window (the frame style stays for the taskbar, Snap and the shadow).
     // Maximized, Windows puts the frame past the screen edge: keep the client on the screen.
     case WM_NCCALCSIZE:if(wp){if(IsZoomed(h)){auto* n=(NCCALCSIZE_PARAMS*)lp;int fx=GetSystemMetrics(SM_CXFRAME)+GetSystemMetrics(SM_CXPADDEDBORDER),fy=GetSystemMetrics(SM_CYFRAME)+GetSystemMetrics(SM_CXPADDEDBORDER);InflateRect(&n->rgrc[0],-fx,-fy);}return 0;}break;
     case WM_NCACTIVATE:return DefWindowProcW(h,msg,wp,-1); // no title bar repaint on (de)activation
     // Drag the window by the top strip and the logo (controls there take their own clicks).
     case WM_NCHITTEST:{POINT p={(short)LOWORD(lp),(short)HIWORD(lp)};ScreenToClient(h,&p);
-        if(!IsZoomed(h)){RECT c;GetClientRect(h,&c);const int b=6;bool l=p.x<b,rt=p.x>=c.right-b,t=p.y<b,bt=p.y>=c.bottom-b; // resize from any edge
-            if(t&&l){return HTTOPLEFT;}if(t&&rt){return HTTOPRIGHT;}if(bt&&l){return HTBOTTOMLEFT;}if(bt&&rt){return HTBOTTOMRIGHT;}if(l){return HTLEFT;}if(rt){return HTRIGHT;}if(t){return HTTOP;}if(bt){return HTBOTTOM;}}
         if(p.y>=0&&(p.y<50||(p.x<220&&p.y<104))){return HTCAPTION;}return HTCLIENT;}
     case WM_QUERYENDSESSION:
         if(fps&&gammaTouched)changeMode(false);
         return TRUE;
-    case WM_DESTROY:{dlssui::optQuit(); /* 최적화 모드: every changed Windows setting goes back when BlueAsh closes */
+    case WM_DESTROY:{stabui::unwatch();stabcollect::recorder.stop();dlssui::optQuit(); /* 최적화 모드: every changed Windows setting goes back when BlueAsh closes */
         raidWatch.capture.stop();stopCompanion();priceWatch.stop();UnregisterHotKey(h,2);boardWatch.capture.stop();pubgMap.close();pubgMap.overlay.destroy();KillTimer(h,77);KillTimer(h,78);KillTimer(h,79);PlaySoundW(nullptr,nullptr,0);KillTimer(h,1);UnregisterHotKey(h,1);NOTIFYICONDATAW data={};data.cbSize=sizeof(data);data.hWnd=h;data.uID=1;Shell_NotifyIconW(NIM_DELETE,&data);
         if(updaterProcess){CloseHandle(updaterProcess);updaterProcess=nullptr;}PostQuitMessage(0);return 0;
     }
@@ -1374,11 +1377,12 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,LPWSTR command,int show){dpi::i
         HWND existing=FindWindowW(L"ModeSwitch",nullptr);
         if(existing&&!startHidden){
             wchar_t title[128]={};GetWindowTextW(existing,title,128);
-            if(std::wstring(title)!=L"BlueAsh 2.27.1")MessageBoxW(nullptr,i18n::text(L"이전 버전이 트레이에서 실행 중입니다. 이전 프로그램을 완전 종료한 뒤 BlueAsh.exe를 다시 실행하세요."),i18n::text(L"BlueAsh · 이전 버전 실행 중"),MB_OK|MB_ICONINFORMATION);
+            if(std::wstring(title)!=L"BlueAsh 2.28.0")MessageBoxW(nullptr,i18n::text(L"이전 버전이 트레이에서 실행 중입니다. 이전 프로그램을 완전 종료한 뒤 BlueAsh.exe를 다시 실행하세요."),i18n::text(L"BlueAsh · 이전 버전 실행 중"),MB_OK|MB_ICONINFORMATION);
             else{ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);}
         }
         CloseHandle(mutex);return 0;
     }
+    datadir::relocate(); // the only BlueAsh now: the old ModeSwitch data folder becomes BlueAsh (see data_dir.h)
     HRESULT co=CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED);if(FAILED(co)){CloseHandle(mutex);return 1;}
     // The UI font (resources 401/402, Pretendard): private to this process, so nothing is installed on the PC.
     {HMODULE self=GetModuleHandleW(nullptr);int loaded=0;for(int id:{401,402}){HRSRC res=FindResourceW(self,MAKEINTRESOURCEW(id),RT_RCDATA);if(!res)continue;DWORD size=SizeofResource(self,res);void* data=LockResource(LoadResource(self,res));DWORD count=0;if(data&&size&&AddFontMemResourceEx(data,size,nullptr,&count)&&count)loaded++;}i18n::customFont=loaded==2;}
@@ -1386,9 +1390,9 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,LPWSTR command,int show){dpi::i
     WNDCLASSW wc={};wc.lpfnWndProc=proc;wc.hInstance=instance;wc.lpszClassName=L"ModeSwitch";
     wc.hCursor=LoadCursor(nullptr,IDC_ARROW);wc.hIcon=LoadIconW(instance,MAKEINTRESOURCEW(101));wc.hbrBackground=nullptr; /* no fill: Windows painted the resized window with it (a navy flash) before the first paint; WM_PAINT draws everything */
     RegisterClassW(&wc);
-    DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_THICKFRAME|WS_CLIPCHILDREN;
+    DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_THICKFRAME|WS_CLIPCHILDREN;
     RECT bounds={0,0,1160,780}; // the client is the whole window (WM_NCCALCSIZE)
-    HWND h=CreateWindowW(wc.lpszClassName,L"BlueAsh 2.27.1",style,CW_USEDEFAULT,CW_USEDEFAULT,bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,instance,nullptr);
+    HWND h=CreateWindowW(wc.lpszClassName,L"BlueAsh 2.28.0",style,CW_USEDEFAULT,CW_USEDEFAULT,bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,instance,nullptr);
     if(!h){painting::shutdown();CoUninitialize();CloseHandle(mutex);return 1;}
     ChangeWindowMessageFilterEx(h,WM_APP+177,MSGFLT_ALLOW,nullptr); // the updater runs as the normal user even when BlueAsh is elevated: let its "please close" through
     {MARGINS shadow={0,0,0,1};DwmExtendFrameIntoClientArea(h,&shadow);SetWindowPos(h,nullptr,0,0,0,0,SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);} // keep the shadow without a frame

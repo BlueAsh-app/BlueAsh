@@ -1,4 +1,5 @@
 #pragma once
+#include "data_dir.h"
 #include "dpi.h" // dpi::Raw (the overlay draws in physical pixels)
 #include "i18n.h"
 #include "mapfit.h"
@@ -60,11 +61,11 @@ inline std::vector<Key> mapKeys(const std::string& ini){
 #include <bcrypt.h>
 // The 4096 px official map for deep zoom (mapfit::Gray8): built by source/build-pubg-hires.ps1, served by the relay
 // (/pubg/manifest.txt: id width size sha256, /pubg/<id>.u8), fetched for the map in play the first time it is identified,
-// checked against the manifest's SHA-256 and kept in %LOCALAPPDATA%\ModeSwitch\pubg-maps. One map at a time in memory.
+// checked against the manifest's SHA-256 and kept in %LOCALAPPDATA%\BlueAsh\pubg-maps. One map at a time in memory.
 // The loader thread is detached and the object never destroyed (it may still be downloading when BlueAsh closes).
 class HiresMaps {
     std::mutex mutex;std::shared_ptr<const mapfit::Pyr> map;int mapIndex=-1;bool tried[pubgmap::mapCount]={};std::atomic<bool> busy{false};std::wstring done;
-    static std::wstring dir(){wchar_t local[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local))){return L"";}std::wstring d=std::wstring(local)+L"\\ModeSwitch\\pubg-maps\\";CreateDirectoryW(d.c_str(),nullptr);return d;}
+    static std::wstring dir(){wchar_t local[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local))){return L"";}std::wstring d=std::wstring(local)+dataSub()+L"\\pubg-maps\\";CreateDirectoryW(d.c_str(),nullptr);return d;}
     static bool get(const std::wstring& path,std::string& body,size_t limit){HINTERNET s=WinHttpOpen(L"BlueAsh",WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,nullptr,nullptr,0),c=nullptr,r=nullptr;DWORD status=0,size=sizeof(status);bool ok=false;
         if(s){WinHttpSetTimeouts(s,10000,10000,20000,20000);c=WinHttpConnect(s,L"modepulse-relay.modepulse.workers.dev",INTERNET_DEFAULT_HTTPS_PORT,0);}
         if(c)r=WinHttpOpenRequest(c,L"GET",path.c_str(),nullptr,nullptr,nullptr,WINHTTP_FLAG_SECURE);
@@ -100,12 +101,12 @@ class MapCapture {
     struct State {bool ok=false,grid=false;POINT cursor={0,0};double ox=0,oy=0,S=0,score=0;int map=-1,w=0,h=0;unsigned seq=0;ULONGLONG lastOk=0;int nOk=0,nWeak=0,nFail=0,nNoGrid=0;std::wstring status=i18n::text(L"대기");} state; // n*: frames of this opening
     std::wstring note; // one-off message for pubg-board.log, taken by the main thread
     // For an offline benchmark: the full-resolution green channel (what the matcher reads) as an 8-bit gray BMP and a .txt with
-    // this frame's state, in %LOCALAPPDATA%\ModeSwitch\pubg-map\<kind>-NN. Fixed slots, the oldest one overwritten.
+    // this frame's state, in %LOCALAPPDATA%\BlueAsh\pubg-map\<kind>-NN. Fixed slots, the oldest one overwritten.
     // Off unless HKCUSoftwareModeSwitch PubgMapDumps=1: writing a full-size frame every 2 s while the map is open cost disk
     // and CPU during play once the diagnosis was done (2.16.13 left it on).
     static bool dumpFrames(){static const bool on=[]{DWORD v=0,n=sizeof(v);return RegGetValueW(HKEY_CURRENT_USER,L"Software\\ModeSwitch",L"PubgMapDumps",RRF_RT_REG_DWORD,nullptr,&v,&n)==ERROR_SUCCESS&&v!=0;}();return on;}
     static std::wstring keepFrame(const mapfit::Gray& full,const wchar_t* kind,int slots,const std::string& info){wchar_t local[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local))){return L"";}
-        std::wstring dir=std::wstring(local)+L"\\ModeSwitch\\pubg-map\\";CreateDirectoryW(dir.c_str(),nullptr);int best=0;ULONGLONG oldest=~0ull;wchar_t n[64];
+        std::wstring dir=std::wstring(local)+dataSub()+L"\\pubg-map\\";CreateDirectoryW(dir.c_str(),nullptr);int best=0;ULONGLONG oldest=~0ull;wchar_t n[64];
         for(int i=0;i<slots;i++){swprintf(n,64,L"%ls-%02d.bmp",kind,i);WIN32_FILE_ATTRIBUTE_DATA a;ULONGLONG t=0;if(GetFileAttributesExW((dir+n).c_str(),GetFileExInfoStandard,&a)){t=(ULONGLONG(a.ftLastWriteTime.dwHighDateTime)<<32)|a.ftLastWriteTime.dwLowDateTime;}if(t<oldest){oldest=t;best=i;}}
         swprintf(n,64,L"%ls-%02d",kind,best);std::wstring base=dir+n;FILE* out=_wfopen((base+L".bmp").c_str(),L"wb");if(!out){return L"";}int w=full.w,h=full.h,row=(w+3)&~3;
         BITMAPFILEHEADER fh={};BITMAPINFOHEADER ih={};ih.biSize=sizeof(ih);ih.biWidth=w;ih.biHeight=-h;ih.biPlanes=1;ih.biBitCount=8;ih.biClrUsed=256;fh.bfType=0x4D42;fh.bfOffBits=sizeof(fh)+sizeof(ih)+1024;fh.bfSize=fh.bfOffBits+row*h;

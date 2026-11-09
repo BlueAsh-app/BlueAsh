@@ -2,7 +2,7 @@
 // model): a larger model on the developer's PC reads each English line beside its translation and returns it corrected
 // (game terms, natural wording, half-translated words), or unchanged. Guides reviewed by people on the server (by=review)
 // are left as they are; everything machine-made is checked: other guides, picture captions, key locations.
-// Model: Qwen3-30B-A3B-Instruct-2507 Q4_K_M (Apache-2.0) in %LOCALAPPDATA%\ModeSwitch\ai\review — a mixture of experts,
+// Model: Qwen3-30B-A3B-Instruct-2507 Q4_K_M (Apache-2.0) in %LOCALAPPDATA%\BlueAsh\ai\review — a mixture of experts,
 // so the expert weights of some layers sit in system memory (--n-cpu-moe) and a 16 GB graphics card still runs it fast.
 // Resumable: every checked pair is kept in %TEMP%\blueash-pack\review-<lang>.json.
 //   node source/review-guide-pack.mjs --server s.json --sources src.json [--lang ko] [--ncmoe 12]
@@ -31,7 +31,7 @@ function namesIn(lang, text) { const hits = [], taken = [];
   return hits.join("; "); }
 const broken = (t) => /[぀-ヿ㐀-鿿가-힣][a-z]{2}/.test(t);
 // The model: llama-server on a port of its own.
-const ai = path.join(os.homedir(), "AppData/Local/ModeSwitch/ai");
+const ai = (fs.existsSync(path.join(os.homedir(),"AppData/Local/BlueAsh"))?path.join(os.homedir(),"AppData/Local/BlueAsh/ai"):path.join(os.homedir(),"AppData/Local/ModeSwitch/ai")) /* data folder renamed to BlueAsh in 2.28 */;
 const model = path.join(ai, "review/Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf");
 const port = 51892, base = `http://127.0.0.1:${port}`;
 async function up() { try { return (await fetch(base + "/health")).ok; } catch { return false; } }

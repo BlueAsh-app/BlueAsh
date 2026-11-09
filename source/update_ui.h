@@ -5,7 +5,7 @@
 // Updates come from the BlueAsh relay (relay/worker.js): /update/check answers in plain text (version, date, size,
 // one "note=" line per change) and counts installs by a random id; the updater (updater/Update.ps1) downloads
 // /update/manifest.json's ZIP, checks its SHA-256 and swaps the files.
-const wchar_t* appVersion=L"2.27.1";
+const wchar_t* appVersion=L"2.28.0";
 const wchar_t* updateHost=L"modepulse-relay.modepulse.workers.dev";
 HANDLE updaterProcess=nullptr;
 struct UpdateInfo{std::wstring version,date,error;std::vector<std::wstring> notes;long long size=0;};
@@ -61,7 +61,7 @@ UpdateInfo fetchUpdate(std::wstring path){
 // The updater (updater/Update.ps1) has no window: it writes update-progress.txt (state, step, part, detail, version)
 // and the 업데이트 page draws it. state: working | done | latest | error | cancel (cancel is ours).
 struct UpdateRun{std::wstring state,step,detail,version;double part=-1;};
-std::wstring progressPath(){wchar_t local[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local)))return L"";return std::wstring(local)+L"\\ModeSwitch\\update-progress.txt";}
+std::wstring progressPath(){wchar_t local[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local)))return L"";return std::wstring(local)+dataSub()+L"\\update-progress.txt";}
 bool readRun(UpdateRun& r,std::wstring* locale=nullptr,ULONGLONG since=0){
  HANDLE f=CreateFileW(progressPath().c_str(),GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,OPEN_EXISTING,0,nullptr);if(f==INVALID_HANDLE_VALUE)return false;
  FILETIME written={};if(since&&(!GetFileTime(f,nullptr,nullptr,&written)||(((ULONGLONG)written.dwHighDateTime<<32)|written.dwLowDateTime)<since)){CloseHandle(f);return false;}
@@ -165,7 +165,7 @@ void launchUpdater(){
  auto fail=[](const wchar_t* why){updateWatch.run={L"error",why,i18n::text(L"기존 프로그램과 설정은 그대로입니다."),L"",-1};updateWatch.repaint();};
  wchar_t exe[32768]={},temp[MAX_PATH]={},system[MAX_PATH]={};GetModuleFileNameW(nullptr,exe,32768);GetTempPathW(MAX_PATH,temp);GetSystemDirectoryW(system,MAX_PATH);
  std::wstring root=exe;root=root.substr(0,root.find_last_of(L"\\/"));auto bundle=bundleRoot();if(bundle.empty()){fail(i18n::text(L"내장 업데이트 파일을 풀지 못했습니다."));return;}
- std::wstring folder=std::wstring(temp)+L"ModeSwitch-updater-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64());
+ std::wstring folder=std::wstring(temp)+L"BlueAsh-updater-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64());
  if(!CreateDirectoryW(folder.c_str(),nullptr)){fail(i18n::text(L"업데이트 작업 폴더를 만들지 못했습니다."));return;}
  for(auto name:{L"Update.ps1",L"UpdateCore.ps1",L"UpdateLanguage.ps1"}){auto from=bundle+L"\\updater\\"+name,to=folder+L"\\"+name;if(!CopyFileW(from.c_str(),to.c_str(),TRUE)){fail(i18n::text(L"내장 업데이트 파일을 찾지 못했습니다."));return;}}
  std::wstring shell=std::wstring(system)+L"\\WindowsPowerShell\\v1.0\\powershell.exe";

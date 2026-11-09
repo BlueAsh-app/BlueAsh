@@ -94,7 +94,8 @@ void writeDiagnostics(){
     std::wstring select=L"/select,\""+out+L"\"";ShellExecuteW(nullptr,L"open",L"explorer.exe",select.c_str(),nullptr,SW_SHOWNORMAL);
 }
 // Release check (source/release.ps1 runs "BlueAsh.exe --selftest <dir>" before publishing): unpack the bundle into <dir>,
-// then PowerShell parses every script and loads both DLLs. Exit code 0 = fine; problems go to <dir>\selftest.txt.
+// then PowerShell parses every script and the helper program checks itself (BlueAshHelper.exe --selftest: translations,
+// assemblies, map catalog). Exit code 0 = fine; problems go to <dir>\selftest.txt.
 std::wstring base64(const std::string& in){
     static const char* abc="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";std::wstring out;
     for(size_t i=0;i<in.size();i+=3){unsigned v=(unsigned char)in[i]<<16;if(i+1<in.size())v|=(unsigned char)in[i+1]<<8;if(i+2<in.size())v|=(unsigned char)in[i+2];
@@ -106,7 +107,7 @@ int selfTest(std::wstring dir){
     CreateDirectoryW(dir.c_str(),nullptr);bundleBase=dir;std::wstring root=bundleRoot();if(root.empty())return 2;
     std::wstring ps=L"$r='"+root+L"';$o='"+dir+L"\\selftest.txt';$bad=@();"
         L"foreach($f in Get-ChildItem $r -Recurse -Filter *.ps1){$e=$null;[void][Management.Automation.Language.Parser]::ParseFile($f.FullName,[ref]$null,[ref]$e);if($e.Count){$bad+=$f.Name+': '+$e[0].Message}};"
-        L"foreach($d in 'companion\\CompanionUI.dll','price\\PriceHelper.dll'){try{Add-Type -Path (Join-Path $r $d) -ErrorAction Stop}catch{$bad+=$d+': '+$_.Exception.Message}};"
+        L"$h=Join-Path $r 'companion\\BlueAshHelper.exe';$t=Join-Path $r 'helper-selftest.txt';try{$p=Start-Process -FilePath $h -ArgumentList '--selftest' -Wait -PassThru -WindowStyle Hidden -RedirectStandardOutput $t;if($p.ExitCode -ne 0){$bad+='BlueAshHelper.exe: '+(Get-Content $t -Raw)}}catch{$bad+='BlueAshHelper.exe: '+$_.Exception.Message};"
         L"if(!(Test-Path (Join-Path $r 'companion\\Localization.tsv'))){$bad+='Localization.tsv missing'};"
         L"if($bad.Count){$bad|Set-Content -Encoding UTF8 $o;exit 1};'ok'|Set-Content $o;exit 0";
     std::string utf16((const char*)ps.data(),ps.size()*sizeof(wchar_t)); // -EncodedCommand takes UTF-16LE in base64

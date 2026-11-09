@@ -5,14 +5,14 @@
 // Data pack (source/build-datapack.ps1): the Fandom map pictures, markers and text translations and the PUBG reference
 // maps and labels are not open source, so they are neither in git nor inside the exe. BlueAsh downloads the pack from
 // the relay once (in the background after start), accepts it only with the SHA-256 this build pins (datapack_id.h),
-// keeps it in %LOCALAPPDATA%\ModeSwitch\data\<sha12>\ and copies its files into the runtime folder at the paths the
+// keeps it in %LOCALAPPDATA%\BlueAsh\data\<sha12>\ and copies its files into the runtime folder at the paths the
 // helpers have always read (maps/..., companion/FandomText.tsv). Until it is there those features wait: the map says it
 // is still receiving its picture, the PUBG overlay tries again later.
 namespace datapack {
 inline std::mutex guard;inline std::wstring liveRoot;inline std::atomic<bool> busy{false};inline std::atomic<ULONGLONG> lastTry{0};
 inline std::wstring cacheDir(){
  wchar_t local[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local))){return L"";}
- std::wstring f=DATAPACK_FILE;return std::wstring(local)+L"\\ModeSwitch\\data\\"+f.substr(9,12); // datapack-<sha12>.bin
+ std::wstring f=DATAPACK_FILE;return std::wstring(local)+dataSub()+L"\\data\\"+f.substr(9,12); // datapack-<sha12>.bin
 }
 inline bool ready(){auto d=cacheDir();return !d.empty()&&GetFileAttributesW((d+L"\\.complete").c_str())!=INVALID_FILE_ATTRIBUTES;}
 inline std::string sha256(const std::string& b){

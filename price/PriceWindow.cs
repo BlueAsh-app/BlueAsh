@@ -7,7 +7,7 @@ using System.Windows.Forms;
 namespace ModeSwitchPrice {
  public class Overlay:Form {
   public readonly Label TextBox=new Label();
-  public Overlay(){FormBorderStyle=FormBorderStyle.None;ShowInTaskbar=false;TopMost=true;BackColor=Color.FromArgb(22,24,31);Opacity=.94;Size=new Size(430,135);TextBox.Dock=DockStyle.Fill;TextBox.Padding=new Padding(12);TextBox.Font=new Font(Language.FontName,10);TextBox.ForeColor=Color.FromArgb(242,244,248);Controls.Add(TextBox);var accent=new Panel();accent.Dock=DockStyle.Left;accent.Width=3;accent.BackColor=Color.FromArgb(52,92,255);Controls.Add(accent);}
+  public Overlay(){FormBorderStyle=FormBorderStyle.None;ShowInTaskbar=false;TopMost=true;BackColor=Color.FromArgb(22,24,31);Opacity=.94;Size=new Size(430,135);TextBox.Dock=DockStyle.Fill;TextBox.Padding=new Padding(12);TextBox.Font=BlueAshUi.UiFont.New(Language.FontName,10);TextBox.ForeColor=Color.FromArgb(242,244,248);Controls.Add(TextBox);var accent=new Panel();accent.Dock=DockStyle.Left;accent.Width=3;accent.BackColor=Color.FromArgb(52,92,255);Controls.Add(accent);}
   protected override bool ShowWithoutActivation {get{return true;}}
   protected override CreateParams CreateParams {get{var c=base.CreateParams;c.ExStyle|=0x08000000|0x20|0x80;return c;}}
  }
@@ -144,7 +144,7 @@ namespace ModeSwitchPrice {
    if(Registered&&hot){text=Language.T("누르면 지도에서 빼기");fill=Color.FromArgb(235,196,54,66);edge=Color.FromArgb(255,236,96,108);ink=Color.White;}
    else if(Registered){text="✓ "+Language.T("지도에 등록됨");fill=Color.FromArgb(235,34,150,84);edge=Color.FromArgb(255,92,210,140);ink=Color.White;}
    else{text="+ "+Language.T("지도에 열쇠 등록");fill=Color.FromArgb(hot?245:225,hot?36:18,hot?44:22,hot?62:30);edge=Color.FromArgb(255,255,206,84);ink=Color.FromArgb(255,255,226,140);}
-   using(var font=new Font(Language.FontName,textHeight,FontStyle.Bold,GraphicsUnit.Pixel))using(var probe=new Bitmap(1,1))using(var pg=Graphics.FromImage(probe)){
+   using(var font=BlueAshUi.UiFont.New(Language.FontName,textHeight,FontStyle.Bold,GraphicsUnit.Pixel))using(var probe=new Bitmap(1,1))using(var pg=Graphics.FromImage(probe)){
     var size=pg.MeasureString(text,font,PointF.Empty,StringFormat.GenericTypographic);int padX=textHeight,padY=textHeight/2,w=(int)Math.Ceiling(size.Width)+padX*2,h=(int)Math.Ceiling(size.Height)+padY*2;
     using(var bmp=new Bitmap(w+2,h+2,PixelFormat.Format32bppArgb)){
      using(var g=Graphics.FromImage(bmp)){g.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;g.TextRenderingHint=System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;g.Clear(Color.Transparent);

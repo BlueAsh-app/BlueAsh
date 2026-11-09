@@ -5,7 +5,7 @@
 #include <aclapi.h>
 #include <bcrypt.h>
 // price/, companion/, maps/ and updater/ are embedded as RCDATA by build.sh (999 = "<build id>\n<path>..." list,
-// 1000+ = files in list order) and unpacked once per build to %LOCALAPPDATA%\ModeSwitch\runtime\<build id>,
+// 1000+ = files in list order) and unpacked once per build to %LOCALAPPDATA%\BlueAsh\runtime\<build id>,
 // so BlueAsh.exe works without its folders. Returns that directory, or empty with problem() on failure.
 inline bool bundleResource(int id,const char*& data,DWORD& size){
  HMODULE m=GetModuleHandleW(nullptr);HRSRC r=FindResourceW(m,MAKEINTRESOURCEW(id),MAKEINTRESOURCEW(10));if(!r)return false;
@@ -63,7 +63,7 @@ inline std::wstring adminBase(){
 }
 std::wstring unpackBundle();
 void datapackUse(const std::wstring& root); // datapack.h: the downloaded data files go into the same folder
-// Where runtime\<build id> goes: %LOCALAPPDATA%\ModeSwitch normally, a scratch folder for --selftest (so a release check
+// Where runtime\<build id> goes: %LOCALAPPDATA%\BlueAsh normally, a scratch folder for --selftest (so a release check
 // never touches, or prunes, the folder the running BlueAsh uses).
 std::wstring bundleBase;
 std::wstring bundleRoot(){
@@ -80,7 +80,7 @@ std::wstring unpackBundle(){
  wchar_t local[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local))){problem(i18n::text(L"AppData 폴더를 찾지 못했습니다."));return L"";}
  bool admin=bundleBase.empty()&&runningElevated();std::wstring protectedBase=admin?adminBase():L"";
  if(admin&&protectedBase.empty()){problem(i18n::text(L"관리자 권한용 보호 폴더를 만들지 못했습니다."));return L"";}
- std::wstring base=admin?protectedBase:bundleBase.empty()?std::wstring(local)+L"\\ModeSwitch":bundleBase,runtime=base+L"\\runtime",root=runtime+L"\\"+widen(lines[0]);
+ std::wstring base=admin?protectedBase:bundleBase.empty()?std::wstring(local)+dataSub():bundleBase,runtime=base+L"\\runtime",root=runtime+L"\\"+widen(lines[0]);
  if(GetFileAttributesW((root+L"\\.complete").c_str())!=INVALID_FILE_ATTRIBUTES)return cached=root;
  CreateDirectoryW(base.c_str(),nullptr);CreateDirectoryW(runtime.c_str(),nullptr);
  // Unpack into a staging folder and rename it, so a crash never leaves a half-written version in use.

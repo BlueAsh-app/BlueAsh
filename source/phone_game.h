@@ -6,7 +6,7 @@
 // The pairing code is the helper's (companion-settings.json phoneCode, DPAPI for this Windows user); no phone
 // paired = nothing is sent. Only the game name and its start time leave the PC.
 namespace phonegame {
-inline std::wstring settingsPath(){wchar_t dir[MAX_PATH]={};SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,dir);return std::wstring(dir)+L"\\ModeSwitch\\companion-settings.json";}
+inline std::wstring settingsPath(){wchar_t dir[MAX_PATH]={};SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,dir);return std::wstring(dir)+dataSub()+L"\\companion-settings.json";}
 // "phoneCode": ConvertFrom-SecureString output = hex of a DPAPI blob of the UTF-16 text.
 inline std::string jsonString(const std::string& s,const char* key){auto at=s.find(std::string("\"")+key+"\"");if(at==std::string::npos)return "";at=s.find(':',at);if(at==std::string::npos)return "";at=s.find('"',at);if(at==std::string::npos)return "";auto end=s.find('"',at+1);return end==std::string::npos?"":s.substr(at+1,end-at-1);}
 inline int jsonInt(const std::string& s,const char* key,int fallback){auto at=s.find(std::string("\"")+key+"\"");if(at==std::string::npos)return fallback;at=s.find(':',at);if(at==std::string::npos)return fallback;return atoi(s.c_str()+at+1);}

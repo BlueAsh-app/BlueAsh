@@ -1,5 +1,5 @@
 // Translates the OptiScaler menu strings that have no <lang>.review.json row yet (new-strings.json from wrap-all.mjs, or any
-// gap) with the large local model (Qwen3-30B-A3B in %LOCALAPPDATA%\ModeSwitch\ai\review), straight to reviewed quality.
+// gap) with the large local model (Qwen3-30B-A3B in %LOCALAPPDATA%\BlueAsh\ai\review), straight to reviewed quality.
 // Every answer is checked: printf (%s %.2f …) and std::format ({}) placeholders, ImGui IDs (##…), \n line breaks,
 // file names and product names must survive; a batch that fails is retried one string at a time. Resumable.
 //   node source/optiscaler-localization/translate-new.mjs [--lang ko]
@@ -10,7 +10,7 @@ import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const here=path.dirname(fileURLToPath(import.meta.url));
 const only=(()=>{const i=process.argv.indexOf('--lang');return i>0?process.argv[i+1]:'';})();
-const ai=path.join(os.homedir(),'AppData/Local/ModeSwitch/ai');
+const ai=(fs.existsSync(path.join(os.homedir(),"AppData/Local/BlueAsh"))?path.join(os.homedir(),"AppData/Local/BlueAsh/ai"):path.join(os.homedir(),"AppData/Local/ModeSwitch/ai")) /* data folder renamed to BlueAsh in 2.28 */;
 const names={ko:'Korean','zh-CN':'Simplified Chinese',ja:'Japanese',ru:'Russian',es:'Spanish','pt-BR':'Brazilian Portuguese',de:'German',fr:'French',it:'Italian',pl:'Polish',tr:'Turkish','zh-TW':'Traditional Chinese (Taiwan)'};
 const source=JSON.parse(fs.readFileSync(path.join(here,'source-strings.json'),'utf8'));
 const terms=['LatencyFlex','OptiScaler','DLSS','DLSSG','DLSSD','XeSS','XeFG','XeLL','FSR','FFX','Vulkan','DirectX','DXVK','Reflex','AntiLag','nvngx','ReShade','RCAS','CAS','NIS','HDR','VRAM','GPU','CPU','FPS','FG','MFG','DLAA','TAA','OptiFG','Streamline','NVAPI','Nukem'];

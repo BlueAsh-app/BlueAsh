@@ -7,7 +7,7 @@
 //  - "optiscaler" titles (community route): BlueAsh installs Dagherbou's OptiScaler DLSS-NR build (dlss_optiscaler.h)
 //    plus the person's own signed nvngx_dlssnr.dll (dlss_runtime.h) as one transaction (dlss_apply.h), writes the real
 //    [DlssNr] settings (dlss_nr.h), and takes the comparison from the build's own before/after capture of the same frame.
-// Screenshots, settings and records stay on this PC (%LOCALAPPDATA%\ModeSwitch\dlss\).
+// Screenshots, settings and records stay on this PC (%LOCALAPPDATA%\BlueAsh\dlss\).
 #include <dxgi1_2.h>
 #include "dlss_library.h"
 #include "dlss_optiscaler.h"
@@ -46,7 +46,7 @@ int applyProgress=-1;
 dlssgpu::Nvml nvml;dlssgpu::Reading live;dlssnr::Settings edit;dlssrt::Info runtimeInfo;
 const char* knownLatest="310.9.16"; // the newest DLSS 5 runtime seen in public sources (2026-10-16); there is no official feed to ask
 std::wstring folders(){return regString(configPath,L"DlssFolders");}
-std::wstring root(){wchar_t d[MAX_PATH]={};SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,d);std::wstring r=std::wstring(d)+L"\\ModeSwitch\\dlss";CreateDirectoryW((std::wstring(d)+L"\\ModeSwitch").c_str(),nullptr);CreateDirectoryW(r.c_str(),nullptr);return r;}
+std::wstring root(){wchar_t d[MAX_PATH]={};SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,d);std::wstring r=std::wstring(d)+dataSub()+L"\\dlss";CreateDirectoryW((std::wstring(d)+dataSub()).c_str(),nullptr);CreateDirectoryW(r.c_str(),nullptr);return r;}
 std::wstring runtimePath(){std::wstring d=root()+L"\\runtime";CreateDirectoryW(d.c_str(),nullptr);return d+L"\\nvngx_dlssnr.dll";}
 std::wstring previousRuntime(){std::wstring d=root()+L"\\runtime\\previous";CreateDirectoryW(d.c_str(),nullptr);return d+L"\\nvngx_dlssnr.dll";}
 std::wstring componentDir(){std::wstring d=root()+L"\\components";CreateDirectoryW(d.c_str(),nullptr);return d+L"\\OptiScaler-DLSSNR-"+dlssopti::version;}
@@ -986,7 +986,7 @@ void findRuntime(bool thenApply){applyAfterRuntime=applyAfterRuntime||thenApply;
     HANDLE t=CreateThread(nullptr,0,[](LPVOID a)->DWORD{auto* j=(RuntimeFind*)a;std::vector<std::wstring> hits;for(auto& d:j->dirs){int budget=60000;walkFor(d,6,budget,hits);}
         int best[3]={-1,-1,-1};for(auto& f:hits){auto i=dlssrt::check(f);if(!i.error.empty())continue;int v[3]={0,0,0};std::sscanf(i.version.c_str(),"%d.%d.%d",&v[0],&v[1],&v[2]);
             if(std::lexicographical_compare(best,best+3,v,v+3)){std::copy(v,v+3,best);j->found=f;j->info=i;}}
-        if(!PostMessageW(j->page,WM_APP+198,0,(LPARAM)j)){delete j;}return 0;},j,0,nullptr);
+        if(!PostMessageW(j->page,WM_APP+198,0,(LPARAM)j)){delete j;runtimeJob=false;} /* page gone: the next page may search again */return 0;},j,0,nullptr);
     if(t)CloseHandle(t);else{runtimeJob=false;delete j;if(applyAfterRuntime){applyAfterRuntime=false;applyProgress=-1;setStatus(i18n::text(L"DLSS 5 적용을 시작하지 못했습니다."),true);}}}
 void command(int id);
 void runtimeFound(RuntimeFind* j){runtimeJob=false;bool go=applyAfterRuntime;applyAfterRuntime=false;
@@ -1152,6 +1152,6 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         return 0;}
     case WM_CTLCOLORSTATIC:return pageStatic(wp,lp);
     case WM_DRAWITEM:drawButton((DRAWITEMSTRUCT*)lp);return TRUE;
-    case WM_DESTROY:KillTimer(h,1);KillTimer(h,3);KillTimer(h,5);endFly();perfDestroy();apxReset();home.clear();rawPlaced.clear();EX=EY=0;mode=3;carDrag=false;for(auto& c:cards)delete c.second;cards.clear();bigCards.clear();for(auto& c:thumbs)delete c.second;thumbs.clear();stopLive();drop(baseBmp);page=nullptr;viewer=nullptr;scanning=false;drop(cmp.a);drop(cmp.b);for(auto& c:covers)delete c.second;covers.clear();for(auto& c:logos)delete c.second;logos.clear();return 0;
+    case WM_DESTROY:scanning=false;applyAfterRuntime=false; /* a scan cut short by leaving: its result went to this window; the next page scans again */KillTimer(h,1);KillTimer(h,3);KillTimer(h,5);endFly();perfDestroy();apxReset();home.clear();rawPlaced.clear();EX=EY=0;mode=3;carDrag=false;for(auto& c:cards)delete c.second;cards.clear();bigCards.clear();for(auto& c:thumbs)delete c.second;thumbs.clear();stopLive();drop(baseBmp);page=nullptr;viewer=nullptr;scanning=false;drop(cmp.a);drop(cmp.b);for(auto& c:covers)delete c.second;covers.clear();for(auto& c:logos)delete c.second;logos.clear();return 0;
     }return DefWindowProcW(h,msg,wp,lp);}
 }

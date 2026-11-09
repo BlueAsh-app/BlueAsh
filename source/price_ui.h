@@ -11,7 +11,7 @@ struct PriceWatch {
  // the game's text language, and English for the Latin model names inside titles. One click installs them through
  // Add-WindowsCapability (Windows asks for permission); the worker restarts afterwards and picks them up.
  std::wstring ocrMissing,ocrNotified;HANDLE ocrInstall=nullptr;ULONGLONG nextOcrCheck=0,balloonOcrAt=0;
- static std::wstring storeFile(const wchar_t* name){wchar_t local[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local)))return L"";return std::wstring(local)+L"\\ModeSwitch\\"+name;}
+ static std::wstring storeFile(const wchar_t* name){wchar_t local[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local)))return L"";return std::wstring(local)+dataSub()+L"\\"+name;}
  void readOcrMissing(){std::wstring s;HANDLE h=CreateFileW(storeFile(L"ocr-missing.txt").c_str(),GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,OPEN_EXISTING,0,nullptr);
   if(h!=INVALID_HANDLE_VALUE){char data[2048];DWORD n=0;if(ReadFile(h,data,sizeof(data),&n,nullptr)&&n){int size=MultiByteToWideChar(CP_UTF8,0,data,n,nullptr,0);if(size>0){s.assign(size,0);MultiByteToWideChar(CP_UTF8,0,data,n,&s[0],size);}}CloseHandle(h);}
   while(!s.empty()&&(s.back()==L'\r'||s.back()==L'\n'||s.back()==L' '))s.pop_back();
@@ -50,11 +50,9 @@ struct PriceWatch {
   if(running())return;
   stop();
   std::wstring root=bundleRoot();if(root.empty()){message=i18n::text(L"내장 시세 파일을 풀지 못했습니다.");render();return;}
-  std::wstring script=root+L"\\price\\PriceWorker.ps1";
-  if(GetFileAttributesW(script.c_str())==INVALID_FILE_ATTRIBUTES){message=i18n::text(L"내장 시세 파일을 찾지 못했습니다.");render();return;}
-  wchar_t system[MAX_PATH]={};GetSystemDirectoryW(system,MAX_PATH);
-  std::wstring shell=std::wstring(system)+L"\\WindowsPowerShell\\v1.0\\powershell.exe";
-  std::wstring command=L"\""+shell+L"\" -NoLogo -NoProfile -NonInteractive -STA -ExecutionPolicy Bypass -File \""+script+L"\" -ParentId "+std::to_wstring(GetCurrentProcessId());
+  std::wstring shell=root+L"\\companion\\BlueAshHelper.exe"; // the same helper program as the map helper, in its price mode
+  if(GetFileAttributesW(shell.c_str())==INVALID_FILE_ATTRIBUTES){message=i18n::text(L"내장 시세 파일을 찾지 못했습니다.");render();return;}
+  std::wstring command=L"\""+shell+L"\" --price -ParentId "+std::to_wstring(GetCurrentProcessId());
   job=CreateJobObjectW(nullptr,nullptr);JOBOBJECT_EXTENDED_LIMIT_INFORMATION info={};info.BasicLimitInformation.LimitFlags=JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
   if(!job||!SetInformationJobObject(job,JobObjectExtendedLimitInformation,&info,sizeof(info))){stop();message=i18n::text(L"OCR 작업을 준비하지 못했습니다.");render();return;}
   FILETIME started={};GetSystemTimeAsFileTime(&started);statusSince=((ULONGLONG)started.dwHighDateTime<<32)|started.dwLowDateTime;
@@ -76,7 +74,7 @@ struct PriceWatch {
   pollOcrInstall();if(now>=nextOcrCheck){nextOcrCheck=now+5000;readOcrMissing();}
   if(!process)return;
   wchar_t local[MAX_PATH]={};if(SUCCEEDED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local))){
-   std::wstring file=std::wstring(local)+L"\\ModeSwitch\\price-status.txt";
+   std::wstring file=std::wstring(local)+dataSub()+L"\\price-status.txt";
    HANDLE h=CreateFileW(file.c_str(),GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,OPEN_EXISTING,0,nullptr);
    if(h!=INVALID_HANDLE_VALUE){FILETIME written={};bool fresh=GetFileTime(h,nullptr,nullptr,&written)&&(((ULONGLONG)written.dwHighDateTime<<32)|written.dwLowDateTime)>=statusSince;char data[8192];DWORD n=0;if(fresh&&ReadFile(h,data,sizeof(data),&n,nullptr)&&n){int size=MultiByteToWideChar(CP_UTF8,0,data,n,nullptr,0);if(size>0){std::wstring s(size,0);MultiByteToWideChar(CP_UTF8,0,data,n,&s[0],size);message=s;}}CloseHandle(h);}
   }
