@@ -53,6 +53,13 @@ try{
  [IO.File]::WriteAllText((Join-Path $cache 'price-pve.tsv'),("v2`tpve`t"+[DateTime]::UtcNow.Ticks+"`n5755383e24597772cb798966`tVaseline 바셀린 연고`t0`t12000`t5`t2026`tmedicalsuppl1es`n"),(New-Object Text.UTF8Encoding($false)))
  $fresh=New-Object ModeSwitchPrice.Catalog('pve',$cache);Assert ($fresh.LoadCache() -and $fresh.Find('Vaseline 바셀린 연고').Price -eq 12000) 'Disk cache is usable immediately'
  Assert (!(New-Object ModeSwitchPrice.Catalog('pvp-season',$cache)).LoadCache()) 'Cache never crosses modes'
+ # Game switched to English mid-session (Game.ini still "kr"): English titles match through the English names.
+ [IO.File]::WriteAllText((Join-Path $cache 'price-pve.tsv'),("v4`tpve`t"+[DateTime]::UtcNow.Ticks+"`nid-fleece`t양털 원단`t0`t9000`t5`t2026`tothers`nid-a`t가`t0`t1`t1`t2026`tothers`nid-b`t나`t0`t2`t1`t2026`tothers`n"),(New-Object Text.UTF8Encoding($false)))
+ [IO.File]::WriteAllText((Join-Path $cache 'price-names-pve.en.json'),'{"id-fleece":"Fleece fabric","id-a":"Same name","id-b":"Same name"}',(New-Object Text.UTF8Encoding($false)))
+ $ko=New-Object ModeSwitchPrice.Catalog('pve',$cache,'ko');Assert ($ko.LoadCache() -and $ko.Find('Fleece fabric').Price -eq 9000) 'English title found in a Korean catalog'
+ Assert ($ko.Find('Fleece fab「ic').Price -eq 9000) 'Near English title found too'
+ Assert ($null -eq $ko.Find('Same name')) 'An English name shared by two items matches nothing'
+ Assert ($ko.Find('양털 원단').Price -eq 9000) 'Korean title still first'
 }finally{Remove-Item $cache -Recurse -Force}
 $item=$rows[0]
 Assert ((Get-PriceState $item 'pve') -eq 'price') 'Price'

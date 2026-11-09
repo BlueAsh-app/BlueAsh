@@ -1,9 +1,14 @@
 #pragma once
+#include "dpi.h" // dpi::Raw (the overlay draws in physical pixels)
 #include "i18n.h"
 #include "mapfit.h"
 #include <fstream>
 #include <sstream>
 #include <memory>
+#include <map>
+// Labels shown on the map (1 cars, 2 boats, 4 secret rooms) and the key that shows / hides them (지도 표시 settings, pubg_map_page.h).
+inline unsigned pubgMapKinds=7,pubgMapKey='L';
+std::wstring keyName(unsigned vk); // ModeSwitch.cpp
 // PUBG world map labels: Korean place names, callouts and secret rooms drawn over the game's own map, so the blue zone,
 // pings and markers stay visible. The map key comes from GameUserSettings.ini (ToggleMap). While the map is open the
 // PUBG window is captured (Windows.Graphics.Capture) about four times a second and mapfit.h finds the visible part of
@@ -96,6 +101,9 @@ class MapCapture {
     std::wstring note; // one-off message for pubg-board.log, taken by the main thread
     // For an offline benchmark: the full-resolution green channel (what the matcher reads) as an 8-bit gray BMP and a .txt with
     // this frame's state, in %LOCALAPPDATA%\ModeSwitch\pubg-map\<kind>-NN. Fixed slots, the oldest one overwritten.
+    // Off unless HKCUSoftwareModeSwitch PubgMapDumps=1: writing a full-size frame every 2 s while the map is open cost disk
+    // and CPU during play once the diagnosis was done (2.16.13 left it on).
+    static bool dumpFrames(){static const bool on=[]{DWORD v=0,n=sizeof(v);return RegGetValueW(HKEY_CURRENT_USER,L"Software\\ModeSwitch",L"PubgMapDumps",RRF_RT_REG_DWORD,nullptr,&v,&n)==ERROR_SUCCESS&&v!=0;}();return on;}
     static std::wstring keepFrame(const mapfit::Gray& full,const wchar_t* kind,int slots,const std::string& info){wchar_t local[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local))){return L"";}
         std::wstring dir=std::wstring(local)+L"\\ModeSwitch\\pubg-map\\";CreateDirectoryW(dir.c_str(),nullptr);int best=0;ULONGLONG oldest=~0ull;wchar_t n[64];
         for(int i=0;i<slots;i++){swprintf(n,64,L"%ls-%02d.bmp",kind,i);WIN32_FILE_ATTRIBUTE_DATA a;ULONGLONG t=0;if(GetFileAttributesExW((dir+n).c_str(),GetFileExInfoStandard,&a)){t=(ULONGLONG(a.ftLastWriteTime.dwHighDateTime)<<32)|a.ftLastWriteTime.dwLowDateTime;}if(t<oldest){oldest=t;best=i;}}
@@ -202,7 +210,7 @@ class MapCapture {
                 // frames at most every 2 s (24 kept), good ones every 20 s (6 kept, to check a fix does not break them).
                 {ULONGLONG t=GetTickCount64();bool weak=fit.ok&&fit.score<0.65,bad=g.ok&&(!fit.ok||weak);
                  {std::lock_guard<std::mutex> l(mutex);if(!g.ok){state.nNoGrid++;}else if(!fit.ok){state.nFail++;}else if(weak){state.nWeak++;}else{state.nOk++;}}
-                 if(g.ok&&t-startAt>400&&((bad&&t-dumpAt>2000)||(!bad&&t-okDumpAt>20000))){(bad?dumpAt:okDumpAt)=t;char info[1024];
+                 if(dumpFrames()&&g.ok&&t-startAt>400&&((bad&&t-dumpAt>2000)||(!bad&&t-okDumpAt>20000))){(bad?dumpAt:okDumpAt)=t;char info[1024];
                      snprintf(info,sizeof(info),"f %d\nknown %d\nfit %d %d %.3f %.3f %.3f %.4f\ngrid %d %.3f %.3f %.3f\ncoarse %d %.3f %.3f %.3f\ncursor %ld %ld\ngood %d %d %.3f %.3f %.3f %llu\ngoodCursor %ld %ld\nlast %d %d %.3f %.3f %.3f\n",
                          f,known,fit.ok,fit.map,fit.ox,fit.oy,fit.S,fit.score,g.ok,g.d,g.px,g.py,coarse.ok,coarse.d,coarse.px,coarse.py,cursor.x,cursor.y,good.ok,good.map,good.ox,good.oy,good.S,(unsigned long long)(t-goodAt),goodCursor.x,goodCursor.y,last.ok,last.map,last.ox,last.oy,last.S);
                      std::wstring name=keepFrame(full,bad?L"fail":L"ok",bad?24:6,info);
@@ -235,6 +243,7 @@ public:
 struct MapOverlay {
     HWND window=nullptr;std::vector<unsigned char> pixels;int w=0,h=0;POINT base={0,0};HBITMAP dib=nullptr;HDC dibDC=nullptr;void* dibBits=nullptr;int dibW=0,dibH=0; // dib kept between redraws
     struct Aware {using Set=HANDLE(WINAPI*)(HANDLE);Set set=nullptr;HANDLE old=nullptr;
+        dpi::Raw raw_; // physical pixels here: not scaled by dpi.h
         Aware(){FARPROC p=GetProcAddress(GetModuleHandleW(L"user32.dll"),"SetThreadDpiAwarenessContext");memcpy(&set,&p,sizeof(set));if(set)old=set((HANDLE)-4);}
         ~Aware(){if(set&&old)set(old);}};
     static LRESULT CALLBACK proc(HWND h,UINT m,WPARAM w,LPARAM l){if(m==WM_NCHITTEST){return HTTRANSPARENT;}return DefWindowProcW(h,m,w,l);}
@@ -269,29 +278,34 @@ struct MapOverlay {
         for(int yy=0;yy<sh;yy++)for(int xx=0;xx<sw;xx++){double d=std::hypot(xx+0.5-cx,yy+0.5-cy);size_t i=size_t(yy)*sw+xx;
             fill[i]=(unsigned char)(255*std::clamp(r-d+0.5,0.0,1.0));outline[i]=(unsigned char)(255*std::clamp(r+2-d+0.5,0.0,1.0));}
         stamp(x-sw/2,y-sh/2,sw,sh,outline,fill,c);}
-    // Side-view vehicle pictogram centred on x,y, height r*2, drawn at alpha (0..1) so the map shows through:
-    // car = rounded body + cabin on two wheels (a thin gap around each wheel), boat = hull with a raked bow + windshield.
-    // Shapes in units of the icon height (width 1.8), 4x4 samples per pixel, thin black rim.
-    static bool roundRect(double u,double v,double x0,double y0,double x1,double y1,double rad){double cx=std::clamp(u,x0+rad,x1-rad),cy=std::clamp(v,y0+rad,y1-rad);return u>=x0&&u<=x1&&v>=y0&&v<=y1&&std::hypot(u-cx,v-cy)<=rad;}
-    static bool carCabin(double u,double v){if(v<0.14||v>0.46)return false;double t=(0.46-v)/0.32;return roundRect(u,v,0.40+t*0.22,0.14,1.30-t*0.26,0.50,0.08);}
-    static bool carBody(double u,double v){
-        bool wheel=std::hypot(u-0.44,v-0.78)<0.17||std::hypot(u-1.36,v-0.78)<0.17,gap=std::hypot(u-0.44,v-0.78)<0.23||std::hypot(u-1.36,v-0.78)<0.23;
-        if(wheel){return true;}if(gap){return false;}return roundRect(u,v,0.04,0.42,1.76,0.76,0.12)||carCabin(u,v);}
-    static bool boatBody(double u,double v){
-        if(v>=0.52&&v<=0.84){double t=(v-0.52)/0.32;if(u>=0.10+t*0.12&&u<=1.76-t*0.40)return true;}
-        if(v>=0.26&&v<0.52){double t=(0.52-v)/0.26;return u>=0.62&&u<=1.12-t*0.26;}return false;}
-    void vehicle(int x,int y,int r,COLORREF c,bool car,double alpha){int ih=r*2,iw=(int)std::lround(ih*1.8),pad=3,sw=iw+pad*2,sh=ih+pad*2;
-        std::vector<unsigned char> body(size_t(sw)*sh),outline(size_t(sw)*sh),fill(size_t(sw)*sh);
-        for(int yy=0;yy<sh;yy++)for(int xx=0;xx<sw;xx++){int f=0;for(int sy=0;sy<4;sy++)for(int sx=0;sx<4;sx++){double u=(xx-pad+(sx+0.5)/4)/ih,v=(yy-pad+(sy+0.5)/4)/ih;f+=car?carBody(u,v):boatBody(u,v);}
-            body[size_t(yy)*sw+xx]=(unsigned char)(255*f/16);}
-        int grow=std::max(1,r/6); // black rim width
-        for(int yy=0;yy<sh;yy++)for(int xx=0;xx<sw;xx++){int m=0;for(int dy=-grow;dy<=grow;dy++)for(int dx=-grow;dx<=grow;dx++){int ty=yy+dy,tx=xx+dx;if(ty<0||tx<0||ty>=sh||tx>=sw||dx*dx+dy*dy>grow*grow+1){continue;}m=std::max<int>(m,body[size_t(ty)*sw+tx]);}
-            size_t i=size_t(yy)*sw+xx;outline[i]=(unsigned char)(m*alpha*0.8);fill[i]=(unsigned char)(body[i]*alpha);}
-        stamp(x-sw/2,y-sh/2,sw,sh,outline,fill,c);}
+    // The car and the boat are the Windows icon font's own glyphs (Car side view E811, Ferry E7E3; Segoe Fluent Icons on Windows 11,
+    // Segoe MDL2 Assets before), the same set as BlueAsh's sidebar icons. Rendered once per size into a coverage mask.
+    static const std::vector<unsigned char>& glyphMask(int s,bool car){
+        static std::map<std::pair<int,bool>,std::vector<unsigned char>> cache;auto key=std::make_pair(s,car);auto hit=cache.find(key);if(hit!=cache.end()){return hit->second;}
+        if(cache.size()>32){cache.clear();}std::vector<unsigned char> mask(size_t(s)*s);
+        wchar_t windir[MAX_PATH]={};GetWindowsDirectoryW(windir,MAX_PATH);bool fluent=GetFileAttributesW((std::wstring(windir)+L"\\Fonts\\SegoeIcons.ttf").c_str())!=INVALID_FILE_ATTRIBUTES;
+        BITMAPINFO bi={};bi.bmiHeader.biSize=sizeof(bi.bmiHeader);bi.bmiHeader.biWidth=s;bi.bmiHeader.biHeight=-s;bi.bmiHeader.biPlanes=1;bi.bmiHeader.biBitCount=32;
+        HDC dc=CreateCompatibleDC(nullptr);void* bits=nullptr;HBITMAP bmp=CreateDIBSection(dc,&bi,DIB_RGB_COLORS,&bits,nullptr,0);
+        if(dc&&bmp){HGDIOBJ ob=SelectObject(dc,bmp);HFONT f=CreateFontW(-(int)std::lround(s*(car?0.58:0.54)),0,0,0,FW_NORMAL,0,0,0,DEFAULT_CHARSET,0,0,ANTIALIASED_QUALITY,0,fluent?L"Segoe Fluent Icons":L"Segoe MDL2 Assets");
+            HGDIOBJ of=SelectObject(dc,f);SetBkMode(dc,TRANSPARENT);SetTextColor(dc,RGB(255,255,255));memset(bits,0,size_t(s)*s*4);RECT all={0,0,s,s};wchar_t g[2]={wchar_t(car?0xE811:0xE7E3),0};
+            DrawTextW(dc,g,1,&all,DT_CENTER|DT_VCENTER|DT_SINGLELINE|DT_NOPREFIX);GdiFlush();const unsigned char* px=(const unsigned char*)bits;
+            for(size_t i=0;i<mask.size();i++){mask[i]=std::max(px[i*4],std::max(px[i*4+1],px[i*4+2]));}SelectObject(dc,of);DeleteObject(f);SelectObject(dc,ob);}
+        if(bmp){DeleteObject(bmp);}if(dc){DeleteDC(dc);}return cache[key]=mask;}
+    // A round badge in BlueAsh's own look: deep navy disc with a hairline dark edge, a thin ring in the accent colour and the
+    // car / boat glyph in the accent colour inside (radius R = 2.4 r). Premultiplied layers, 4x4 samples per pixel.
+    void vehicle(int x,int y,int r,COLORREF c,bool car,double alpha){double R=r*2.4,ring=std::max(1.5,R*0.12);int s=(int)std::ceil(R)*2+6;double cx=s/2.0,cy=s/2.0;
+        size_t n=size_t(s)*s;std::vector<unsigned char> none(n),disc(n),edge(n),band(n),glyph(n);const auto& mask=glyphMask(s,car);
+        for(int yy=0;yy<s;yy++)for(int xx=0;xx<s;xx++){int fd=0,fe=0,fb=0;
+            for(int sy=0;sy<4;sy++)for(int sx=0;sx<4;sx++){double px=xx+(sx+0.5)/4,py=yy+(sy+0.5)/4,d=std::hypot(px-cx,py-cy);fd+=d<=R;fe+=d<=R+1.2;fb+=d<=R&&d>=R-ring;}
+            size_t i=size_t(yy)*s+xx;disc[i]=(unsigned char)(255*fd/16*alpha*0.9);edge[i]=(unsigned char)(255*fe/16*alpha*0.55);band[i]=(unsigned char)(255*fb/16*alpha);glyph[i]=(unsigned char)(mask[i]*alpha);}
+        int x0=x-s/2,y0=y-s/2;stamp(x0,y0,s,s,edge,disc,RGB(13,22,44));stamp(x0,y0,s,s,none,band,c);stamp(x0,y0,s,s,none,glyph,c);}
     // ox,oy,S in captured-frame pixels (frame = client area for a borderless window).
     void draw(HWND game,const std::vector<pubgmap::Label>& labels,double ox,double oy,double S,int frameW,int frameH,const std::wstring& mapName,bool all=true){
         if(!ensure()){return;}Aware a;RECT rc={};if(!GetClientRect(game,&rc)){return;}POINT org={0,0};ClientToScreen(game,&org);int cw=rc.right,ch=rc.bottom;if(cw<100||ch<100){return;}
-        render(cw,ch,all?labels:std::vector<pubgmap::Label>{},ox,oy,S,double(cw)/std::max(1,frameW),double(ch)/std::max(1,frameH),mapName+(all?i18n::text(L" · L: 표시 끄기"):i18n::text(L" · 표시 꺼짐 (L: 켜기)")));HDC screen=GetDC(nullptr);
+        // Only the kinds turned on in 지도 표시 settings (pubgMapKinds: 1 cars, 2 boats, 4 secret rooms).
+        std::vector<pubgmap::Label> kept;if(all){for(auto& l:labels){if((l.kind==4&&!(pubgMapKinds&1))||(l.kind==3&&!(pubgMapKinds&2))||(l.kind==2&&!(pubgMapKinds&4))){continue;}kept.push_back(l);}}
+        wchar_t hint[160];swprintf(hint,160,all?i18n::text(L" · %ls: 표시 끄기"):i18n::text(L" · 표시 꺼짐 (%ls: 켜기)"),keyName(pubgMapKey).c_str());
+        render(cw,ch,kept,ox,oy,S,double(cw)/std::max(1,frameW),double(ch)/std::max(1,frameH),mapName+hint);HDC screen=GetDC(nullptr);
         BLENDFUNCTION bf={AC_SRC_OVER,0,255,AC_SRC_ALPHA};
         if(!dib||dibW!=w||dibH!=h){if(dibDC)DeleteDC(dibDC);if(dib)DeleteObject(dib);BITMAPINFO bi={};bi.bmiHeader.biSize=sizeof(bi.bmiHeader);bi.bmiHeader.biWidth=w;bi.bmiHeader.biHeight=-h;bi.bmiHeader.biPlanes=1;bi.bmiHeader.biBitCount=32;
             dib=CreateDIBSection(screen,&bi,DIB_RGB_COLORS,&dibBits,nullptr,0);dibDC=dib?CreateCompatibleDC(screen):nullptr;if(dibDC)SelectObject(dibDC,dib);dibW=w;dibH=h;}
@@ -310,8 +324,8 @@ struct MapOverlay {
         for(auto& l:labels){int x=(int)std::lround((ox+l.u*S)*sx),y=(int)std::lround((oy+l.v*S)*sy);if(x<-50||y<-50||x>w+50||y>h+50){continue;}
             if(l.kind==0)label(screen,l.name,place,x,y,RGB(255,236,150));
             else if(l.kind==1)label(screen,l.name,callout,x,y,RGB(70,240,225));
-            else if(l.kind==3)vehicle(x,y,icon,RGB(255,220,40),false,0.82); // boat: yellow
-            else if(l.kind==4)vehicle(x,y,icon,RGB(255,140,30),true,0.82); // car: orange
+            else if(l.kind==3)vehicle(x,y,icon,RGB(255,206,84),false,0.95); // boat: gold
+            else if(l.kind==4)vehicle(x,y,icon,RGB(255,146,64),true,0.95); // car: orange
             else label(screen,mapPx>=h*1.5?l.name:L"",secretText,x,y,RGB(200,110,255),ring);} // secret room: purple
         label(screen,L"BlueAsh · "+mapName,int(13*k),int(150*k),h-int(20*k),RGB(200,200,200));ReleaseDC(nullptr,screen);
     }
@@ -322,7 +336,9 @@ struct PubgMapWatch {
     MapCapture capture;MapOverlay overlay;bool loaded=false,open=false,timer=false,shown=false,visible=true,toggleDown=true;double drawn[5]={-1,0,0,0,1};std::vector<pubgmap::Key> keys;std::vector<bool> down;bool escDown=false,tabDown=false;
     std::vector<mapfit::Gray> refs,hiRefs;std::vector<int> cells;std::vector<std::vector<pubgmap::Label>> labels;int known=-1;unsigned seenSeq=0;ULONGLONG nextCheck=0,openedAt=0,openStart=0;DWORD pid=0;HWND game=nullptr;
     ULONGLONG matchSeen=0;
-    void load(){pubgMapOn=regString(configPath,L"PubgMapLabels")!=L"0";visible=regString(configPath,L"PubgMapVisible")!=L"0";}
+    void load(){pubgMapOn=regString(configPath,L"PubgMapLabels")!=L"0";visible=regString(configPath,L"PubgMapVisible")!=L"0";
+        pubgMapKinds=(regString(configPath,L"PubgMapCars")!=L"0"?1:0)|(regString(configPath,L"PubgMapBoats")!=L"0"?2:0)|(regString(configPath,L"PubgMapSecrets")!=L"0"?4:0);
+        unsigned k=(unsigned)wcstoul(regString(configPath,L"PubgMapToggleKey").c_str(),nullptr,10);pubgMapKey=k>=8&&k<=0xFE?k:'L';}
     void toggleSetting(){pubgMapOn=!pubgMapOn;saveString(configPath,L"PubgMapLabels",pubgMapOn?L"1":L"0");if(!pubgMapOn){close(L"turned off");}}
     // The reference maps come with the data pack (datapack.h): until it has arrived, try again every 30 s.
     ULONGLONG retryAt=0;
@@ -357,15 +373,15 @@ struct PubgMapWatch {
         // Tab only when it is not itself a map key.
         bool esc=pressed(VK_ESCAPE),tab=pressed(VK_TAB)&&!alt&&std::none_of(keys.begin(),keys.end(),[](const pubgmap::Key& k){return k.vk==VK_TAB;});
         bool closing=open&&((esc&&!escDown)||(tab&&!tabDown));escDown=esc;tabDown=tab;if(closing){close(esc?L"Esc":L"Tab");return;}
-        // L (not bound in PUBG): show/hide the labels while the map is open.
-        bool tg=pressed('L')&&!ctrl&&!alt&&!shift;if(tg&&!toggleDown&&open){visible=!visible;saveString(configPath,L"PubgMapVisible",visible?L"1":L"0");shown=false;seenSeq=0;}toggleDown=tg;
+        // The label key (L by default, not bound in PUBG; 지도 표시 settings): show/hide the labels while the map is open.
+        bool tg=pressed((int)pubgMapKey)&&!ctrl&&!alt&&!shift;if(tg&&!toggleDown&&open){visible=!visible;saveString(configPath,L"PubgMapVisible",visible?L"1":L"0");shown=false;seenSeq=0;}toggleDown=tg;
         if(!open){return;}
         auto s=capture.read();ULONGLONG now=GetTickCount64();{auto n=capture.takeNote();if(!n.empty()){pubgNote(n);}}{auto n=pubgHires.takeNote();if(!n.empty()){pubgNote(n);}}
         if(known>=0){pubgHires.want(known);capture.setUltra(known,pubgHires.of(known));}
         if(s.seq!=seenSeq||!shown){seenSeq=s.seq;
             if(s.ok&&s.map>=0&&s.map<(int)labels.size()){if(known!=s.map){known=s.map;pubgNote(std::wstring(i18n::text(L"지도 인식: "))+pubgmap::maps[s.map].korean+i18n::text(L" (일치 ")+std::to_wstring(int(s.score*100))+L"%)");}
                 // Same placement as on screen: nothing to redraw (a 4K redraw costs the main thread tens of ms).
-                double now4[5]={double(s.map),s.ox,s.oy,s.S,visible?1.0:0.0};if(!shown||now4[0]!=drawn[0]||std::fabs(now4[1]-drawn[1])>0.5||std::fabs(now4[2]-drawn[2])>0.5||std::fabs(now4[3]-drawn[3])>0.5||now4[4]!=drawn[4]){
+                double now4[5]={double(s.map),s.ox,s.oy,s.S,visible?1.0+pubgMapKinds+pubgMapKey*8.0:0.0};if(!shown||now4[0]!=drawn[0]||std::fabs(now4[1]-drawn[1])>0.5||std::fabs(now4[2]-drawn[2])>0.5||std::fabs(now4[3]-drawn[3])>0.5||now4[4]!=drawn[4]){
                     overlay.draw(game,labels[s.map],s.ox,s.oy,s.S,s.w,s.h,pubgmap::maps[s.map].korean,visible);std::copy(now4,now4+5,drawn);shown=true;}}
             // A frame that did not match while the map moves is not the map closing: keep the labels 0.4 s.
             else if(shown&&(!s.grid||now-s.lastOk>400)){overlay.hide();shown=false;}}

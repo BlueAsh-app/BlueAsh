@@ -17,27 +17,61 @@ inline void initialize(){
  logo=Gdiplus::Bitmap::FromStream(logoStream);if(!logo||logo->GetLastStatus()!=Gdiplus::Ok){delete logo;logo=nullptr;logoStream->Release();logoStream=nullptr;}
 }
 inline void shutdown(){delete logo;logo=nullptr;if(logoStream){logoStream->Release();logoStream=nullptr;}if(token){Gdiplus::GdiplusShutdown(token);token=0;}}
+// A window bigger than the 1160 x 780 design: while a page or the main window's content paints, its design coordinates
+// are mapped. The extra width and height go into a few splits that each screen picks in its gaps (ex / ey shared out):
+// everything between two splits keeps its exact spacing, and what crosses a split stretches (panels, wide controls).
+// Icons, dots and pictures keep their size; text keeps its height. Off for everything else (buttons draw in their own
+// coordinates; the graphics page lays itself out).
+struct Stretch {bool on=false;int ex=0,ey=0,nx=0,ny=0,xs[4]={},ys[4]={};
+ void set(std::initializer_list<int> sx,std::initializer_list<int> sy,int extraX,int extraY){nx=ny=0;for(int v:sx){if(nx<4)xs[nx++]=v;}for(int v:sy){if(ny<4)ys[ny++]=v;}ex=nx?std::max(0,extraX):0;ey=ny?std::max(0,extraY):0;}
+ static int share(int i,int n,int e){return e/n+(i==n-1?e%n:0);}
+ static int map(int v,const int* s,int n,int e){int a=0;for(int i=0;i<n;i++){if(v>s[i])a+=share(i,n,e);}return v+a;}
+ static int unmap(int v,const int* s,int n,int e){int a=0;for(int i=0;i<n;i++){int at=s[i]+a,w=share(i,n,e);if(v>at+w){a+=w;}else if(v>at){return s[i];}}return v-a;}
+ int x(int v)const{return map(v,xs,nx,ex);} int y(int v)const{return map(v,ys,ny,ey);}
+ int unx(int v)const{return unmap(v,xs,nx,ex);} int uny(int v)const{return unmap(v,ys,ny,ey);}
+ RECT box(RECT r)const{return {x(r.left),y(r.top),x(r.right),y(r.bottom)};}
+ RECT keep(RECT r)const{int w=r.right-r.left,h=r.bottom-r.top,cx=x((r.left+r.right)/2),cy=y((r.top+r.bottom)/2);return {cx-w/2,cy-h/2,cx-w/2+w,cy-h/2+h};}
+ RECT wide(RECT r)const{int h=r.bottom-r.top,cy=y((r.top+r.bottom)/2);return {x(r.left),cy-h/2,x(r.right),cy-h/2+h};}
+ // A child control: small ones (icons, switches, "?") keep their width, short ones their height.
+ // left: a small one keeps its left edge instead of its centre (a page's buttons stay beside their left neighbour).
+ RECT child(RECT r,int keepBelow=100,bool left=false)const{RECT c=r.right-r.left<keepBelow?keep(r):wide(r);if(left&&r.right-r.left<keepBelow){OffsetRect(&c,x(r.left)-c.left,0);}if(r.bottom-r.top>=100){c.top=y(r.top);c.bottom=y(r.bottom);}return c;}
+ bool idle()const{return !ex&&!ey;}};
+inline Stretch stretch;
+// A 1 px divider: it moves and lengthens with the stretch but stays 1 px thick.
+inline void hairline(HDC dc,RECT r,HBRUSH b){if(stretch.on){if(r.bottom-r.top<=2){r=stretch.wide(r);}else{int w=r.right-r.left,cx=stretch.x(r.left);r={cx,stretch.y(r.top),cx+w,stretch.y(r.bottom)};}}FillRect(dc,&r,b);}
+// Maps once at the outermost call: a drawing helper that calls another must not map twice.
+struct StretchOff {bool was;StretchOff():was(stretch.on){stretch.on=false;}~StretchOff(){stretch.on=was;}};
 inline void path(Gdiplus::GraphicsPath& p,RECT r,int diameter){
  float x=(float)r.left+.5f,y=(float)r.top+.5f,w=(float)(r.right-r.left)-1,h=(float)(r.bottom-r.top)-1,d=(float)std::min(diameter,(int)std::min(w,h));
  if(d<=1){p.AddRectangle(Gdiplus::RectF(x,y,w,h));return;}p.AddArc(x,y,d,d,180,90);p.AddArc(x+w-d,y,d,d,270,90);p.AddArc(x+w-d,y+h-d,d,d,0,90);p.AddArc(x,y+h-d,d,d,90,90);p.CloseFigure();
 }
-inline bool box(HDC dc,RECT r,COLORREF fill,COLORREF edge,int diameter){
- if(!token){return false;}Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
- Gdiplus::GraphicsPath p;path(p,r,diameter);Gdiplus::SolidBrush b(color(fill));g.FillPath(&b,&p);if(edge!=fill){Gdiplus::Pen pen(color(edge),1.f);g.DrawPath(&pen,&p);}return true;
+inline bool box(HDC dc,RECT r,COLORREF fill,COLORREF edge,int diameter){if(stretch.on){r=stretch.box(r);}StretchOff off_;
+ if(!token){return false;}
+ // A big box (a whole page panel): the plain middle is a GDI fill and GDI+ only draws the band along the edges - its
+ // anti-aliased fill costs about 23 ns a pixel, 70 ms for a full-screen panel.
+ // Each band is its own clip rectangle: GDI+ works over the clip's bounding box, so one clip with a hole saved nothing.
+ auto draw=[&](){Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
+  Gdiplus::GraphicsPath p;path(p,r,diameter);Gdiplus::SolidBrush b(color(fill));g.FillPath(&b,&p);if(edge!=fill){Gdiplus::Pen pen(color(edge),1.f);g.DrawPath(&pen,&p);}};
+ int c=std::max(diameter,0)/2+3;RECT in={r.left+c,r.top+c,r.right-c,r.bottom-c};
+ if(in.right<=in.left||in.bottom<=in.top||(in.right-in.left)*(long long)(in.bottom-in.top)<20000){draw();return true;}
+ HBRUSH fb=CreateSolidBrush(fill);FillRect(dc,&in,fb);DeleteObject(fb);
+ for(RECT band:{RECT{r.left,r.top,r.right,in.top},RECT{r.left,in.bottom,r.right,r.bottom},RECT{r.left,in.top,in.left,in.bottom},RECT{in.right,in.top,r.right,in.bottom}}){
+  int saved=SaveDC(dc);IntersectClipRect(dc,band.left,band.top,band.right,band.bottom);RECT box={};if(GetClipBox(dc,&box)!=NULLREGION){draw();}RestoreDC(dc,saved);}
+ return true;
 }
-inline bool card(HDC dc,RECT r,COLORREF fill,COLORREF edge,bool selected){
+inline bool card(HDC dc,RECT r,COLORREF fill,COLORREF edge,bool selected){if(stretch.on){r=stretch.box(r);}StretchOff off_;
  if(!token){return false;}Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
  Gdiplus::GraphicsPath p;path(p,r,24);auto top=Gdiplus::Color(255,(BYTE)std::min(255,(int)GetRValue(fill)+7),(BYTE)std::min(255,(int)GetGValue(fill)+7),(BYTE)std::min(255,(int)GetBValue(fill)+9));
  Gdiplus::LinearGradientBrush b(Gdiplus::Point(r.left,r.top),Gdiplus::Point(r.left,r.bottom),top,color(fill));g.FillPath(&b,&p);Gdiplus::Pen pen(color(edge),selected?1.8f:1.f);g.DrawPath(&pen,&p);return true;
 }
-inline void outline(HDC dc,RECT r,COLORREF edge,int diameter){
+inline void outline(HDC dc,RECT r,COLORREF edge,int diameter){if(stretch.on){r=stretch.box(r);}StretchOff off_;
  if(!token){return;}Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);Gdiplus::GraphicsPath p;path(p,r,diameter);Gdiplus::Pen pen(color(edge),1.5f);g.DrawPath(&pen,&p);
 }
-inline bool circle(HDC dc,RECT r,COLORREF fill,COLORREF edge,float width=1.f){
+inline bool circle(HDC dc,RECT r,COLORREF fill,COLORREF edge,float width=1.f){if(stretch.on){r=stretch.keep(r);}StretchOff off_;
  if(!token){return false;}Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);Gdiplus::RectF area((float)r.left+.5f,(float)r.top+.5f,(float)(r.right-r.left)-1,(float)(r.bottom-r.top)-1);
  if(fill!=CLR_NONE){Gdiplus::SolidBrush b(color(fill));g.FillEllipse(&b,area);}if(edge!=CLR_NONE){Gdiplus::Pen p(color(edge),width);g.DrawEllipse(&p,area);}return true;
 }
-inline void bug(HDC dc,RECT r,COLORREF ink){
+inline void bug(HDC dc,RECT r,COLORREF ink){if(stretch.on){r=stretch.keep(r);}StretchOff off_;
  if(token){Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);g.TranslateTransform((float)r.left,(float)r.top);g.ScaleTransform((float)(r.right-r.left)/24,(float)(r.bottom-r.top)/24);Gdiplus::Pen p(color(ink),1.7f);p.SetStartCap(Gdiplus::LineCapRound);p.SetEndCap(Gdiplus::LineCapRound);
   g.DrawEllipse(&p,7.f,8.f,10.f,13.f);g.DrawArc(&p,8.5f,4.f,7.f,7.f,180.f,180.f);g.DrawLine(&p,10.f,4.5f,8.f,2.f);g.DrawLine(&p,14.f,4.5f,16.f,2.f);g.DrawLine(&p,12.f,12.f,12.f,21.f);
   for(int i=0;i<3;i++){float y=10.f+4.f*i,end=8.f+6.f*i;g.DrawLine(&p,7.f,y,3.f,end);g.DrawLine(&p,17.f,y,21.f,end);}return;
@@ -47,7 +81,7 @@ inline void bug(HDC dc,RECT r,COLORREF ink){
 }
 // Take-away coffee cup (sidebar 커피 한 잔 후원), the bug icon's pen on the same 24 x 24 grid: a domed lid on a wide rim, a cup
 // that narrows to the bottom and a solid sleeve band (lines alone read as a bin), with two wisps of steam above.
-inline void coffee(HDC dc,RECT r,COLORREF ink){
+inline void coffee(HDC dc,RECT r,COLORREF ink){if(stretch.on){r=stretch.keep(r);}StretchOff off_;
  if(!token){return;}Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);g.TranslateTransform((float)r.left,(float)r.top);g.ScaleTransform((float)(r.right-r.left)/24,(float)(r.bottom-r.top)/24);
  Gdiplus::Pen p(color(ink),1.6f);p.SetStartCap(Gdiplus::LineCapRound);p.SetEndCap(Gdiplus::LineCapRound);p.SetLineJoin(Gdiplus::LineJoinRound);Gdiplus::SolidBrush fill(color(ink));
  auto side=[](float y){return 6.6f+(y-9.f)*2.0f/12.f;}; // the cup's left edge at height y (9 = under the rim, 21 = bottom)
@@ -59,7 +93,7 @@ inline void coffee(HDC dc,RECT r,COLORREF ink){
  for(float x:{10.f,14.f})g.DrawBezier(&thin,x,3.4f,x-1.f,2.4f,x+1.f,1.6f,x,0.6f);
 }
 // A soft light behind an icon: the colour fades from the middle to nothing at the edge of r.
-inline void glow(HDC dc,RECT r,COLORREF c,BYTE strength){
+inline void glow(HDC dc,RECT r,COLORREF c,BYTE strength){if(stretch.on){r=stretch.box(r);}StretchOff off_;
  // Drawn in memory and copied (see art(): gradient brushes straight onto a captured window's DC are not safe).
  int w=r.right-r.left,h=r.bottom-r.top;if(!token||w<2||h<2){return;}Gdiplus::Bitmap light(w,h,PixelFormat32bppPARGB);
  {Gdiplus::Graphics o(&light);o.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);o.Clear(Gdiplus::Color(0,0,0,0));Gdiplus::GraphicsPath p;p.AddEllipse(0.f,0.f,(float)w,(float)h);
@@ -90,7 +124,7 @@ inline void iconGlow(HDC dc,RECT r,COLORREF c,int blur,double gain,const std::fu
 // Mode-card icons, drawn with the same pen so the pair matches: a soft controller (curves only, like an iOS symbol)
 // and headphones. Both fit r and use colour c and line width stroke.
 inline void roundCaps(Gdiplus::Pen& pen){pen.SetLineJoin(Gdiplus::LineJoinRound);pen.SetStartCap(Gdiplus::LineCapRound);pen.SetEndCap(Gdiplus::LineCapRound);}
-inline bool gamepad(HDC dc,RECT r,COLORREF c,float stroke){
+inline bool gamepad(HDC dc,RECT r,COLORREF c,float stroke){if(stretch.on){r=stretch.keep(r);}StretchOff off_;
  if(!token){return false;}const float k=.76f;float W=(float)(r.right-r.left)-stroke,H=(float)(r.bottom-r.top)-stroke,w=std::min(W,H/k),h=w*k,x0=r.left+((float)(r.right-r.left)-w)/2,y0=r.top+((float)(r.bottom-r.top)-h)/2;
  auto P=[&](float x,float y){return Gdiplus::PointF(x0+x*w,y0+y*h);};Gdiplus::GraphicsPath b;
  // Right half from the top centre, then the mirror image back up the left: every joint is a smooth curve.
@@ -104,7 +138,7 @@ inline bool gamepad(HDC dc,RECT r,COLORREF c,float stroke){
  for(auto e:{Gdiplus::PointF(q.X+o,q.Y),Gdiplus::PointF(q.X-o,q.Y),Gdiplus::PointF(q.X,q.Y-o),Gdiplus::PointF(q.X,q.Y+o)})g.FillEllipse(&fill,e.X-dot,e.Y-dot,dot*2,dot*2);
  return true;
 }
-inline bool headphones(HDC dc,RECT r,COLORREF c,float stroke){
+inline bool headphones(HDC dc,RECT r,COLORREF c,float stroke){if(stretch.on){r=stretch.keep(r);}StretchOff off_;
  // Mirror-exact in floating point: the headband is a half circle whose ends run straight into the top of two pill
  // shaped ear cups centred on those ends (no part of the band shows inside a cup).
  if(!token){return false;}float s=std::min((float)(r.right-r.left),(float)(r.bottom-r.top))-stroke,cx=(r.left+r.right)/2.f,cy=(r.top+r.bottom)/2.f;
@@ -117,7 +151,7 @@ inline bool headphones(HDC dc,RECT r,COLORREF c,float stroke){
 }
 // An exclamation mark drawn as shapes (a rounded bar and a dot) centred in r: the update badge's "!". Not text, because
 // GDI+ cannot see the UI font (Pretendard is loaded privately for GDI only), so a text "!" came out empty.
-inline bool exclaim(HDC dc,RECT r,COLORREF c){
+inline bool exclaim(HDC dc,RECT r,COLORREF c){if(stretch.on){r=stretch.keep(r);}StretchOff off_;
  if(!token){return false;}float cx=(r.left+r.right)/2.f,cy=(r.top+r.bottom)/2.f,h=(float)(r.bottom-r.top),w=std::max(2.f,h*.13f);
  // Same pixel alignment as circle() (no pixel offset), so the mark sits in the exact middle of the disc drawn there.
  Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
@@ -126,7 +160,7 @@ inline bool exclaim(HDC dc,RECT r,COLORREF c){
 }
 // Game artwork (game tiles on the dashboard): a picture filling a rounded square, cropped to its centre (or the
 // given vertical anchor 0..1 for tall covers), antialiased edges through a texture brush.
-inline bool art(HDC dc,RECT r,Gdiplus::Bitmap* image,int diameter,float anchorY=.5f){
+inline bool art(HDC dc,RECT r,Gdiplus::Bitmap* image,int diameter,float anchorY=.5f){if(stretch.on){r=stretch.keep(r);}StretchOff off_;
  if(!token||!image){return false;}int w=r.right-r.left,h=r.bottom-r.top;double sw=image->GetWidth(),sh=image->GetHeight();if(sw<1||sh<1){return false;}
  double k=std::max(w/sw,h/sh);int dw=(int)(sw*k+.5),dh=(int)(sh*k+.5);Gdiplus::Bitmap tile(w,h,PixelFormat32bppPARGB);
  {Gdiplus::Graphics t(&tile);t.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);t.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);t.DrawImage(image,(w-dw)/2,(int)((h-dh)*anchorY),dw,dh);}
@@ -140,7 +174,7 @@ inline bool art(HDC dc,RECT r,Gdiplus::Bitmap* image,int diameter,float anchorY=
 // A dashboard mode card (2.21): a rounded navy card inset 6 px in r (the margin holds the glow). The chosen card gets a
 // cobalt wash from the left, a brighter edge and a soft outer glow; art (a game cover found on this PC) is blurred and
 // faded in from the right. Composed in memory, then copied (see art()).
-inline bool modeCard(HDC dc,RECT r,bool selected,bool hover,Gdiplus::Bitmap* image,float anchorY,COLORREF fill,COLORREF edge,COLORREF accent){
+inline bool modeCard(HDC dc,RECT r,bool selected,bool hover,Gdiplus::Bitmap* image,float anchorY,COLORREF fill,COLORREF edge,COLORREF accent){if(stretch.on){r=stretch.box(r);}StretchOff off_;
  int w=r.right-r.left,h=r.bottom-r.top;if(!token||w<40||h<40){return false;}Gdiplus::Bitmap out(w,h,PixelFormat32bppPARGB);
  {Gdiplus::Graphics g(&out);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);g.Clear(Gdiplus::Color(0,0,0,0));
   RECT c={6,6,w-6,h-6};Gdiplus::GraphicsPath p;path(p,c,22);
@@ -161,7 +195,7 @@ inline bool modeCard(HDC dc,RECT r,bool selected,bool hover,Gdiplus::Bitmap* ima
  Gdiplus::Graphics g(dc);return g.DrawImage(&out,r.left,r.top,w,h)==Gdiplus::Ok;
 }
 // A heartbeat line (현재 상태 title), fitting r.
-inline bool pulse(HDC dc,RECT r,COLORREF c,float stroke){
+inline bool pulse(HDC dc,RECT r,COLORREF c,float stroke){if(stretch.on){r=stretch.keep(r);}StretchOff off_;
  if(!token){return false;}float x=(float)r.left,y=(r.top+r.bottom)/2.f,w=(float)(r.right-r.left),h=(float)(r.bottom-r.top)/2.f-stroke;
  Gdiplus::PointF pts[]={{x,y},{x+w*.28f,y},{x+w*.40f,y-h},{x+w*.56f,y+h},{x+w*.68f,y},{x+w,y}};
  Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);Gdiplus::Pen pen(color(c),stroke);roundCaps(pen);g.DrawLines(&pen,pts,6);return true;
@@ -175,6 +209,18 @@ inline Gdiplus::Bitmap* iconBitmap(HICON icon){
    if(out->LockBits(&all,Gdiplus::ImageLockModeWrite,PixelFormat32bppARGB,&d)==Gdiplus::Ok){for(int y=0;y<bm.bmHeight;y++)memcpy((BYTE*)d.Scan0+(size_t)y*d.Stride,px.data()+(size_t)y*bm.bmWidth*4,(size_t)bm.bmWidth*4);out->UnlockBits(&d);}else{delete out;out=nullptr;}}ReleaseDC(nullptr,dc);}
  if(ii.hbmColor){DeleteObject(ii.hbmColor);}if(ii.hbmMask){DeleteObject(ii.hbmMask);}return out;
 }
+// Skeleton (a loading placeholder instead of "불러오는 중…"): a rounded block in a quiet colour with a soft light band
+// sweeping left to right across the group [left, right] every 1.4 s, so the blocks of one placeholder shimmer together.
+// The caller repaints it about every 30 ms while it loads.
+inline void skeleton(HDC dc,RECT r,int diameter,int left,int right,COLORREF base,COLORREF light){if(stretch.on){r=stretch.box(r);left=stretch.x(left);right=stretch.x(right);}StretchOff off_;
+ if(!token){return;}Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
+ Gdiplus::GraphicsPath p;path(p,r,diameter);Gdiplus::SolidBrush b(color(base));g.FillPath(&b,&p);
+ const float band=200.f;float t=(float)(GetTickCount64()%1400)/1400.f,cx=left-band+(right-left+2*band)*t;g.SetClip(&p);
+ Gdiplus::LinearGradientBrush lb(Gdiplus::PointF(cx-band,0),Gdiplus::PointF(cx+band,0),Gdiplus::Color(0,0,0,0),Gdiplus::Color(0,0,0,0));
+ Gdiplus::Color cs[3]={Gdiplus::Color(0,GetRValue(light),GetGValue(light),GetBValue(light)),Gdiplus::Color(70,GetRValue(light),GetGValue(light),GetBValue(light)),Gdiplus::Color(0,GetRValue(light),GetGValue(light),GetBValue(light))};Gdiplus::REAL at[3]={0,.5f,1};lb.SetInterpolationColors(cs,at,3);
+ g.FillRectangle(&lb,cx-band,(float)r.top,2*band,(float)(r.bottom-r.top));}
+// Colour between a and b (t 0..1).
+inline COLORREF mixColor(COLORREF a,COLORREF b,double t){auto m=[t](int x,int y){return (int)std::lround(x+(y-x)*t);};return RGB(m(GetRValue(a),GetRValue(b)),m(GetGValue(a),GetGValue(b)),m(GetBValue(a),GetBValue(b)));}
 inline bool drawLogo(HDC dc,RECT r){
  if(!logo){return false;}Gdiplus::Graphics g(dc);g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);g.SetCompositingQuality(Gdiplus::CompositingQualityHighQuality);
  Gdiplus::ImageAttributes attributes;attributes.SetWrapMode(Gdiplus::WrapModeTileFlipXY);return g.DrawImage(logo,Gdiplus::Rect(r.left,r.top,r.right-r.left,r.bottom-r.top),0,0,logo->GetWidth(),logo->GetHeight(),Gdiplus::UnitPixel,&attributes)==Gdiplus::Ok;

@@ -12,7 +12,7 @@ struct Profile {
 inline unsigned channelGamma(const Profile& p,int c){return c==0?p.gamma:c==1?p.greenGamma:p.blueGamma;}
 inline void setGamma(Profile& p,int c,unsigned v){if(c==0)p.gamma=v;else if(c==1)p.greenGamma=v;else p.blueGamma=v;}
 inline void allGamma(Profile& p,unsigned v){p.gamma=p.greenGamma=p.blueGamma=v;}
-inline const wchar_t* profileName(int i){const wchar_t* n[]={L"일반",L"공통 게임",L"배틀그라운드",L"타르코프"};return n[i];}
+inline const wchar_t* profileName(int i){const wchar_t* n[]={L"일반 모드",L"게임 모드",L"배틀그라운드",L"타르코프"};return n[i];}
 using Profiles=std::array<Profile,4>;
 inline Profiles defaults(){
     Profiles p{};allGamma(p[1],155);p[1].volume=10;

@@ -6,6 +6,7 @@
 // Then `npx wrangler deploy` in relay/; the minute cron translates what is missing. Pages are cached in %TEMP%\blueash-guides.
 // node source/quest-guides.mjs
 import fs from "fs";import path from "path";import crypto from "crypto";import { fileURLToPath } from "url";
+import { keyNeed } from "./quest-key-policy.mjs";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const out = path.join(root, "relay/public/quest-guide"), cache = path.join(process.env.TEMP || "/tmp", "blueash-guides");
 fs.mkdirSync(path.join(out, "src"), { recursive: true });fs.mkdirSync(cache, { recursive: true });
@@ -45,17 +46,8 @@ function glossary(ui, text) {
 }
 const clean = (h) => h.replace(/<br\s*\/?>/g, "\n").replace(/<[^>]+>/g, "").replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n)).replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16))).replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#039;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").replace(/[ \t]+/g, " ").trim();
 const sptEn = await (await fetch("https://raw.githubusercontent.com/sp-tarkov/server/master/project/assets/database/locales/global/en.json")).json(), tasksEn = en.tasks;
-const ids = [];let chars = 0;const keyMarks = {};
-// A key is required when a sentence naming it says so ("is required", "you need", "requires"), unless the page says it
-// is not needed, one of several keys will do, or there is another way in; a key the page never names is optional.
-function keyNeed(body, name) {
-  if (!name) return "optional";const low = body.toLowerCase();if (/only one of the keys|either (?:of the )?keys?|one of the (?:two |three )?keys/.test(low)) return "optional";
-  const n = name.toLowerCase(), sentences = low.split(/(?<=[.!?])\s+|\n/).filter((s) => s.includes(n));
-  if (!sentences.length) return "optional";
-  const no = /optional|not (?:be )?(?:required|needed|necessary)|isn't (?:required|needed)|without (?:the |a |its |using )?(?:key|it)|not requiring|no key|alternatively|or (?:you can|by|through)/;
-  const yes = /\b(?:is|are) (?:required|needed|necessary)\b|\brequires?\b|\bneed(?:s|ed)? (?:the|a|an|to)\b|\byou(?:'ll| will)? (?:need|must)\b|\bmust (?:have|use|unlock)\b/;
-  if (sentences.some((s) => no.test(s))) return "optional";return sentences.some((s) => yes.test(s)) ? "required" : "optional";
-}
+const ids = [], captionIds = [];let chars = 0;const keyMarks = {};
+// Classify only when the wiki supplies specific evidence; ambiguity stays "unknown".
 for (const t of tasks.sort((a, b) => (a.minPlayerLevel || 0) - (b.minPlayerLevel || 0))) {
   if (!t.wikiLink) continue;const file = path.join(cache, t.id + ".html");let html;
   if (fs.existsSync(file)) html = fs.readFileSync(file, "utf8");
@@ -78,13 +70,22 @@ for (const t of tasks.sort((a, b) => (a.minPlayerLevel || 0) - (b.minPlayerLevel
     const marks = {};for (const nk of t.neededKeys) for (const k of nk.keys || []) { const id = typeof k === "string" ? k : k.id;marks[id] = keyNeed(body, en.items[id + " Name"] || ""); }
     keyMarks[t.id] = marks; }
   const start = html.indexOf('id="Guide"');if (start < 0) continue;let end = html.indexOf("<h2", start);const nav = html.indexOf("navbox", start);if (end < 0 || (nav >= 0 && nav < end)) end = nav;if (end < 0) end = html.length;
-  const part = html.slice(start, end).replace(/<table.*?<\/table>|<ul class="gallery.*?<\/ul>/gs, "");const lines = [];
+  const section = html.slice(start, end), captions = [], seen = new Set();
+  for (const m of section.matchAll(/<a href="(https:\/\/static\.wikia\.nocookie\.net\/[^"]+)"[^>]*class="mw-file-description[^"]*"([^>]*)>\s*<img ([^>]*)>/g)) {
+    const width = m[3].match(/width="(\d+)"/);if (width && +width[1] < 120) continue;
+    const url = m[1].replace(/\/scale-to-width-down\/\d+/g, "");if (seen.has(url)) continue;seen.add(url);
+    const label = (m[2].match(/title="([^"]*)"/) || m[3].match(/alt="([^"]*)"/) || [," "])[1];
+    const caption = clean(label).replace(/\s+/g, " ");if (caption && !/\.(png|jpe?g|gif|webp)$/i.test(caption)) captions.push(caption);
+    if (seen.size >= 12) break;
+  }
+  if (captions.length) { write(t.id + "-c", captions.join("\n"));captionIds.push(ids.pop()); }
+  const part = section.replace(/<table.*?<\/table>|<ul class="gallery.*?<\/ul>/gs, "");const lines = [];
   for (const m of part.matchAll(/<(p|li)(?:\s[^>]*)?>(.*?)<\/\1>/gs)) { const x = clean(m[2]);if (x) lines.push((m[1] === "li" ? "• " : "") + x); }
   let text = lines.join("\n");if (text.length > 4000) text = text.slice(0, 4000).trimEnd() + "…";write(t.id, text);
 }
-fs.writeFileSync(path.join(out, "ids.json"), JSON.stringify(ids));
+ids.push(...captionIds);fs.writeFileSync(path.join(out, "ids.json"), JSON.stringify(ids));
 // {quest id: {key id: "required" | "optional"}} for the quest card's needed keys ("(optional)" beside a key).
-fs.writeFileSync(path.join(out, "keys.json"), JSON.stringify(keyMarks));
+fs.writeFileSync(path.join(out, "keys.json"), JSON.stringify({__policy:2,...keyMarks}));
 const kc = Object.values(keyMarks).flatMap((m) => Object.values(m));console.log("keys: required", kc.filter((x) => x === "required").length, "optional", kc.filter((x) => x === "optional").length);
 // Objective translations (source/guide-translate/objectives/<lang>.json, kept in git) are published with the guides.
 const objDir = path.join(root, "source/guide-translate/objectives");fs.mkdirSync(path.join(out, "objectives"), { recursive: true });

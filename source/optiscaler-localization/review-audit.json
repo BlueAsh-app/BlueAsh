@@ -1,0 +1,482 @@
+[
+  {
+    "lang": "ko",
+    "problem": "missing",
+    "source": "MFG totally works with Nukem's 100%% no scam"
+  },
+  {
+    "lang": "ko",
+    "problem": "missing",
+    "source": "Latency with FG? But I have good internet"
+  },
+  {
+    "lang": "ko",
+    "problem": "missing",
+    "source": "Who's Nukem anyway?"
+  },
+  {
+    "lang": "ko",
+    "problem": "missing",
+    "source": "Similar to preset K. Preset J might exhibit slightly\nless ghosting...\n1st Gen Transformer"
+  },
+  {
+    "lang": "ko",
+    "problem": "missing",
+    "source": "Late Streamline hook detected"
+  },
+  {
+    "lang": "ko",
+    "problem": "missing",
+    "source": "OptiFG (Upscaler)"
+  },
+  {
+    "lang": "ko",
+    "problem": "missing",
+    "source": "DLSSG output\ncan be used in conjuction with Nukem's for example"
+  },
+  {
+    "lang": "ko",
+    "problem": "missing",
+    "source": "Nukem's"
+  },
+  {
+    "lang": "ko",
+    "problem": "missing",
+    "source": "Uses frametimes provided by\nDLSSG or FSR-FG "
+  },
+  {
+    "lang": "ko",
+    "problem": "missing",
+    "source": "Reset##colour"
+  },
+  {
+    "lang": "ko",
+    "problem": "missing",
+    "source": " ({} Doesn't support more than {}x)"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "It's never too late to buy a better GPU"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "MFG totally works with Nukem's 100%% no scam"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "Latency with FG? But I have good internet"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "And that's how you get to 60 FPS"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "Menu key pressed, will be switching FG mode"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "FPS: %6.1f/%5.1f, %7.2f ms"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "FPS: %6.1f/%5.1f, Avg: %6.1f"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "FPS: %6.1f, Avg: %6.1f"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": " or "
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "Upscaler must be enabled\n\nCan be used with any FG Output, but might be imperfect with some\nTo prevent UI glitching, HUDfix required"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "FSR 3.1 FG"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "FSR 3.0 FG"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "Support not implemented, they meant FG Output"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "FSR FG"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "FSR 3 FG"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "FSR 3 MFG"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "FSR 3/4 FG"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "FSR 3/4 FG using the FFX"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "FG Input"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "The data source to be used for FG\nThe native FG which the game supports"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "FG Output"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "The FG that you will actually be using"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "Uses frametimes provided by\nDLSSG or FSR-FG "
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "FFX FG"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "FG Rectangle Settings"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "Using upscaler data for FG"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "FG Scale Depth Max"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "ACTIVATE FG"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "Vulkan AntiLag"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": " (inactive)"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "LatencyFlex mode"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "AntiLag 2"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "AntiLag Vk"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": "Reset##colour"
+  },
+  {
+    "lang": "zh-CN",
+    "problem": "missing",
+    "source": " ({} Doesn't support more than {}x)"
+  },
+  {
+    "lang": "ja",
+    "problem": "missing",
+    "source": "MFG totally works with Nukem's 100%% no scam"
+  },
+  {
+    "lang": "ja",
+    "problem": "missing",
+    "source": "Who's Nukem anyway?"
+  },
+  {
+    "lang": "ja",
+    "problem": "missing",
+    "source": " or "
+  },
+  {
+    "lang": "ja",
+    "problem": "missing",
+    "source": "Nukem's"
+  },
+  {
+    "lang": "ja",
+    "problem": "missing",
+    "source": "Uses frametimes provided by\nDLSSG or FSR-FG "
+  },
+  {
+    "lang": "ja",
+    "problem": "missing",
+    "source": "Using upscaler data for FG"
+  },
+  {
+    "lang": "ja",
+    "problem": "missing",
+    "source": "Best when can be used, some games are not compatible (e.g. Cyberpunk)\nand will fallback to Aggressive"
+  },
+  {
+    "lang": "ja",
+    "problem": "missing",
+    "source": " ({} Doesn't support more than {}x)"
+  },
+  {
+    "lang": "ja",
+    "problem": "missing",
+    "source": " ({} off)"
+  },
+  {
+    "lang": "ru",
+    "problem": "missing",
+    "source": "It's never too late to buy a better GPU"
+  },
+  {
+    "lang": "ru",
+    "problem": "missing",
+    "source": "MFG totally works with Nukem's 100%% no scam"
+  },
+  {
+    "lang": "ru",
+    "problem": "missing",
+    "source": "Latency with FG? But I have good internet"
+  },
+  {
+    "lang": "ru",
+    "problem": "missing",
+    "source": "Who's Nukem anyway?"
+  },
+  {
+    "lang": "ru",
+    "problem": "missing",
+    "source": "Nukem's"
+  },
+  {
+    "lang": "ru",
+    "problem": "missing",
+    "source": "Uses frametimes provided by\nDLSSG or FSR-FG "
+  },
+  {
+    "lang": "ru",
+    "problem": "missing",
+    "source": "Using upscaler data for FG"
+  },
+  {
+    "lang": "ru",
+    "problem": "missing",
+    "source": "The whole pass: the staging copies and the resolve as well as the\nmodel. Timing only the model would flatter the number.\n\nCompare it against the frame time at the bottom of this window to\nsee what it is costing you."
+  },
+  {
+    "lang": "ru",
+    "problem": "missing",
+    "source": "Reset##colour"
+  },
+  {
+    "lang": "es",
+    "problem": "missing",
+    "source": "MFG totally works with Nukem's 100%% no scam"
+  },
+  {
+    "lang": "es",
+    "problem": "missing",
+    "source": "Similar to preset K. Preset J might exhibit slightly\nless ghosting...\n1st Gen Transformer"
+  },
+  {
+    "lang": "es",
+    "problem": "missing",
+    "source": "Using upscaler data for FG"
+  },
+  {
+    "lang": "pt-BR",
+    "problem": "missing",
+    "source": "MFG totally works with Nukem's 100%% no scam"
+  },
+  {
+    "lang": "pt-BR",
+    "problem": "missing",
+    "source": "Reset##colour"
+  },
+  {
+    "lang": "de",
+    "problem": "missing",
+    "source": "MFG totally works with Nukem's 100%% no scam"
+  },
+  {
+    "lang": "de",
+    "problem": "missing",
+    "source": "Reset##colour"
+  },
+  {
+    "lang": "fr",
+    "problem": "missing",
+    "source": "MFG totally works with Nukem's 100%% no scam"
+  },
+  {
+    "lang": "fr",
+    "problem": "missing",
+    "source": "Using upscaler data for FG"
+  },
+  {
+    "lang": "fr",
+    "problem": "missing",
+    "source": "FG Scale Depth Max"
+  },
+  {
+    "lang": "fr",
+    "problem": "missing",
+    "source": "Reset##colour"
+  },
+  {
+    "lang": "it",
+    "problem": "missing",
+    "source": "MFG totally works with Nukem's 100%% no scam"
+  },
+  {
+    "lang": "it",
+    "problem": "missing",
+    "source": "Similar to preset K. Preset J might exhibit slightly\nless ghosting...\n1st Gen Transformer"
+  },
+  {
+    "lang": "it",
+    "problem": "missing",
+    "source": "Using upscaler data for FG"
+  },
+  {
+    "lang": "pl",
+    "problem": "missing",
+    "source": "It's never too late to buy a better GPU"
+  },
+  {
+    "lang": "pl",
+    "problem": "missing",
+    "source": "MFG totally works with Nukem's 100%% no scam"
+  },
+  {
+    "lang": "pl",
+    "problem": "missing",
+    "source": "Uses frametimes provided by\nDLSSG or FSR-FG "
+  },
+  {
+    "lang": "pl",
+    "problem": "missing",
+    "source": "Using upscaler data for FG"
+  },
+  {
+    "lang": "pl",
+    "problem": "missing",
+    "source": "Reset##colour"
+  },
+  {
+    "lang": "tr",
+    "problem": "missing",
+    "source": "MFG totally works with Nukem's 100%% no scam"
+  },
+  {
+    "lang": "tr",
+    "problem": "missing",
+    "source": "DLSSG output\ncan be used in conjuction with Nukem's for example"
+  },
+  {
+    "lang": "tr",
+    "problem": "missing",
+    "source": "Uses frametimes provided by\nDLSSG or FSR-FG "
+  },
+  {
+    "lang": "zh-TW",
+    "problem": "missing",
+    "source": "MFG totally works with Nukem's 100%% no scam"
+  },
+  {
+    "lang": "zh-TW",
+    "problem": "missing",
+    "source": " or "
+  },
+  {
+    "lang": "zh-TW",
+    "problem": "missing",
+    "source": "FSR 3 FG"
+  },
+  {
+    "lang": "zh-TW",
+    "problem": "missing",
+    "source": "FSR 3/4 FG"
+  },
+  {
+    "lang": "zh-TW",
+    "problem": "missing",
+    "source": "FSR 3/4 FG using the FFX"
+  },
+  {
+    "lang": "zh-TW",
+    "problem": "missing",
+    "source": "Uses frametimes provided by\nDLSSG or FSR-FG "
+  },
+  {
+    "lang": "zh-TW",
+    "problem": "missing",
+    "source": "FG Scale Depth Max"
+  },
+  {
+    "lang": "zh-TW",
+    "problem": "missing",
+    "source": "LatencyFlex mode"
+  },
+  {
+    "lang": "zh-TW",
+    "problem": "missing",
+    "source": "Reset##colour"
+  },
+  {
+    "lang": "zh-TW",
+    "problem": "missing",
+    "source": " ({} Doesn't support more than {}x)"
+  }
+]

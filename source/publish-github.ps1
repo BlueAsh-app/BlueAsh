@@ -23,7 +23,7 @@ if(!$ReleaseOnly){
 if(!(Test-Path -LiteralPath (Join-Path $Public '.git'))){& git clone $repo $Public;if($LASTEXITCODE){throw 'GitHub 저장소를 받지 못했습니다.'}}
 G $Public config user.name 'BlueAsh';G $Public config user.email '334943974+BlueAsh-app@users.noreply.github.com'
 G $Public pull --ff-only origin main
-$files=@(& git -C $root -c core.quotepath=off ls-files)|Where-Object{$_ -notmatch '^(AGENTS\.md|CLAUDE\.md|\.claude/|\.codex/|docs/|relay/|brand/|BlueAsh\.exe$|t\.exe$)'}
+$files=@(& git -C $root -c core.quotepath=off ls-files)|Where-Object{$_ -notmatch '^(AGENTS\.md|CLAUDE\.md|RULES\.md|\.claude/|\.codex/|docs/|relay/|brand/|BlueAsh\.exe$|t\.exe$)'}
 if($LASTEXITCODE -or $files.Count -lt 50){throw 'git ls-files를 읽지 못했습니다.'}
 $keep=@{};foreach($f in $files){$keep[$f]=$true;$src=Join-Path $root $f;$dst=Join-Path $Public $f
  if(!(Test-Path -LiteralPath $src -PathType Leaf)){continue}

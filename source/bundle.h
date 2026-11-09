@@ -1,6 +1,9 @@
 #pragma once
 #include "i18n.h"
 #include <shlobj.h>
+#include <sddl.h>
+#include <aclapi.h>
+#include <bcrypt.h>
 // price/, companion/, maps/ and updater/ are embedded as RCDATA by build.sh (999 = "<build id>\n<path>..." list,
 // 1000+ = files in list order) and unpacked once per build to %LOCALAPPDATA%\ModeSwitch\runtime\<build id>,
 // so BlueAsh.exe works without its folders. Returns that directory, or empty with problem() on failure.
@@ -33,6 +36,31 @@ inline bool verifyBundle(const std::wstring& root){
  }
  return true;
 }
+// Running as administrator (BlueAsh switches when Tarkov runs as administrator), the helpers must not run from a folder
+// the user, or anything running as the user, can change: verifyBundle checks the files, but a script swapped between that
+// check and PowerShell reading it would run with administrator rights. So an elevated BlueAsh unpacks into a new folder
+// under %ProgramData% created with a protected ACL (SYSTEM and Administrators full, Users read and run), a fresh random
+// name each run, and removes older ones of its own (owned by Administrators; a folder someone else made is left alone).
+// Its helpers also get only the system PowerShell module folders (the user's Documents modules come first otherwise),
+// a temporary folder inside the protected one, and BLUEASH_ADMIN_DIR (the OCR files are copied there, PaddleOcr.cs).
+inline bool runningElevated(){HANDLE t=nullptr;TOKEN_ELEVATION e={};DWORD n=0;bool r=OpenProcessToken(GetCurrentProcess(),TOKEN_QUERY,&t)&&GetTokenInformation(t,TokenElevation,&e,sizeof(e),&n)&&e.TokenIsElevated;if(t){CloseHandle(t);}return r;}
+inline bool ownedByAdmins(const std::wstring& path){PSID owner=nullptr;PSECURITY_DESCRIPTOR sd=nullptr;bool ok=false;
+ if(GetNamedSecurityInfoW(path.c_str(),SE_FILE_OBJECT,OWNER_SECURITY_INFORMATION,&owner,nullptr,nullptr,nullptr,&sd)==ERROR_SUCCESS){ok=owner&&(IsWellKnownSid(owner,WinBuiltinAdministratorsSid)||IsWellKnownSid(owner,WinLocalSystemSid));LocalFree(sd);}return ok;}
+inline std::wstring adminBase(){
+ static std::wstring cached;if(!cached.empty()){return cached;}
+ wchar_t data[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_COMMON_APPDATA,nullptr,SHGFP_TYPE_CURRENT,data))){return L"";}std::wstring pd=data;
+ WIN32_FIND_DATAW f;HANDLE find=FindFirstFileW((pd+L"\\BlueAsh-admin-*").c_str(),&f);
+ if(find!=INVALID_HANDLE_VALUE){do{std::wstring old=pd+L"\\"+f.cFileName;if((f.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)&&!(f.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)&&ownedByAdmins(old)){removeTree(old);}}while(FindNextFileW(find,&f));FindClose(find);}
+ PSECURITY_DESCRIPTOR sd=nullptr;if(!ConvertStringSecurityDescriptorToSecurityDescriptorW(L"O:BAD:P(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICI;0x1200a9;;;BU)",SDDL_REVISION_1,&sd,nullptr)){return L"";}
+ SECURITY_ATTRIBUTES sa={sizeof(sa),sd,FALSE};
+ for(int i=0;i<8&&cached.empty();i++){unsigned char r[8]={};if(BCryptGenRandom(nullptr,r,sizeof(r),BCRYPT_USE_SYSTEM_PREFERRED_RNG)!=0){break;}wchar_t name[40];swprintf(name,40,L"\\BlueAsh-admin-%02x%02x%02x%02x%02x%02x%02x%02x",r[0],r[1],r[2],r[3],r[4],r[5],r[6],r[7]);
+  std::wstring path=pd+name;if(CreateDirectoryW(path.c_str(),&sa)){cached=path;}}
+ LocalFree(sd);if(cached.empty()){return L"";}
+ std::wstring tmp=cached+L"\\tmp";CreateDirectoryW(tmp.c_str(),nullptr);wchar_t sys[MAX_PATH]={},pf[MAX_PATH]={};GetSystemDirectoryW(sys,MAX_PATH);SHGetFolderPathW(nullptr,CSIDL_PROGRAM_FILES,nullptr,SHGFP_TYPE_CURRENT,pf);
+ SetEnvironmentVariableW(L"PSModulePath",(std::wstring(sys)+L"\\WindowsPowerShell\\v1.0\\Modules;"+pf+L"\\WindowsPowerShell\\Modules").c_str());
+ SetEnvironmentVariableW(L"TEMP",tmp.c_str());SetEnvironmentVariableW(L"TMP",tmp.c_str());SetEnvironmentVariableW(L"BLUEASH_ADMIN_DIR",cached.c_str());
+ return cached;
+}
 std::wstring unpackBundle();
 void datapackUse(const std::wstring& root); // datapack.h: the downloaded data files go into the same folder
 // Where runtime\<build id> goes: %LOCALAPPDATA%\ModeSwitch normally, a scratch folder for --selftest (so a release check
@@ -50,7 +78,9 @@ std::wstring unpackBundle(){
  while(at<list.size()){size_t end=list.find('\n',at);if(end==std::string::npos)end=list.size();auto line=list.substr(at,end-at);if(!line.empty()&&line.back()=='\r')line.pop_back();if(!line.empty())lines.push_back(line);at=end+1;}
  if(lines.size()<2){problem(i18n::text(L"내장 파일 목록 오류"));return L"";}
  wchar_t local[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local))){problem(i18n::text(L"AppData 폴더를 찾지 못했습니다."));return L"";}
- std::wstring base=bundleBase.empty()?std::wstring(local)+L"\\ModeSwitch":bundleBase,runtime=base+L"\\runtime",root=runtime+L"\\"+widen(lines[0]);
+ bool admin=bundleBase.empty()&&runningElevated();std::wstring protectedBase=admin?adminBase():L"";
+ if(admin&&protectedBase.empty()){problem(i18n::text(L"관리자 권한용 보호 폴더를 만들지 못했습니다."));return L"";}
+ std::wstring base=admin?protectedBase:bundleBase.empty()?std::wstring(local)+L"\\ModeSwitch":bundleBase,runtime=base+L"\\runtime",root=runtime+L"\\"+widen(lines[0]);
  if(GetFileAttributesW((root+L"\\.complete").c_str())!=INVALID_FILE_ATTRIBUTES)return cached=root;
  CreateDirectoryW(base.c_str(),nullptr);CreateDirectoryW(runtime.c_str(),nullptr);
  // Unpack into a staging folder and rename it, so a crash never leaves a half-written version in use.

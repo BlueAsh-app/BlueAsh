@@ -65,11 +65,17 @@ void pasteShot(HWND h){
 int shotAt(int x,int y){for(int i=0;i<(int)feedbackShots.size();i++){int l=shotX+i*(shotW+shotGap);if(x>=l&&x<l+shotW&&y>=shotY&&y<shotY+shotH)return i;}return -1;}
 void paintShots(HDC dc){
     if(!painting::token){return;}Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-    for(int i=0;i<(int)feedbackShots.size();i++){int l=shotX+i*(shotW+shotGap);
-        Gdiplus::GraphicsPath clip;painting::path(clip,{l,shotY,l+shotW,shotY+shotH},12);g.SetClip(&clip);g.DrawImage(feedbackShots[i].thumb,l,shotY,shotW,shotH);g.ResetClip();
+    // Slot i on the page (moved with the page's stretch; the GDI+ drawing below is not mapped by itself).
+    auto slot=[](int i){RECT r={shotX+i*(shotW+shotGap),shotY,shotX+i*(shotW+shotGap)+shotW,shotY+shotH};return painting::stretch.on?painting::stretch.keep(r):r;};
+    // Empty slots: a dashed outline with a faint picture mark, so the three places for pictures read at a glance.
+    for(int i=(int)feedbackShots.size();i<3;i++){Gdiplus::GraphicsPath slotPath;painting::path(slotPath,slot(i),12);
+        Gdiplus::Pen dash(painting::color(line),1.2f);dash.SetDashStyle(Gdiplus::DashStyleDash);g.DrawPath(&dash,&slotPath);}
+    for(int i=(int)feedbackShots.size();i<3;i++){int l=shotX+i*(shotW+shotGap);glyph(dc,0xEB9F,{l,shotY,l+shotW,shotY+shotH},iconFont,line);}
+    for(int i=0;i<(int)feedbackShots.size();i++){RECT s=slot(i);int l=s.left,top=s.top;
+        Gdiplus::GraphicsPath clip;painting::path(clip,s,12);g.SetClip(&clip);g.DrawImage(feedbackShots[i].thumb,l,top,shotW,shotH);g.ResetClip();
         Gdiplus::Pen edge(painting::color(line),1.f);g.DrawPath(&edge,&clip);
         // The remove mark: a small dark disc with an ✕ in the top-right corner.
-        int cx=l+shotW-12,cy=shotY+12;Gdiplus::SolidBrush disc(Gdiplus::Color(210,8,10,16));g.FillEllipse(&disc,cx-9,cy-9,18,18);
+        int cx=l+shotW-12,cy=top+12;Gdiplus::SolidBrush disc(Gdiplus::Color(210,8,10,16));g.FillEllipse(&disc,cx-9,cy-9,18,18);
         Gdiplus::Pen x(painting::color(ink),1.6f);g.DrawLine(&x,cx-4,cy-4,cx+4,cy+4);g.DrawLine(&x,cx+4,cy-4,cx-4,cy+4);}
 }
 LRESULT CALLBACK feedbackProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){

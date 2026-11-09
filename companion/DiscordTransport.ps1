@@ -27,6 +27,7 @@ $connectBtn.add_Click({Start-Connect})
 $script:phoneCode=Unprotect $config.phoneCode;$script:phonePaired=$false;$script:phoneChecked=$false;$script:phoneWatchUntil=[DateTime]::MinValue;$script:phoneNext=[DateTime]::MinValue;$script:phoneStatusTask=$null;$script:phoneSendTask=$null;$script:phoneSendContent=$null
 function Update-Phone {
  $phoneLabel.Text=$(if(!$relay){(T '이 빌드에는 휴대폰 알림 서버가 없습니다.')}elseif($script:phonePaired){(T '연결됨 · 이 휴대폰으로 바로 알림이 옵니다.')}elseif([DateTime]::UtcNow -lt $script:phoneWatchUntil){(T '휴대폰에서 알림 허용을 기다리는 중…')}else{(T '아직 연결 안 됨 · 오른쪽 버튼을 눌러 주세요.')})
+ $phoneLabel.Dot=$(if($relay -and $script:phonePaired){[Drawing.Color]::FromArgb(95,211,141)}elseif($relay -and [DateTime]::UtcNow -lt $script:phoneWatchUntil){[Drawing.Color]::FromArgb(255,196,84)}else{[Drawing.Color]::FromArgb(158,174,204)});$phoneLabel.Invalidate()
 }
 function Start-Phone {
  if(!$relay){return}
@@ -40,22 +41,28 @@ function Start-Phone {
 function Show-PhonePair {
  $pairUrl=$relay+'/phone/pair?c='+$script:phoneCode+'&lang='+$script:uiLanguage
  $f=New-Object Windows.Forms.Form;$f.Text=(T 'BlueAsh · 휴대폰 알림 연결');[ModePulse.Brand]::Apply($f,$appExe);$f.StartPosition='CenterScreen';$f.FormBorderStyle='FixedDialog';$f.MaximizeBox=$false;$f.MinimizeBox=$false;$f.Font=$uiFont;$f.TopMost=$true
- $f.ClientSize=New-Object Drawing.Size(420,560)
+ $f.ClientSize=New-Object Drawing.Size(420,600)
  $title=New-Object Windows.Forms.Label;$title.Text=(T '휴대폰 알림 연결');$title.Font=New-Object Drawing.Font($fontName,15,[Drawing.FontStyle]::Bold);$title.SetBounds(24,20,372,34);$f.Controls.Add($title)
- $how=New-Object Windows.Forms.Label;$how.Text=(T '휴대폰 카메라로 QR을 찍고, 열린 페이지에서 알림 허용을 누르세요.');$how.SetBounds(24,58,372,44);$f.Controls.Add($how)
+ # Two numbered steps (a small rounded number badge each) instead of one sentence.
+ $steps=@();$i=0;foreach($s in (T '휴대폰 카메라로 QR을 찍습니다.'),(T '열린 페이지에서 알림 허용을 누릅니다.')){$y=64+$i*34
+  $n=New-Object ModePulse.ThemeCard;$n.SetBounds(24,$y,24,24);$f.Controls.Add($n);$d=New-Object Windows.Forms.Label;$d.Text=[string]($i+1);$d.TextAlign='MiddleCenter';$d.SetBounds(3,3,18,18);$n.Controls.Add($d)
+  $t=New-Object Windows.Forms.Label;$t.Text=$s;$t.TextAlign='MiddleLeft';$t.SetBounds(58,($y-3),338,30);$f.Controls.Add($t);$steps+=@($n,$d,$t);$i++}
  # White plate behind the code: phone cameras read a dark-on-light QR best.
- $plate=New-Object ModePulse.ThemeCard;$plate.SetBounds(70,112,280,280);$f.Controls.Add($plate)
+ $plate=New-Object ModePulse.ThemeCard;$plate.SetBounds(70,140,280,280);$f.Controls.Add($plate)
  $pic=New-Object Windows.Forms.PictureBox;$pic.SetBounds(14,14,252,252);$pic.SizeMode='Zoom';$plate.Controls.Add($pic)
- $state=New-Object Windows.Forms.Label;$state.Text=(T 'QR을 불러오는 중…');$state.TextAlign='MiddleCenter';$state.SetBounds(24,404,372,48);$f.Controls.Add($state)
- $open=New-Object ModePulse.ThemeButton;$open.Text=(T '브라우저로 열기');$open.SetBounds(24,496,180,40);$f.Controls.Add($open);$open.add_Click({Start-Process $pairUrl})
- $close=New-Object ModePulse.ThemeButton;$close.Text=(T '닫기');$close.SetBounds(276,496,120,40);$f.Controls.Add($close);$close.add_Click({$f.Close()});$f.CancelButton=$close
- Apply-Theme $f;$plate.BackColor=[Drawing.Color]::White;$pic.BackColor=[Drawing.Color]::White;$how.ForeColor=[ModePulse.Theme]::Muted
+ # The state under the code in colour: amber while waiting, green when connected, red on an error.
+ $state=New-Object Windows.Forms.Label;$state.Text=(T 'QR을 불러오는 중…');$state.TextAlign='MiddleCenter';$state.SetBounds(24,432,372,52);$f.Controls.Add($state)
+ $open=New-Object ModePulse.ThemeButton;$open.Text=(T '브라우저로 열기');$open.SetBounds(24,532,180,40);$f.Controls.Add($open);$open.add_Click({Start-Process $pairUrl})
+ $close=New-Object ModePulse.ThemeButton;$close.Text=(T '닫기');$close.SetBounds(276,532,120,40);$f.Controls.Add($close);$close.add_Click({$f.Close()});$f.CancelButton=$close
+ Apply-Theme $f;$plate.BackColor=[Drawing.Color]::White;$pic.BackColor=[Drawing.Color]::White
+ foreach($c in $steps){if($c -is [ModePulse.ThemeCard]){$c.BackColor=[ModePulse.Theme]::Field}elseif($c.Text.Length -eq 1){$c.BackColor=[ModePulse.Theme]::Field;$c.ForeColor=[ModePulse.Theme]::AccentText}}
+ $waitColor=[Drawing.Color]::FromArgb(255,196,84);$state.ForeColor=$waitColor
  # Buttons in the same size as the text around them (the form font is larger than the rest of the app reads).
- $small=New-Object Drawing.Font($fontName,9.5);foreach($c in $open,$close,$how,$state){$c.Font=$small}
+ $small=New-Object Drawing.Font($fontName,9.5);foreach($c in @($open,$close,$state)+@($steps|Where-Object {$_ -is [Windows.Forms.Label]})){$c.Font=$small}
  $script:pairQr=$http.GetByteArrayAsync($relay+'/phone/qr.gif?c='+$script:phoneCode+'&lang='+$script:uiLanguage);$script:pairStatus=$null;$script:pairBase=$null;$script:pairDone=$false;$script:pairAt=[DateTime]::MinValue;$script:pairNext=[DateTime]::MinValue
  $timer=New-Object Windows.Forms.Timer;$timer.Interval=250
  $timer.add_Tick({
-  if($script:pairQr -and $script:pairQr.IsCompleted){try{$ms=New-Object IO.MemoryStream(,$script:pairQr.GetAwaiter().GetResult());$pic.Image=[Drawing.Image]::FromStream($ms)}catch{$state.Text=(T 'QR을 불러오지 못했습니다. 브라우저로 열기를 눌러 주세요.')};$script:pairQr=$null}
+  if($script:pairQr -and $script:pairQr.IsCompleted){try{$ms=New-Object IO.MemoryStream(,$script:pairQr.GetAwaiter().GetResult());$pic.Image=[Drawing.Image]::FromStream($ms)}catch{$state.ForeColor=[Drawing.Color]::FromArgb(255,100,110);$state.Text=(T 'QR을 불러오지 못했습니다. 브라우저로 열기를 눌러 주세요.')};$script:pairQr=$null}
   if($script:pairStatus -and $script:pairStatus.IsCompleted){
    try{$r=$script:pairStatus.GetAwaiter().GetResult();try{if($r.IsSuccessStatusCode){$j=$r.Content.ReadAsStringAsync().GetAwaiter().GetResult()|ConvertFrom-Json;$at=[double]$j.at
     if($null -eq $script:pairBase){$script:pairBase=$at;$state.Text=$(if($j.paired){(T '이미 연결된 휴대폰이 있습니다. 다른 휴대폰으로 바꾸려면 QR을 찍으세요.')}else{(T '휴대폰에서 알림 허용을 기다리는 중…')})}

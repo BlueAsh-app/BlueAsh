@@ -19,4 +19,7 @@ int main(){raid::Context c;assert(c.line("application|scene preset path:maps/big
   t.role="SCAV";t.line("application|scene preset path:maps/woods_preset.bundle rcid:x");assert(t.role=="UNKNOWN");
   t.line("2026-10-15 23:25:00.000|1.2.0.0.47965|Info|application|[Transit] Flag:Common, RaidId:69f0a1b2c3d4e5f60718293a, Count:1, Locations:bigmap -> Woods -> ");assert(t.role=="SCAV");
   t.line("application|scene preset path:maps/factory_day_preset.bundle rcid:x");t.line("application|[Transit] Flag:Common, RaidId:69f0a1b2c3d4e5f60718293b, Count:0, Locations:factory4_day -> ");assert(t.role=="UNKNOWN");}
+ // Online raids carry the matched server (Sid region code); a new preset (or a PvE raid) clears it.
+ {raid::Context v;v.line("application|scene preset path:maps/customs_preset.bundle rcid:x");v.line("2026-10-24 21:10:02.120|1.2.5.0.48146|Debug|application|TRACE-NetworkGameCreate profileStatus: 'Profileid: 69192727a4d169575c01eccf, Status: Busy, RaidMode: Online, Ip: 10.0.0.1, Port: 17000, Location: bigmap, Sid: JP-TK03G012_6a1b, GameMode: deathmatch, shortId: Q7RT2M'");assert(v.server=="JP-TK");
+  v.line("application|scene preset path:maps/woods_preset.bundle rcid:x");assert(v.server.empty());}
  }

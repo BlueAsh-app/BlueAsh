@@ -51,9 +51,13 @@ inline void registerClass(){static bool done=false;if(done){return;}done=true;WN
 }
 settings::Profiles draft;
 int editProfile=0,editChannel=0;
+// Items 4+ of the profile list are PC games (gameswitch::rows); a game without its own entry shows 게임 모드's values.
+std::vector<gameswitch::Row> editRows;std::map<std::wstring,settings::Profile> gameDraft;
+settings::Profile shownProfile(){if(editProfile<4)return draft[editProfile];auto f=gameDraft.find(editRows[editProfile-4].dir);return f!=gameDraft.end()?f->second:draft[1];}
+void addGameRows(HWND h){if(!editRows.empty())return;editRows=gameswitch::rows;HWND box=GetDlgItem(h,60);for(auto& r:editRows){SendMessageW(box,CB_ADDSTRING,0,(LPARAM)r.name.c_str());}}
 bool filling=false,colorDirty[3]={};
 void fillColorEditor(HWND h){
-    filling=true;const auto& p=draft[editProfile];int c=editChannel?editChannel-1:0;
+    filling=true;const auto p=shownProfile();int c=editChannel?editChannel-1:0;
     SetDlgItemTextW(h,50,std::to_wstring(p.brightness[c]).c_str());
     SetDlgItemTextW(h,51,std::to_wstring(p.contrast[c]).c_str());
     SetDlgItemTextW(h,52,settings::gammaText(settings::channelGamma(p,c)).c_str());
@@ -69,7 +73,7 @@ void fillColorEditor(HWND h){
     filling=false;
 }
 bool collectColorEditor(HWND h){
-    auto p=draft[editProfile];unsigned values[3]={};
+    auto p=shownProfile();unsigned values[3]={};
     for(int i=0;i<3;i++)if(colorDirty[i]){
         bool ok=i==2?settings::parseGamma(field(h,50+i),values[i]):settings::integer(field(h,50+i),values[i])&&values[i]<=199;
         if(!ok){SetDlgItemTextW(h,59,i18n::text(L"밝기·대비는 0~199, 감마는 0.50~3.00 사이로 넣어 주세요."));return false;}
@@ -83,13 +87,17 @@ bool collectColorEditor(HWND h){
         if(colorDirty[2])settings::setGamma(p,c,values[2]);
     }
     p.extended=checked(h,57);if(!p.extended)settings::allGamma(p,p.gamma);
-    draft[editProfile]=p;return true;
+    if(editProfile<4)draft[editProfile]=p;else{auto& id=editRows[editProfile-4].dir;if(gameDraft.count(id)||!gameswitch::same(p,draft[1]))gameDraft[id]=p;} /* an untouched game gets no entry: it will not switch modes */
+    return true;
 }
 void storeColorEditor(HWND h){
     if(!collectColorEditor(h))return;
     bool automatic=checked(h,58);
     if(automatic){draft[0].extended=true;draft[2].extended=true;draft[3].extended=true;}
     if(!saveString(configPath,L"ProfilesV2",settings::encodeV2(draft,automatic))){SetDlgItemTextW(h,59,i18n::text(L"저장하지 못했습니다. 기존 설정은 그대로입니다."));return;}
+    std::map<std::wstring,settings::Profile> keep;for(auto& [k,v]:gameDraft){if(k.size()<=200)keep[k]=v;}
+    if(!saveString(configPath,L"GameProfiles",gameprofiles::encodeProfiles(keep))){SetDlgItemTextW(h,59,i18n::text(L"저장하지 못했습니다. 기존 설정은 그대로입니다."));return;}
+    gameProfiles=keep;gameswitch::setDirs();
     profiles=draft;autoGame=automatic;fillColorEditor(h);
     for(int id:{1,2,61,62}){InvalidateRect(GetDlgItem(win,id),nullptr,TRUE);}
     bool ok=!active||changeMode(fps,appliedProfileIndex);
@@ -97,11 +105,11 @@ void storeColorEditor(HWND h){
 }
 // 모드 설정 has two tabs, each its own page: switching asks the main window to open the other one (90 -> 32, 91 -> 34).
 // The tabs sit above the page's panels, on the window backdrop (2.21).
-void modeTabs(HWND h){addSetting(h,L"BUTTON",i18n::text(L"컬러 & 사운드"),BS_OWNERDRAW|WS_TABSTOP,12,2,180,38,90);addSetting(h,L"BUTTON",i18n::text(L"단축키"),BS_OWNERDRAW|WS_TABSTOP,202,2,150,38,91);}
+void modeTabs(HWND h){addSetting(h,L"BUTTON",i18n::text(L"컬러 & 사운드"),BS_OWNERDRAW|WS_TABSTOP,12,2,180,38,90);addSetting(h,L"BUTTON",i18n::text(L"모드 변경 단축키"),BS_OWNERDRAW|WS_TABSTOP,202,2,250,38,91);}
 // Both tab pages paint the backdrop and their own panels (no picture behind them), off-screen and copied once.
 void pagePanels(HWND h,HDC target,const std::function<void(HDC)>& draw){
     RECT r={};GetClientRect(h,&r);HDC dc=CreateCompatibleDC(target);HBITMAP bmp=CreateCompatibleBitmap(target,std::max(1L,r.right),std::max(1L,r.bottom));auto old=SelectObject(dc,bmp);
-    POINT o={};MapWindowPoints(h,win,&o,1);if(!copyBackdrop(dc,r,o)){FillRect(dc,&r,backgroundBrush);}draw(dc);
+    {painting::StretchOff off_;POINT o={};MapWindowPoints(h,win,&o,1);if(!copyBackdrop(dc,r,o)){FillRect(dc,&r,backgroundBrush);}}draw(dc);
     BitBlt(target,0,0,r.right,r.bottom,dc,0,0,SRCCOPY);SelectObject(dc,old);DeleteObject(bmp);DeleteDC(dc);
 }
 // The status line (59) of the tab pages sits on the backdrop below the panels. The label stays hidden and only keeps
@@ -114,7 +122,7 @@ void drawStatus(HWND page,HDC dc){wchar_t t[512]={};GetDlgItemTextW(page,59,t,51
 void paintProfilePage(HDC dc){
     COLORREF ac=RGB(84,140,255),ri=RGB(196,208,232);HBRUSH sep=CreateSolidBrush(line);
     for(RECT p:std::initializer_list<RECT>{{12,48,840,120},{12,134,422,378},{430,134,840,378},{12,392,840,500}})roundBox(dc,p,panel,line,18);
-    for(RECT d:std::initializer_list<RECT>{{426,64,427,104},{28,210,406,211},{446,210,824,211},{28,264,406,265},{28,316,406,317},{446,264,824,265},{446,316,824,317}}){FillRect(dc,&d,sep);}DeleteObject(sep);
+    for(RECT d:std::initializer_list<RECT>{{426,64,427,104},{28,210,406,211},{446,210,824,211},{28,264,406,265},{28,316,406,317},{446,264,824,265},{446,316,824,317}}){painting::hairline(dc,d,sep);}DeleteObject(sep);
     glyph(dc,0xE81E,{26,66,62,102},tileFont,ac);textAt(dc,i18n::text(L"프로필"),{72,66,190,102},boldFont,ink,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);
     glyph(dc,0xE701,{442,66,478,102},tileFont,ac);textAt(dc,i18n::text(L"채널"),{488,66,600,102},boldFont,ink,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);
     glyph(dc,0xE7F4,{24,150,62,190},tileFont,ac);textAt(dc,i18n::text(L"디스플레이 컬러"),{74,148,410,172},sectionFont,ink,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);textAt(dc,i18n::text(L"게임 화면의 색감과 밝기를 조정합니다."),{74,175,410,197},smallFont,muted,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);
@@ -122,6 +130,7 @@ void paintProfilePage(HDC dc){
     if(painting::token){Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);Gdiplus::Pen pen(painting::color(ri),1.6f);painting::roundCaps(pen);Gdiplus::SolidBrush fill(painting::color(ri));
         // contrast: a circle half filled; sharpness: a half-filled triangle; hue: a circle split in three
         g.DrawEllipse(&pen,33.f,281.f,18.f,18.f);g.FillPie(&fill,33.f,281.f,18.f,18.f,90.f,180.f);
+        if(painting::stretch.on){g.TranslateTransform((float)(painting::stretch.x(460)-460),0.f);} // the right panel's icons move with it (a wider window)
         Gdiplus::PointF tri[]={{460.f,229.f},{470.f,247.f},{450.f,247.f}},half[]={{460.f,229.f},{470.f,247.f},{460.f,247.f}};g.DrawPolygon(&pen,tri,3);g.FillPolygon(&fill,half,3);
         g.DrawEllipse(&pen,451.f,281.f,18.f,18.f);g.FillPie(&fill,451.f,281.f,18.f,18.f,-90.f,120.f);g.DrawLine(&pen,460.f,290.f,460.f,281.f);g.DrawLine(&pen,460.f,290.f,468.f,295.f);g.DrawLine(&pen,460.f,290.f,452.f,295.f);}
     glyph(dc,0xE706,{26,224,58,252},iconFont,ri);textAt(dc,L"γ",{26,328,58,356},sectionFont,ri,DT_CENTER|DT_VCENTER|DT_SINGLELINE);glyph(dc,0xE995,{444,328,476,356},iconFont,ri);
@@ -132,11 +141,12 @@ inline bool modeTabClick(int id){if(id!=90&&id!=91)return false;if(id-90!=modeTa
 LRESULT CALLBACK editorProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
     switch(msg){
     case WM_CREATE:{
-        draft=profiles;editProfile=0;editChannel=0;
+        draft=profiles;editProfile=0;editChannel=0;gameDraft=gameProfiles;editRows.clear();
         auto add=[&](const wchar_t* cls,const wchar_t* text,DWORD style,int x,int y,int w,int height,int id=0){return addSetting(h,cls,text,style,x,y,w,height,id);};
         modeTabs(h);valueSlider::registerClass();
-        HWND box=add(L"COMBOBOX",L"",CBS_DROPDOWNLIST|WS_TABSTOP,196,68,210,180,60);
-        for(int i=0;i<4;i++){SendMessageW(box,CB_ADDSTRING,0,(LPARAM)i18n::text(settings::profileName(i)));}
+        HWND box=add(L"COMBOBOX",L"",CBS_DROPDOWNLIST|WS_TABSTOP|WS_VSCROLL,196,68,210,420,60);
+        for(int i=0;i<4;i++){SendMessageW(box,CB_ADDSTRING,0,(LPARAM)i18n::text(settings::profileName(i)));}SendMessageW(box,CB_SETITEMDATA,1,1);
+        if(gameswitch::scanned)addGameRows(h);else gameswitch::scan(h);
         SendMessageW(box,CB_SETCURSEL,0,0);SendMessageW(box,CB_SETITEMHEIGHT,(WPARAM)-1,26);
         box=add(L"COMBOBOX",L"",CBS_DROPDOWNLIST|WS_TABSTOP,610,68,214,180,61);
         for(auto label:{i18n::text(L"모든 채널"),i18n::text(L"적색 (R)"),i18n::text(L"녹색 (G)"),i18n::text(L"청색 (B)")}){SendMessageW(box,CB_ADDSTRING,0,(LPARAM)label);}
@@ -173,7 +183,7 @@ LRESULT CALLBACK editorProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
             if(modeTabClick(id))return 0;
             if(id==57||id==58){checkBox(h,id,!checked(h,id));return 0;}
             if(id==40||id==IDOK)storeColorEditor(h);
-            else if(id==41){draft[editProfile]=settings::defaults()[editProfile];fillColorEditor(h);SetDlgItemTextW(h,59,i18n::text(L"기본값으로 되돌렸습니다. 저장을 눌러야 반영됩니다."));}
+            else if(id==41){if(editProfile<4)draft[editProfile]=settings::defaults()[editProfile];else gameDraft.erase(editRows[editProfile-4].dir);fillColorEditor(h);SetDlgItemTextW(h,59,i18n::text(L"기본값으로 되돌렸습니다. 저장을 눌러야 반영됩니다."));}
             else if(id==42||id==IDCANCEL)DestroyWindow(h);
         }return 0;
     }

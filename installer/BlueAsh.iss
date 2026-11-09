@@ -106,6 +106,17 @@ fr.CloseFailed=Impossible de fermer BlueAsh. Il est peut-être exécuté en tant
 it.CloseFailed=Impossibile chiudere BlueAsh. Potrebbe essere in esecuzione come amministratore.%n%nChiudi BlueAsh dall'icona nell'area di notifica e riprova.
 pl.CloseFailed=Nie udało się zamknąć BlueAsh. Może działać jako administrator.%n%nZamknij BlueAsh z ikony w zasobniku i spróbuj ponownie.
 tr.CloseFailed=BlueAsh kapatılamadı. Yönetici olarak çalışıyor olabilir.%n%nBlueAsh'i tepsi simgesinden tamamen kapatıp yeniden deneyin.
+ko.DlssRestoreFailed=일부 게임의 DLSS 5 변경을 되돌리지 못했습니다. 그 게임을 끄고 BlueAsh를 다시 설치한 뒤 그래픽 설정의 원본 복구를 눌러 주세요.
+en.DlssRestoreFailed=Some games could not be put back from DLSS 5. Close those games, reinstall BlueAsh and press Restore original in Graphics settings.
+ja.DlssRestoreFailed=一部のゲームの DLSS 5 の変更を元に戻せませんでした。そのゲームを終了し、BlueAsh を再インストールしてグラフィック設定の「元に戻す」を押してください。
+ru.DlssRestoreFailed=Не удалось отменить изменения DLSS 5 в некоторых играх. Закройте эти игры, переустановите BlueAsh и нажмите «Восстановить» в настройках графики.
+es.DlssRestoreFailed=No se pudieron revertir los cambios de DLSS 5 en algunos juegos. Cierra esos juegos, reinstala BlueAsh y pulsa Restaurar original en Ajustes gráficos.
+ptbr.DlssRestoreFailed=Não foi possível desfazer as mudanças do DLSS 5 em alguns jogos. Feche esses jogos, reinstale o BlueAsh e clique em Restaurar original nas Configurações gráficas.
+de.DlssRestoreFailed=Bei einigen Spielen konnten die DLSS-5-Änderungen nicht rückgängig gemacht werden. Spiele schließen, BlueAsh neu installieren und in den Grafikeinstellungen „Original wiederherstellen“ drücken.
+fr.DlssRestoreFailed=Certains jeux n’ont pas pu être remis comme avant DLSS 5. Fermez ces jeux, réinstallez BlueAsh et cliquez sur Restaurer l’original dans Paramètres graphiques.
+it.DlssRestoreFailed=Non è stato possibile annullare le modifiche DLSS 5 in alcuni giochi. Chiudi quei giochi, reinstalla BlueAsh e premi Ripristina originale in Impostazioni grafiche.
+pl.DlssRestoreFailed=Nie udało się cofnąć zmian DLSS 5 w niektórych grach. Zamknij te gry, zainstaluj ponownie BlueAsh i naciśnij Przywróć oryginał w Ustawieniach grafiki.
+tr.DlssRestoreFailed=Bazı oyunlarda DLSS 5 değişiklikleri geri alınamadı. O oyunları kapatın, BlueAsh'ı yeniden kurun ve Grafik ayarlarında Orijinali geri yükle'ye basın.
 ko.RemoveTask=BlueAsh가 만든 관리자 권한 예약 작업을 지우려면 관리자 확인이 필요합니다. 다음 Windows 창에서 '예'를 누르세요.
 en.RemoveTask=Removing the administrator task BlueAsh created needs administrator approval. Choose Yes in the next Windows prompt.
 ja.RemoveTask=BlueAsh が作成した管理者タスクを削除するには、管理者の承認が必要です。次の Windows の画面で「はい」を選んでください。
@@ -150,7 +161,7 @@ Name: "{autodesktop}\BlueAsh"; Filename: "{app}\BlueAsh.exe"; Tasks: desktopicon
 ; First install: BlueAsh starts in the language picked for setup (an existing choice is kept).
 Root: HKCU; Subkey: "Software\ModeSwitch"; ValueType: string; ValueName: "Language"; ValueData: "{code:UiLanguage}"; Flags: createvalueifdoesntexist
 ; Same value name BlueAsh itself uses for 설정 > Windows 시작 시 자동 실행.
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "ModeSwitch"; ValueData: """{app}\BlueAsh.exe"" --tray"; Tasks: autostart
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "BlueAsh"; ValueData: """{app}\BlueAsh.exe"" --tray"; Tasks: autostart
 
 [Run]
 ; Only without the WebView2 Runtime (Windows 11 and most Windows 10 have it): Microsoft's bootstrapper, per-user when not administrator.
@@ -232,17 +243,26 @@ begin
 end;
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var exe, v: String;
+    code: Integer;
 begin
+  // Before BlueAsh.exe is removed: put every game BlueAsh applied DLSS 5 to back to its own files (from the backups).
+  if CurUninstallStep = usUninstall then begin
+    if Exec(ExpandConstant('{app}\BlueAsh.exe'), '--dlss-restore-all', '', SW_HIDE, ewWaitUntilTerminated, code) and (code <> 0) and (not UninstallSilent) then
+      MsgBox(CustomMessage('DlssRestoreFailed'), mbError, MB_OK);
+  end;
   if CurUninstallStep = usPostUninstall then begin
     // Only what points at this install: a BlueAsh kept elsewhere keeps its autostart and administrator task.
     exe := Lowercase(ExpandConstant('{app}\BlueAsh.exe'));
     if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'ModeSwitch', v) and (Pos(exe, Lowercase(v)) > 0) then
       RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'ModeSwitch');
+    if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'BlueAsh', v) and (Pos(exe, Lowercase(v)) > 0) then
+      RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'BlueAsh');
     if RegQueryStringValue(HKCU, 'Software\ModeSwitch', 'ElevatedTaskPath', v) and (Lowercase(v) = exe) then
       if RemoveElevatedTask() then RegDeleteValue(HKCU, 'Software\ModeSwitch', 'ElevatedTaskPath');
     // Program copies, not user data: the files BlueAsh unpacks from its exe and the backup of the exe an update replaced.
     DelTree(ExpandConstant('{#DataDir}\runtime'), True, True, True);
     DelTree(ExpandConstant('{#DataDir}\update-backups'), True, True, True);
+    DelTree(ExpandConstant('{#DataDir}\ai'), True, True, True); // the downloaded AI translator for 모드 번역 (2.5 GB)
     if (not UninstallSilent) and (MsgBox(CustomMessage('RemoveSettings'), mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES) then begin
       RegDeleteKeyIncludingSubkeys(HKCU, 'Software\ModeSwitch');
       DelTree(ExpandConstant('{#DataDir}'), True, True, True);

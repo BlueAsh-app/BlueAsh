@@ -38,12 +38,16 @@ namespace ModePulse {
    using(var path=new GraphicsPath()){path.AddArc(box.Left,box.Top,d,d,180,90);path.AddArc(box.Right-d,box.Top,d,d,270,90);path.AddArc(box.Right-d,box.Bottom-d,d,d,0,90);path.AddArc(box.Left,box.Bottom-d,d,d,90,90);path.CloseFigure();
     using(var b=new SolidBrush(fill))g.FillPath(b,path);using(var p=new Pen(edge,width))g.DrawPath(p,path);}
   }
+  // Drop-down items drawn dark like BlueAsh's own lists (the system one painted the closed box white with a blue selection).
+  static void ComboItem(object sender,DrawItemEventArgs e){var c=(ComboBox)sender;bool edit=(e.State&DrawItemState.ComboBoxEdit)!=0,sel=!edit&&(e.State&DrawItemState.Selected)!=0;
+   using(var b=new SolidBrush(sel?Accent:Field))e.Graphics.FillRectangle(b,e.Bounds);
+   if(e.Index>=0)TextRenderer.DrawText(e.Graphics,c.GetItemText(c.Items[e.Index]),c.Font,Rectangle.Inflate(e.Bounds,-4,0),Ink,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.SingleLine|TextFormatFlags.NoPrefix);}
   public static void Apply(Control c){
    // The map overlay styles itself (no stretched carbon behind a full-screen-size canvas: it cost every repaint).
    if(c is MapCanvas||c is MapWindow)return;c.ForeColor=Ink;c.BackColor=c is Label&&c.Parent is ThemeCard?Panel:c is Label||c is CheckBox||c is FlowLayoutPanel?Color.Transparent:Panel; // a see-through label on a rounded card painted a dark box over its neighbours
    var form=c as Form;if(form!=null){DarkTitle(form);form.BackColor=Bg;}
    var button=c as Button;if(button!=null){button.UseVisualStyleBackColor=false;button.FlatStyle=FlatStyle.Flat;button.BackColor=Field;button.FlatAppearance.BorderColor=Border;button.FlatAppearance.MouseOverBackColor=Hover;button.FlatAppearance.MouseDownBackColor=Accent;}
-   var check=c as CheckBox;if(check!=null)check.UseVisualStyleBackColor=false;var text=c as TextBoxBase;if(text!=null){text.BackColor=Field;text.BorderStyle=BorderStyle.FixedSingle;}var combo=c as ComboBox;if(combo!=null){combo.BackColor=Field;combo.FlatStyle=FlatStyle.Flat;}var number=c as NumericUpDown;if(number!=null){number.BackColor=Field;number.BorderStyle=BorderStyle.FixedSingle;}
+   var check=c as CheckBox;if(check!=null)check.UseVisualStyleBackColor=false;var text=c as TextBoxBase;if(text!=null){text.BackColor=Field;text.BorderStyle=BorderStyle.FixedSingle;}var combo=c as ComboBox;if(combo!=null){combo.BackColor=Field;combo.FlatStyle=FlatStyle.Flat;if(combo.DrawMode!=DrawMode.OwnerDrawFixed){combo.DrawMode=DrawMode.OwnerDrawFixed;combo.DrawItem+=ComboItem;}}var number=c as NumericUpDown;if(number!=null){number.BackColor=Field;number.BorderStyle=BorderStyle.FixedSingle;}
    foreach(Control child in c.Controls)Apply(child);var map=c as MapWindow;if(map!=null)map.State.ForeColor=AccentText;
   }
  }
@@ -92,6 +96,44 @@ namespace ModePulse {
    TextRenderer.DrawText(g,Text,Font,text,Enabled?ForeColor:Theme.Muted,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix|TextFormatFlags.NoPadding|(single?TextFormatFlags.SingleLine|TextFormatFlags.EndEllipsis:TextFormatFlags.WordBreak));
   }
  }
+ // An on/off switch in BlueAsh's own look (cobalt track, white knob) in place of the system check box, where the box was
+ // (left of the text: some pages put two of them side by side). Still a CheckBox (Checked, CheckedChanged).
+ public class ThemeSwitch:CheckBox {
+  bool hot;
+  // The knob slides and the track fades over 0.2 s (ease-out), as the main window's switches do. Set from code before the
+  // control is shown, a switch starts settled.
+  float pos=-1,from;DateTime start;readonly Timer slide=new Timer{Interval=15};
+  public ThemeSwitch(){SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true);Cursor=Cursors.Hand;slide.Tick+=(s,e)=>{Invalidate();if((DateTime.Now-start).TotalMilliseconds>=200)slide.Stop();};}
+  protected override void Dispose(bool disposing){if(disposing)slide.Dispose();base.Dispose(disposing);}
+  float Pos(){float to=Checked?1:0;if(pos<0||!IsHandleCreated||!Visible){pos=to;return to;}double t=Math.Min(1,(DateTime.Now-start).TotalMilliseconds/200),ease=1-Math.Pow(1-t,3);return from+(to-from)*(float)ease;}
+  static Color Mix(Color a,Color b,float t){return Color.FromArgb((int)(a.R+(b.R-a.R)*t),(int)(a.G+(b.G-a.G)*t),(int)(a.B+(b.B-a.B)*t));}
+  protected override void OnMouseEnter(EventArgs e){hot=true;Invalidate();base.OnMouseEnter(e);}
+  protected override void OnMouseLeave(EventArgs e){hot=false;Invalidate();base.OnMouseLeave(e);}
+  protected override void OnCheckedChanged(EventArgs e){if(pos>=0&&IsHandleCreated&&Visible){from=Pos();pos=Checked?1:0;start=DateTime.Now;slide.Start();}Invalidate();base.OnCheckedChanged(e);}
+  protected override void OnPaint(PaintEventArgs e){
+   var g=e.Graphics;g.Clear(Theme.Surface(this));g.SmoothingMode=SmoothingMode.AntiAlias;float k=DeviceDpi/96f,tw=44*k,th=24*k,cy=Height/2f;
+   var track=new RectangleF(2*k,cy-th/2,tw,th);float at=Pos();
+   Theme.Round(g,track,th/2,Mix(hot?Theme.Hover:Theme.Field,hot?Theme.AccentHover:Theme.Accent,at),Mix(Theme.Border,Theme.Accent,at),1f);
+   float d=th-6*k,x=track.Left+3*k+(track.Width-d-6*k)*at;using(var b=new SolidBrush(Mix(Theme.Muted,Color.White,at)))g.FillEllipse(b,x,cy-d/2,d,d);
+   var text=new Rectangle((int)(track.Right+10*k),0,Math.Max(1,Width-(int)(track.Right+10*k)),Height);
+   TextRenderer.DrawText(g,Text,Font,text,Enabled?ForeColor:Theme.Muted,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix);
+   if(Focused&&ShowFocusCues)using(var p=new Pen(Theme.AccentText,1.2f))g.DrawRectangle(p,track.Left-2,track.Top-2,track.Width+3,track.Height+3);
+  }
+ }
+ // A small rounded status badge: a coloured dot and a short text (connected / waiting / not connected).
+ public class StatusPill:Control {
+  public Color Dot=Color.FromArgb(158,174,204);
+  public StatusPill(){SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw|ControlStyles.SupportsTransparentBackColor,true);}
+  public void Set(string text,Color dot){Dot=dot;Text=text;Width=PreferredWidthFor(text);Invalidate();}
+  public int PreferredWidthFor(string text){return TextRenderer.MeasureText(text??"",Font).Width+(int)(40*DeviceDpi/96f);}
+  protected override void OnTextChanged(EventArgs e){Invalidate();base.OnTextChanged(e);}
+  protected override void OnPaint(PaintEventArgs e){
+   var g=e.Graphics;g.Clear(Theme.Surface(this));g.SmoothingMode=SmoothingMode.AntiAlias;float k=DeviceDpi/96f;
+   var box=new RectangleF(0.75f,0.75f,Width-1.5f,Height-1.5f);Theme.Round(g,box,box.Height/2,Color.FromArgb(40,Dot.R,Dot.G,Dot.B),Color.FromArgb(120,Dot.R,Dot.G,Dot.B),1f);
+   float d=8*k;using(var b=new SolidBrush(Dot))g.FillEllipse(b,14*k,Height/2f-d/2,d,d);
+   TextRenderer.DrawText(g,Text,Font,new Rectangle((int)(28*k),0,Width-(int)(34*k),Height),ForeColor,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.SingleLine|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix);
+  }
+ }
  // Extra windows show BlueAsh's mark: the helper runs as powershell.exe, so the window would carry PowerShell's icon on
  // its title bar and taskbar button. It gets BlueAsh.exe's icon, and its own AppUserModelID with BlueAsh.exe as the
  // relaunch icon, so the taskbar groups it as "BlueAsh" with that mark instead of under PowerShell.
@@ -126,13 +168,17 @@ namespace ModePulse {
   [StructLayout(LayoutKind.Sequential)] struct Rect{public int Left,Top,Right,Bottom;}
   [DllImport("user32.dll")] static extern bool GetClientRect(IntPtr h,out Rect rect);
   [DllImport("user32.dll")] static extern IntPtr SetThreadDpiAwarenessContext(IntPtr context);
+  [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern int GetClassName(IntPtr h,System.Text.StringBuilder name,int max);
   public static bool Attach(Form f,IntPtr host,int x,int y,int w,int height){
    if(host==IntPtr.Zero||!IsWindow(host))return false;
    // The whole attach runs unaware: window creation and the x,y,w,h (main-window units) both depend on it.
    IntPtr old=IntPtr.Zero;try{old=SetThreadDpiAwarenessContext(new IntPtr(-1));}catch(EntryPointNotFoundException){}
    try{
     f.Hide();f.SuspendLayout();f.FormBorderStyle=FormBorderStyle.None;f.ShowInTaskbar=false;f.StartPosition=FormStartPosition.Manual;
-    Rect rect;if(GetClientRect(host,out rect)){w=Math.Max(420,rect.Right-308);height=Math.Max(200,Math.Min(height,rect.Bottom-158));}
+    // BlueAsh 2.27+ hands over a box made for the page (BlueAshEmbedHost): fill it. Older builds hand over the main window.
+    var cls=new System.Text.StringBuilder(64);GetClassName(host,cls,64);Rect rect;
+    if(cls.ToString()=="BlueAshEmbedHost"&&GetClientRect(host,out rect)){x=0;y=0;w=rect.Right;height=rect.Bottom;}
+    else if(GetClientRect(host,out rect)){w=Math.Max(420,rect.Right-308);height=Math.Max(200,Math.Min(height,rect.Bottom-158));}
     var hwnd=f.Handle;int style=GetWindowLong(hwnd,-16);
     style=unchecked((int)(((uint)style&~0x80000000u&~0x00C00000u&~0x00040000u)|0x40000000u));SetWindowLong(hwnd,-16,style);
     SetParent(hwnd,host);SetWindowPos(hwnd,IntPtr.Zero,x,y,w,height,0x0004|0x0020);f.ResumeLayout(true);f.Show();f.Update();return true;
@@ -173,7 +219,9 @@ namespace ModePulse {
  // Name = what the in-game exit list shows (OCR matches it); Condition shows in the hover tooltip.
  // Kind: exit, transit (both matched against the exit list), pmc (PMC spawn), boss, cultist.
  // quest: Count objectives merged into one pin, Outline = objective zone (normalised), Condition = one line each.
- public class Pin { public string Name="";public float X,Y;public bool Taxi;public string Destination="";public string Condition="";public string Kind="exit";public int Count=1;public PointF[] Outline;public string Note="";public string Ref="";public bool Faded;public string Guards=""; }
+ public class Pin { public string Name="";public float X,Y;public bool Taxi;public string Destination="";public string Condition="";public string Kind="exit";public int Count=1;public PointF[] Outline;public string Note="";public string Ref="";public bool Faded;public string Guards="";
+  // Story chapter marker (Kind "story"): chapter id, state (next/active/locked/done), part of a branch.
+  public string Chapter="",Story="";public bool Branch; }
  // Draw the same vector sign on the map and in the preview. Scav-only exits are not co-op exits.
  public static class ExitSign {
   public static readonly Color Green=Color.FromArgb(0,135,56),Orange=Color.FromArgb(218,128,35);
@@ -431,6 +479,11 @@ namespace ModePulse {
     if(fl.Contains("area")){var ar=Nums(fl["area"]);if(ar.Length>=4&&(x<ar[0]||x>ar[2]||z<ar[1]||z>ar[3]))continue;}var t=new List<double>();foreach(var o in (IEnumerable)fl["t"])t.Add(D(o));if(t.Count>=6)return Affine(t.ToArray(),x,z);}
    return ToImage(id,shippedPath,x,z);
   }
+  // Every floor drawing a game x,z could be on (null for a map not drawn floor by floor). A story mark has no height, so its
+  // spot is certain only when the floors that take it agree; an empty list means it is outside them (the map's own transform).
+  public static List<double[]> Floors(string id,string shippedPath,double x,double z){
+   ToImage(id,shippedPath,x,0,z);IDictionary all;levelFiles.TryGetValue(shippedPath,out all);var floors=all!=null&&all.Contains(id)?all[id] as IEnumerable:null;if(floors==null)return null;
+   var r=new List<double[]>();foreach(IDictionary fl in floors){if(fl.Contains("area")){var ar=Nums(fl["area"]);if(ar.Length>=4&&(x<ar[0]||x>ar[2]||z<ar[1]||z>ar[3]))continue;}var t=Nums(fl["t"]);if(t.Length>=6)r.Add(Affine(t,x,z));}return r;}
   public static double[] Transform(string id,string shippedPath){var fit=Fit(id,shippedPath);if(fit!=null){var ft=Nums(fit["t"]);if(ft.Length>=6)return ft;}var m=MapOf(shippedPath,id);if(m==null||!m.Contains("transform"))return null;var t=new List<double>();foreach(var o in (IEnumerable)m["transform"])t.Add(D(o));return t.Count>=6?t.ToArray():null;}
  }
  // ---- Active quests from the game's own logs, objective places from tarkov.dev ----
@@ -559,7 +612,7 @@ namespace ModePulse {
   public static string CachePath(string store,string mode){return System.IO.Path.Combine(store,"quest-places-"+mode+(I18n.Language=="ko"?"":"."+I18n.ApiLocale)+".json");}
   public static void RefreshIfStale(string store,string mode,TimeSpan maxAge){
    if(mode.Length==0)return;var path=CachePath(store,mode);
-   try{if(System.IO.File.Exists(path)&&DateTime.UtcNow-System.IO.File.GetLastWriteTimeUtc(path)<maxAge){var have=FandomMarkers.Parsed(path);if(have!=null&&have.Contains("keyDetails")&&Convert.ToInt32(have["keyDetails"])>=13)return;}}catch{}
+   try{if(System.IO.File.Exists(path)&&DateTime.UtcNow-System.IO.File.GetLastWriteTimeUtc(path)<maxAge){var have=FandomMarkers.Parsed(path);if(have!=null&&have.Contains("keyDetails")&&Convert.ToInt32(have["keyDetails"])>=15)return;}}catch{}
    lock(refreshing){if(!refreshing.Add(mode))return;}
    var t=new System.Threading.Thread(()=>{try{var json=Build(mode);var tmp=path+".tmp";System.IO.File.WriteAllText(tmp,json);if(System.IO.File.Exists(path))System.IO.File.Replace(tmp,path,null);else System.IO.File.Move(tmp,path);LastError="";}catch(Exception e){LastError=e.Message;}finally{lock(refreshing)refreshing.Remove(mode);}});
    t.IsBackground=true;t.Priority=System.Threading.ThreadPriority.BelowNormal;t.Start();
@@ -589,7 +642,7 @@ namespace ModePulse {
    string script=I18n.Language=="ko"?"[\\uac00-\\ud7a3]":I18n.Language=="ja"?"[\\u3040-\\u30ff\\u4e00-\\u9fff]":I18n.Language.StartsWith("zh")?"[\\u4e00-\\u9fff]":I18n.Language=="ru"?"[\\u0400-\\u04ff]":null;
    if(script!=null&&!System.Text.RegularExpressions.Regex.IsMatch(t,script))return "";
    return t.Length>4000?t.Substring(0,4000).TrimEnd()+"…":t;}
-  static bool KeyOptional(IDictionary needs,string quest,string key){var q=needs!=null&&needs.Contains(quest)?needs[quest] as IDictionary:null;return q!=null&&q.Contains(key)&&Convert.ToString(q[key])=="optional";}
+  static string KeyNeed(IDictionary needs,string quest,string key){var q=needs!=null&&needs.Contains(quest)?needs[quest] as IDictionary:null;var v=q!=null&&q.Contains(key)?Convert.ToString(q[key]):"";if(v=="required")return v;return v=="optional"&&needs.Contains("__policy")&&Convert.ToInt32(needs["__policy"])>=2?v:"unknown";}
   static string QuestName(IDictionary ko,IDictionary game,IDictionary t,bool sameQuest){var name=Tr(ko,t["name"]);if(Native(name)||!sameQuest||game==null)return name;var k=Convert.ToString(t["id"])+" name";var g=game.Contains(k)?Convert.ToString(game[k]).Trim():"";return g.Length>0&&Native(g)?g:name;}
   static string Tr(IDictionary ko,object key){var k=key as string;return k!=null&&ko!=null&&ko.Contains(k)?Convert.ToString(ko[k]):(k??"");}
   // Compact file: quest id -> {name, places:[{map (our id), text, x, z, outline:[x,z,...]}]}.
@@ -638,7 +691,7 @@ namespace ModePulse {
     foreach(var kv in locks){foreach(IDictionary l in (List<object>)kv.Value){var key=Convert.ToString(l["key"]);Dictionary<string,object> info;
      if(keyInfo.ContainsKey(key))info=(Dictionary<string,object>)keyInfo[key];else{var en=Tr(english,key+" Name");info=new Dictionary<string,object>{{"name",Tr(names,key+" Name")},{"description",KeyDescription(names,english,key,briefs)},{"card",en.IndexOf("keycard",StringComparison.OrdinalIgnoreCase)>=0},{"wiki",en.Length>0?"https://escapefromtarkov.fandom.com/wiki/"+en.Replace(' ','_'):""},{"maps",new Dictionary<string,object>()}};keyInfo[key]=info;}
      var per=(Dictionary<string,object>)info["maps"];per[kv.Key]=(per.ContainsKey(kv.Key)?Convert.ToInt32(per[kv.Key]):0)+1;}}}catch{}
-   var outQuests=new Dictionary<string,object>();
+   var outQuests=new Dictionary<string,object>();var listed=new List<string>();foreach(IDictionary t in Seq(tasks["tasks"]))listed.Add(Convert.ToString(t["id"]));
    foreach(IDictionary t in Seq(tasks["tasks"])){var places=new List<object>();
     foreach(IDictionary o in Seq(t.Contains("objectives")?t["objectives"]:null)){var text=objective(o);
      var spots=new List<IDictionary>();foreach(IDictionary z in Seq(o.Contains("zones")?o["zones"]:null))spots.Add(z);
@@ -649,15 +702,16 @@ namespace ModePulse {
     var steps=new List<object>();foreach(IDictionary o in Seq(t.Contains("objectives")?t["objectives"]:null)){var text=objective(o);if(text.Length==0)continue;var on=new List<object>();foreach(var mp in Seq(o.Contains("maps")?o["maps"]:null)){string mid;if(maps.TryGetValue(Convert.ToString(mp),out mid))on.Add(mid);}
      steps.Add(new Dictionary<string,object>{{"text",text},{"optional",o.Contains("optional")&&Convert.ToBoolean(o["optional"])},{"maps",on}});}
     // Keys the quest needs (tarkov.dev neededKeys: per map, any one of the listed keys), names in the UI language;
-    // "optional" when the wiki's guide does not say the key is required (BlueAsh's server: quest-guide/keys.json).
+    // The server records whether the guide supports required, optional, or an unknown status.
     // A key whose locks are all on other maps is a data slip (Vitamins listed a Shoreline key on Factory): left out.
     var needed=new List<object>();foreach(IDictionary nk in Seq(t.Contains("neededKeys")?t["neededKeys"]:null)){string nm;maps.TryGetValue(Convert.ToString(nk["map"]),out nm);var ids=new List<object>();
      foreach(var k in Seq(nk["keys"])){var kid=Convert.ToString(k);HashSet<string> on;if(nm!=null&&keyMaps.TryGetValue(kid,out on)&&!on.Contains(nm))continue;ids.Add(kid);}if(ids.Count==0)continue;
-     needed.Add(new Dictionary<string,object>{{"map",nm??""},{"keys",ids.ConvertAll(k=>(object)new Dictionary<string,object>{{"id",k},{"name",itemNames!=null?Tr(itemNames,k+" Name"):Convert.ToString(k)},{"optional",KeyOptional(keyNeeds,Convert.ToString(t["id"]),Convert.ToString(k))}})}});}
+     needed.Add(new Dictionary<string,object>{{"map",nm??""},{"keys",ids.ConvertAll(k=>(object)new Dictionary<string,object>{{"id",k},{"name",itemNames!=null?Tr(itemNames,k+" Name"):Convert.ToString(k)},{"need",KeyNeed(keyNeeds,Convert.ToString(t["id"]),Convert.ToString(k))}})}});}
     if(places.Count>0)outQuests[Convert.ToString(t["id"])]=new Dictionary<string,object>{{"name",QuestName(ko,briefs,t,sameQuest(t))},{"places",places},{"steps",steps},{"needed",needed},{"trader",Convert.ToString(t["trader"])},{"wiki",t.Contains("wikiLink")?Convert.ToString(t["wikiLink"]):""},{"brief",sameQuest(t)?Brief(briefs,Convert.ToString(t["id"])):""},{"level",t.Contains("minPlayerLevel")?Convert.ToInt32(t["minPlayerLevel"]):0}};}
    // Trader names in the UI language (for the quest card).
    var traders=new Dictionary<string,object>();try{var tn=((IDictionary)js.DeserializeObject(FandomMarkers.Get(b+"traders_"+I18n.ApiLocale)))["data"] as IDictionary;if(tn!=null)foreach(DictionaryEntry e in tn){var k=Convert.ToString(e.Key);if(k.EndsWith(" Nickname"))traders[k.Substring(0,k.Length-9)]=Convert.ToString(e.Value);}}catch{}
-   return js.Serialize(new Dictionary<string,object>{{"keyDetails",13},{"mode",mode},{"quests",outQuests},{"bosses",bosses},{"guards",guards},{"traders",traders},{"locks",locks},{"keys",keyInfo},{"mapNames",mapNames}});
+   var barters=new Dictionary<string,List<object>>();try{var all=((IDictionary)js.DeserializeObject(FandomMarkers.Get(b+"barters")))["data"];foreach(IDictionary trade in Seq(all)){var item=trade.Contains("offeredItem")?trade["offeredItem"] as IDictionary:null;if(item==null||!item.Contains("item"))continue;var itemId=Convert.ToString(item["item"]);if(!keyInfo.ContainsKey(itemId))continue;var vendor=Convert.ToString(trade["trader"]);object label;if(!traders.TryGetValue(vendor,out label))continue;var level=trade.Contains("minTraderLevel")?Convert.ToInt32(trade["minTraderLevel"]):0;var s=I18n.Format("{0} 우호도 {1} · 물물교환",Convert.ToString(label),level);if(trade.Contains("taskUnlock")&&!string.IsNullOrEmpty(Convert.ToString(trade["taskUnlock"])))s+=" · "+I18n.Text("퀘스트 완료 필요");if(!barters.ContainsKey(itemId))barters[itemId]=new List<object>();if(!barters[itemId].Contains(s))barters[itemId].Add(s);}}catch{}
+   return js.Serialize(new Dictionary<string,object>{{"keyDetails",15},{"mode",mode},{"quests",outQuests},{"listed",listed},{"bosses",bosses},{"guards",guards},{"traders",traders},{"barters",barters},{"locks",locks},{"keys",keyInfo},{"mapNames",mapNames}});
   }
   // Fandom boss, cultist and PMC-spawn pins in the UI language with this mode's spawn chance as the note; descriptions
   // translated line by line (FandomText). Exit names stay as they are.
@@ -716,15 +770,19 @@ namespace ModePulse {
   // Keys a quest needs for the card: one row per key (name, map name), and whether it is in my-keys.json for this mode.
   public static List<Dictionary<string,object>> NeededKeys(IDictionary quest,string logs,string store,string myKeys){
    var rows=new List<Dictionary<string,object>>();if(quest==null||!quest.Contains("needed"))return rows;var mode=CurrentMode(logs);var root=mode.Length>0?FandomMarkers.Parsed(CachePath(store,mode)):null;
-   var mapNames=root!=null&&root.Contains("mapNames")?root["mapNames"] as IDictionary:null;IDictionary mine=null;
+   var mapNames=root!=null&&root.Contains("mapNames")?root["mapNames"] as IDictionary:null;var barters=root!=null&&root.Contains("barters")?root["barters"] as IDictionary:null;var keyInfo=root!=null&&root.Contains("keys")?root["keys"] as IDictionary:null;IDictionary mine=null;
    try{if(System.IO.File.Exists(myKeys))mine=((IDictionary)js.DeserializeObject(System.IO.File.ReadAllText(myKeys)))[mode] as IDictionary;}catch{}
    foreach(IDictionary nk in (IEnumerable)quest["needed"]){var map=Convert.ToString(nk["map"]);var mapName=mapNames!=null&&mapNames.Contains(map)?Convert.ToString(mapNames[map]):"";
-    foreach(IDictionary k in (IEnumerable)nk["keys"]){var id=Convert.ToString(k["id"]);rows.Add(new Dictionary<string,object>{{"id",id},{"name",Convert.ToString(k["name"])},{"map",mapName},{"mine",mine!=null&&mine.Contains(id)},{"optional",k.Contains("optional")&&Convert.ToBoolean(k["optional"])}});}}
+    foreach(IDictionary k in (IEnumerable)nk["keys"]){var id=Convert.ToString(k["id"]);var trades=new List<string>();if(barters!=null&&barters.Contains(id))foreach(var trade in (IEnumerable)barters[id])trades.Add(Convert.ToString(trade));var info=keyInfo!=null&&keyInfo.Contains(id)?keyInfo[id] as IDictionary:null;rows.Add(new Dictionary<string,object>{{"id",id},{"name",Convert.ToString(k["name"])},{"map",mapName},{"mine",mine!=null&&mine.Contains(id)},{"barters",string.Join("\n",trades)},{"wiki",info!=null&&info.Contains("wiki")?Convert.ToString(info["wiki"]):""},{"need",k.Contains("need")?Convert.ToString(k["need"]):"unknown"}});}}
    return rows;}
   // One quest for the card: name, trader (UI language), level, objectives (text, optional, maps), wiki link; null if unknown.
   public static IDictionary Quest(string logs,string store,string id,out string trader){
    trader="";var mode=CurrentMode(logs);var root=mode.Length>0?FandomMarkers.Parsed(CachePath(store,mode)):null;var data=root==null?null:root["quests"] as IDictionary;if(data==null||!data.Contains(id))return null;
    var q=(IDictionary)data[id];var tr=root.Contains("traders")?root["traders"] as IDictionary:null;var tid=q.Contains("trader")?Convert.ToString(q["trader"]):"";if(tr!=null&&tr.Contains(tid))trader=Convert.ToString(tr[tid]);return q;}
+  // Active quests the cached tarkov.dev data does not list at all (new event quests, e.g. Halloween 2026): no spot to draw,
+  // only counted so the map can say so. They appear by themselves once tarkov.dev publishes them (daily refresh).
+  public static int Unlisted(string logs,string store){var mode=CurrentMode(logs);if(mode.Length==0)return 0;var root=FandomMarkers.Parsed(CachePath(store,mode));var data=root==null?null:root["quests"] as IDictionary;if(data==null)return 0;
+   var all=new HashSet<string>();foreach(var k in data.Keys)all.Add(Convert.ToString(k));if(!root.Contains("listed"))return 0;foreach(var k in (IEnumerable)root["listed"])all.Add(Convert.ToString(k));int n=0;foreach(var q in Active(logs,mode))if(!all.Contains(q))n++;return n;}
   // Pins for the active quests on this map: nearby objectives (within 2% of the image) share one pin.
   public static List<Pin> Pins(string id,string logs,string store,string shippedMarkers){
    var pins=new List<Pin>();var t=FandomMarkers.Transform(id,shippedMarkers);var mode=CurrentMode(logs);if(t==null||mode.Length==0)return pins;
@@ -740,6 +798,205 @@ namespace ModePulse {
    foreach(var p in pins)if(p.Count>1)p.Name=I18n.Format("퀘스트 목표 {0}개",p.Count);
    return pins;
   }
+ }
+ // ---- Story chapters (Tour ... Boreas): companion/story.json from source/build-story.mjs, text per UI language in story.<lang>.tsv ----
+ // Chapters, ordered objectives, mutually exclusive sub-quests and endings come from tarkov-data-overlay (MIT), positions
+ // from szepiz/tarkov-quest-data story-marks (CC0). Progress is ticked by the player (story-progress.json, per game mode):
+ // the game's logs do not say which story objective is done, so nothing here claims to detect it.
+ // Story chapter symbols as vector shapes (24-unit grid, absolute M/L/C/Z only), centred and scaled to fit, so they sit
+ // exactly in the middle of the map marker and the card draws the same shapes. The first six follow the motifs of the
+ // game's chapter emblems (our own drawings, not the game's art); the rest are simple stand-ins. Each layer is filled
+ // on its own with even-odd, so overlapping layers add up and holes go inside one layer.
+ public static class StoryIcon {
+  static readonly Dictionary<string,string[]> icons=new Dictionary<string,string[]>();
+  static readonly Dictionary<string,GraphicsPath[]> paths=new Dictionary<string,GraphicsPath[]>();
+  static string F(double v){return v.ToString("0.##",System.Globalization.CultureInfo.InvariantCulture);}
+  static string Poly(params double[] p){var sb=new System.Text.StringBuilder("M"+F(p[0])+" "+F(p[1]));for(int i=2;i+1<p.Length;i+=2)sb.Append(" L"+F(p[i])+" "+F(p[i+1]));return sb.Append(" Z").ToString();}
+  static string Rect(double x,double y,double w,double h){return Poly(x,y,x+w,y,x+w,y+h,x,y+h);}
+  static string Circle(double cx,double cy,double r){double k=r*0.5523;Func<double,double,string> P=(a,b)=>F(a)+" "+F(b);
+   return "M"+P(cx+r,cy)+" C"+P(cx+r,cy+k)+" "+P(cx+k,cy+r)+" "+P(cx,cy+r)+" C"+P(cx-k,cy+r)+" "+P(cx-r,cy+k)+" "+P(cx-r,cy)+" C"+P(cx-r,cy-k)+" "+P(cx-k,cy-r)+" "+P(cx,cy-r)+" C"+P(cx+k,cy-r)+" "+P(cx+r,cy-k)+" "+P(cx+r,cy)+" Z";}
+  static double[] Seg(double x1,double y1,double x2,double y2,double w){double dx=x2-x1,dy=y2-y1,l=Math.Sqrt(dx*dx+dy*dy),nx=-dy/l*w/2,ny=dx/l*w/2;return new[]{x1+nx,y1+ny,x2+nx,y2+ny,x2-nx,y2-ny,x1-nx,y1-ny};}
+  // Turn points by deg around the origin, optionally mirror, then move to (12,12).
+  static double[] Place(double[] p,double deg,bool mirror){var o=new double[p.Length];double a=deg*Math.PI/180,c=Math.Cos(a),s=Math.Sin(a);for(int i=0;i+1<p.Length;i+=2){double x=p[i]*c-p[i+1]*s,y=p[i]*s+p[i+1]*c;o[i]=(mirror?-x:x)+12;o[i+1]=y+12;}return o;}
+  // Map every coordinate pair of a path string: x*sx+tx, y*sy+ty.
+  static string Xform(string d,double sx,double sy,double tx,double ty){int n=0;return Regex.Replace(d,@"-?\d+(\.\d+)?",m=>{double v=double.Parse(m.Value,System.Globalization.CultureInfo.InvariantCulture);return F(n++%2==0?v*sx+tx:v*sy+ty);});}
+  const string Flame="M12 23 C6.5 23 4 19 4.5 15 C5 11 8.5 9 9 4.5 C11.5 6.5 12.5 9 12.2 11.5 C13.5 10.5 14.3 9 14.5 7.5 C17.5 10 19.8 13 19.5 16.5 C19.2 20.5 16.5 23 12 23 Z";
+  const string FlameCore="M12 21 C9.5 21 8.3 19.2 8.6 17.2 C8.9 15.4 10.3 14.4 10.8 12.5 C12.6 13.8 13.6 15.5 13.4 17 C14.2 16.6 14.8 15.8 15 15 C15.9 16.2 16.2 17.5 16 18.5 C15.7 20.1 14.2 21 12 21 Z";
+  static StoryIcon(){
+   // Tour: compass star drawn as an outline (long spikes up and down, open chevrons left and right), ring in the middle.
+   // Tour: hollow V outlines for the four main points, solid diagonal points, a ring in a dark gap at the centre.
+   Func<double,double,double[]> At=(deg,r)=>new[]{12+r*Math.Cos(deg*Math.PI/180),12+r*Math.Sin(deg*Math.PI/180)};
+   var tour=new List<string>{Circle(12,12,2.2)+" "+Circle(12,12,1.2)};
+   for(int k=0;k<4;k++){double m=-90+k*90,d=m+45;var tip=At(m,9);var v1=At(m-22.5,4);var v2=At(m+22.5,4);
+    tour.Add(Poly(Seg(tip[0],tip[1],v1[0],v1[1],0.95)));tour.Add(Poly(Seg(tip[0],tip[1],v2[0],v2[1],0.95)));tour.Add(Circle(tip[0],tip[1],0.3));
+    var dv1=At(d-15,4.1);var dt=At(d,7.2);var dv2=At(d+15,4.1);var din=At(d,3);tour.Add(Poly(dv1[0],dv1[1],dt[0],dt[1],dv2[0],dv2[1],din[0],din[1]));}
+   icons["tour"]=tour.ToArray();
+   // Falling Skies: a nose-down plane with wide swept wings, drips under the wings, flames rising from the tail.
+   var plane=new List<string>{Poly(12,11,17,10.6,22,8.4,20.5,12.5,16,15.2,13.3,16.2,12.6,22.5,12,24,11.4,22.5,10.7,16.2,8,15.2,3.5,12.5,2,8.4,7,10.6),Xform(Flame,0.62,0.62,4.56,-2.8)};
+   foreach(var d in new[]{new[]{5.6,13.4,15.6},new[]{9,15.4,17.6},new[]{15,15.4,17.6},new[]{18.4,13.4,15.6}}){plane.Add(Poly(Seg(d[0],d[1],d[0],d[2],1.2)));plane.Add(Circle(d[0],d[2],0.7));}
+   icons["falling-skies"]=plane.ToArray();
+   // Batya: two axes crossing high, blades facing out, a small poll on the inside.
+   var axe=new List<string>();foreach(bool m in new[]{false,true}){axe.Add(Poly(Place(Seg(0,-10.2,0,13.5,1.5),-25,m)));axe.Add(Poly(Place(new double[]{0.75,-12,-1.8,-12.3,-4.6,-13.4,-5.1,-12,-5.3,-10.4,-5.1,-8.8,-4.6,-7.2,-1.8,-8.4,0.75,-8.6},-25,m)));axe.Add(Poly(Place(new double[]{0.75,-11.6,2.2,-11.1,2.2,-9.5,0.75,-9},-25,m)));}
+   icons["batya"]=axe.ToArray();
+   // The Unheard: a slanted L and 7 that interlock.
+   icons["the-unheard"]=new[]{Poly(8.8,3,11.4,3,8.6,17.4,13.6,17.4,13.1,20,5.3,20),Poly(12.6,7.5,20.2,7.5,17.1,23,14.5,23,17,10.1,12.1,10.1)};
+   // Blue Fire: one tall flame leaning right with a side tongue and an inner cut.
+   // Blue Fire: one flame, a tongue split off on the right, a flame-shaped cut opening at the bottom with a barb on its left.
+   icons["blue-fire"]=new[]{"M11.5 1.4 C14.4 3.8 16 6.6 15.4 9.8 C16.4 9.3 17.1 8.6 17.4 7.8 C19.3 10.4 19.6 13.6 18.4 16.2 C17.4 18.2 15.8 19.2 14.4 19.4 C15 17.6 14.8 15.2 13.8 13.6 C13.2 12.4 12.6 11.4 12 10.8 C11.2 11.6 10.2 12.6 9.7 13.7 L10.9 15.1 C10.3 16.4 10.3 17.6 10.7 18.8 C7.6 17.6 5.8 15 6 12 C6.2 8.6 8.6 6.6 10.2 4.6 C10.9 3.7 11.3 2.6 11.5 1.4 Z"};
+   // They Are Already Here: a sound wave, thin rounded bars across one long line.
+   var wave=new List<string>{Poly(Seg(1.4,12,22.6,12,1.4)),Circle(1.4,12,0.7)+" "+Circle(22.6,12,0.7)};double[][] b={new[]{4.5,10,15.5},new[]{6.9,8.5,18},new[]{9.3,6,19.5},new[]{11.7,2,21.5},new[]{14.1,7,18},new[]{16.5,9.5,16},new[]{18.9,10,14.5}};
+   var bars=new System.Text.StringBuilder();var caps=new System.Text.StringBuilder();foreach(var x in b){bars.Append(Poly(Seg(x[0],x[1],x[0],x[2],1))+" ");caps.Append(Circle(x[0],x[1],0.5)+" "+Circle(x[0],x[2],0.5)+" ");}
+   wave.Add(bars.ToString().Trim());wave.Add(caps.ToString().Trim());
+   icons["they-are-already-here"]=wave.ToArray();
+   icons["accidental-witness"]=new[]{"M1 12 C5 5.5 19 5.5 23 12 C19 18.5 5 18.5 1 12 Z "+Circle(12,12,4.6)+" "+Circle(12,12,2.3)};
+   icons["the-labyrinth"]=new[]{string.Join(" ",Rect(2,2,13,2.4),Rect(18,2,4,2.4),Rect(19.6,4.4,2.4,17.6),Rect(2,19.6,17.6,2.4),Rect(2,4.4,2.4,9.6),Rect(6.8,6.8,10.4,2.2),Rect(15,9,2.2,8.2),Rect(9,15,6,2.2),Rect(6.8,9,2.2,5.2),Rect(11,11,2,2))};
+   icons["the-ticket"]=new[]{"M3 6 L21 6 L21 9.5 C19.6 9.5 19.6 14.5 21 14.5 L21 18 L3 18 L3 14.5 C4.4 14.5 4.4 9.5 3 9.5 Z "+Rect(14.4,7.5,1.2,2)+" "+Rect(14.4,11,1.2,2)+" "+Rect(14.4,14.5,1.2,2)};
+   var flake=new List<string>();for(int k=0;k<3;k++){double a=k*Math.PI/3;flake.Add(Poly(Seg(12-10.5*Math.Cos(a),12-10.5*Math.Sin(a),12+10.5*Math.Cos(a),12+10.5*Math.Sin(a),1.8)));}
+   for(int k=0;k<6;k++){double a=k*Math.PI/3,px=12+6*Math.Cos(a),py=12+6*Math.Sin(a);foreach(int sgn in new[]{-1,1}){double t=a+sgn*Math.PI/4;flake.Add(Poly(Seg(px,py,px+3.8*Math.Cos(t),py+3.8*Math.Sin(t),1.6)));}}
+   icons["boreas"]=flake.ToArray();
+   icons[""]=new[]{Circle(12,12,7)};
+   foreach(var id in new List<string>(icons.Keys)){var layers=icons[id];var all=new GraphicsPath();foreach(var l in layers)all.AddPath(Parse(l),false);var r=all.GetBounds();all.Dispose();
+    double k=21/Math.Max(r.Width,r.Height);var fitted=new string[layers.Length];var ps=new GraphicsPath[layers.Length];
+    for(int i=0;i<layers.Length;i++){fitted[i]=Xform(layers[i],k,k,12-(r.X+r.Width/2)*k,12-(r.Y+r.Height/2)*k);ps[i]=Parse(fitted[i]);}
+    icons[id]=fitted;paths[id]=ps;}
+  }
+  static GraphicsPath Parse(string d){var p=new GraphicsPath(FillMode.Alternate);var t=Regex.Matches(d,@"[MLCZ]|-?\d+(\.\d+)?");PointF cur=PointF.Empty;char cmd='M';var nums=new List<float>();
+   Action flush=()=>{if(cmd=='M'&&nums.Count==2){p.StartFigure();cur=new PointF(nums[0],nums[1]);nums.Clear();}else if(cmd=='L'&&nums.Count==2){var q=new PointF(nums[0],nums[1]);p.AddLine(cur,q);cur=q;nums.Clear();}
+    else if(cmd=='C'&&nums.Count==6){var q=new PointF(nums[4],nums[5]);p.AddBezier(cur,new PointF(nums[0],nums[1]),new PointF(nums[2],nums[3]),q);cur=q;nums.Clear();}};
+   foreach(Match m in t){var s=m.Value;if(s=="Z"){p.CloseFigure();continue;}if(s.Length==1&&char.IsLetter(s[0])){cmd=s[0];nums.Clear();continue;}nums.Add(float.Parse(s,System.Globalization.CultureInfo.InvariantCulture));flush();}
+   return p;}
+  static string Key(string chapter){return icons.ContainsKey(chapter??"")?chapter:"";}
+  public static string[] Svg(string chapter){return icons[Key(chapter)];}
+  // Fill the symbol centred on (x,y), size = width of the 24-unit box on screen.
+  public static void Draw(Graphics g,string chapter,float x,float y,float size,Brush ink){var st=g.Save();g.TranslateTransform(x,y);g.ScaleTransform(size/24,size/24);g.TranslateTransform(-12,-12);
+   foreach(var p in paths[Key(chapter)])g.FillPath(ink,p);g.Restore(st);}
+ }
+ public static class Story {
+  public class Mark{public string Map="";public int Floor;public bool Area;public double[] Pts=new double[0];}
+  public class Step{public string Id="",Text="",Quest="",Ending="";public bool Optional;public int Indent,Index;public List<string> Maps=new List<string>();public List<Mark> Marks=new List<Mark>();public Chapter Chapter;}
+  public class Chapter{public string Id="",Name="",Wiki="",Activation="",Description="",Notes="",Rewards="";public int Order,Referenced,Resolved,MissingTexts;public bool AutoStart,Partial;
+   public List<string> Requires=new List<string>();public List<string[]> Branches=new List<string[]>(),Endings=new List<string[]>();public List<Step> Steps=new List<Step>();}
+  public static readonly List<Chapter> Chapters=new List<Chapter>();public static readonly Dictionary<string,Step> Steps=new Dictionary<string,Step>();
+  public static string Checked="";public static readonly List<string> Sources=new List<string>();
+  static readonly JavaScriptSerializer js=new JavaScriptSerializer{MaxJsonLength=int.MaxValue};
+  static readonly Dictionary<string,string> ko=new Dictionary<string,string>();
+  // One colour and one symbol (StoryIcon) per chapter: never told apart by colour alone.
+  static readonly Dictionary<string,Color> colors=new Dictionary<string,Color>{{"tour",Color.FromArgb(0,196,170)},{"falling-skies",Color.FromArgb(255,142,48)},{"batya",Color.FromArgb(132,182,64)},
+   {"the-unheard",Color.FromArgb(186,104,255)},{"blue-fire",Color.FromArgb(92,116,255)},{"they-are-already-here",Color.FromArgb(232,72,96)},{"accidental-witness",Color.FromArgb(240,96,170)},
+   {"the-labyrinth",Color.FromArgb(206,146,84)},{"the-ticket",Color.FromArgb(236,196,58)},{"boreas",Color.FromArgb(120,206,246)}};
+  public static Color ColorOf(string chapter){Color c;return colors.TryGetValue(chapter??"",out c)?c:Color.FromArgb(160,170,190);}
+  public static string T(string en){string v;return en!=null&&ko.TryGetValue(en,out v)?v:en??"";}
+  static string Str(IDictionary d,string k){return d!=null&&d.Contains(k)&&d[k]!=null?Convert.ToString(d[k]):"";}
+  static IEnumerable Arr(IDictionary d,string k){return d!=null&&d.Contains(k)?(d[k] as IEnumerable)??new object[0]:new object[0];}
+  public static void Load(){if(Chapters.Count>0)return;Load(System.IO.Path.GetDirectoryName(typeof(I18n).Assembly.Location));}
+  public static void Load(string dir){
+   Chapters.Clear();Steps.Clear();ko.Clear();Sources.Clear();var path=System.IO.Path.Combine(dir,"story.json");if(!System.IO.File.Exists(path))return;
+   var root=(IDictionary)js.DeserializeObject(System.IO.File.ReadAllText(path));Checked=Str(root,"checked");
+   foreach(IDictionary s in Arr(root,"sources"))Sources.Add(Str(s,"name")+" ("+Str(s,"license")+", "+Str(s,"asOf")+")");
+   foreach(IDictionary c in Arr(root,"chapters")){var ch=new Chapter{Id=Str(c,"id"),Name=Str(c,"name"),Wiki=Str(c,"wiki"),Activation=Str(c,"activation"),Description=Str(c,"description"),Notes=Str(c,"notes"),Rewards=Str(c,"rewards"),Order=Convert.ToInt32(c["order"]),AutoStart=Convert.ToBoolean(c["autoStart"])};
+    var cov=c["coverage"] as IDictionary;ch.Referenced=Convert.ToInt32(cov["referenced"]);ch.Resolved=Convert.ToInt32(cov["resolved"]);ch.MissingTexts=Convert.ToInt32(cov["missingTexts"]);ch.Partial=Convert.ToBoolean(cov["partial"]);
+    foreach(var r in Arr(c,"requires"))ch.Requires.Add(Convert.ToString(r));foreach(IList b in Arr(c,"branches"))ch.Branches.Add(new[]{Convert.ToString(b[0]),Convert.ToString(b[1])});
+    foreach(IDictionary e in Arr(c,"endings"))ch.Endings.Add(new[]{Str(e,"id"),Str(e,"system"),Str(e,"gate"),Str(e,"objectives")});
+    foreach(IDictionary s in Arr(c,"steps")){var st=new Step{Id=Str(s,"id"),Text=Str(s,"text"),Quest=Str(s,"quest"),Ending=Str(s,"ending"),Optional=Convert.ToBoolean(s["optional"]),Indent=s.Contains("indent")?Convert.ToInt32(s["indent"]):0,Chapter=ch,Index=ch.Steps.Count};
+     foreach(var m in Arr(s,"maps"))st.Maps.Add(Convert.ToString(m));
+     foreach(IDictionary m in Arr(s,"marks")){var pts=new List<double>();foreach(IList p in Arr(m,"pts")){pts.Add(Convert.ToDouble(p[0]));pts.Add(Convert.ToDouble(p[1]));}st.Marks.Add(new Mark{Map=Str(m,"map"),Floor=Convert.ToInt32(m["floor"]),Area=Convert.ToBoolean(m["area"]),Pts=pts.ToArray()});}
+     ch.Steps.Add(st);Steps[st.Id]=st;}
+    Chapters.Add(ch);}
+   var tsv=System.IO.Path.Combine(dir,"story."+I18n.Language+".tsv");if(System.IO.File.Exists(tsv))foreach(var line in System.IO.File.ReadAllLines(tsv,System.Text.Encoding.UTF8)){if(line.Length==0||line.StartsWith("#"))continue;int tab=line.IndexOf('\t');if(tab>0)ko[line.Substring(0,tab)]=line.Substring(tab+1);}
+  }
+  // The step "지도에서 위치 보기" was asked for: shown whatever the filters say.
+  public static string Focus="";
+  public static readonly Dictionary<string,string> MapEnglish=new Dictionary<string,string>{{"bigmap","Customs"},{"woods","Woods"},{"shoreline","Shoreline"},{"interchange","Interchange"},{"rezervbase","Reserve"},{"lighthouse","Lighthouse"},{"tarkovstreets","Streets of Tarkov"},{"laboratory","The Lab"},{"sandbox","Ground Zero"},{"factory4_day","Factory"},{"labyrinth","The Labyrinth"},{"icebreaker","Icebreaker"},{"terminal","Terminal"}};
+  public static Chapter Find(string id){foreach(var c in Chapters)if(c.Id==id)return c;return null;}
+  // ---- Progress and view settings: %LOCALAPPDATA%\ModeSwitch\story-progress.json ----
+  public static string ProgressFile="";static string readFile;
+  static readonly Dictionary<string,HashSet<string>> done=new Dictionary<string,HashSet<string>>();
+  // Spoiler level of the branch tab: hide (default), hint, guide, all.
+  public static string Spoiler="hide",Only="";public static bool ShowGeneral=true,ShowStory=true,ShowActive=true,ShowNext=true,HideDone=true,OpenOnly,BranchOnly;
+  public static void Use(string file){if(file==readFile)return;readFile=file;ProgressFile=file;done.Clear();if(!System.IO.File.Exists(file))return;
+   try{var root=(IDictionary)js.DeserializeObject(System.IO.File.ReadAllText(file));var p=root["progress"] as IDictionary;if(p!=null)foreach(DictionaryEntry e in p){var set=new HashSet<string>();foreach(var id in (IEnumerable)e.Value)set.Add(Convert.ToString(id));done[Convert.ToString(e.Key)]=set;}
+    var sp=Str(root,"spoiler");if(sp=="hide"||sp=="hint"||sp=="guide"||sp=="all")Spoiler=sp;Only=Str(root,"chapter");if(Only.Length>0&&Find(Only)==null&&Chapters.Count>0)Only="";
+    var f=root["filters"] as IDictionary;Func<string,bool,bool> b=(k,d)=>f!=null&&f.Contains(k)?Convert.ToBoolean(f[k]):d;
+    ShowGeneral=b("general",true);ShowStory=b("story",true);ShowActive=b("active",true);ShowNext=b("next",true);HideDone=b("hideDone",true);OpenOnly=b("openOnly",false);BranchOnly=b("branchOnly",false);}catch{}}
+  public static void Save(){if(ProgressFile.Length==0)return;var p=new Dictionary<string,object>();foreach(var kv in done)p[kv.Key]=new List<string>(kv.Value);
+   var root=new Dictionary<string,object>{{"progress",p},{"spoiler",Spoiler},{"chapter",Only},{"filters",new Dictionary<string,object>{{"general",ShowGeneral},{"story",ShowStory},{"active",ShowActive},{"next",ShowNext},{"hideDone",HideDone},{"openOnly",OpenOnly},{"branchOnly",BranchOnly}}}};
+   try{var tmp=ProgressFile+".tmp";System.IO.File.WriteAllText(tmp,js.Serialize(root));if(System.IO.File.Exists(ProgressFile))System.IO.File.Replace(tmp,ProgressFile,null);else System.IO.File.Move(tmp,ProgressFile);}catch{}}
+  // The log's session mode (pve, pvp-season, regular); unknown counts as PvP.
+  public static string ModeKey(string mode){return string.IsNullOrEmpty(mode)?"regular":mode;}
+  public static string ModeLabel(string mode){mode=ModeKey(mode);return mode=="pve"?"PvE":mode=="pvp-season"?I18n.Text("PvP 시즌"):"PvP";}
+  public static bool IsDone(string mode,string id){HashSet<string> s;return done.TryGetValue(ModeKey(mode),out s)&&s.Contains(id);}
+  public static void SetDone(string mode,string id,bool on){HashSet<string> s;if(!done.TryGetValue(ModeKey(mode),out s))done[ModeKey(mode)]=s=new HashSet<string>();if(on)s.Add(id);else s.Remove(id);Save();}
+  // ---- States: chapter done / locked (a required chapter not done) / active (something ticked) / open; a step is
+  // done, next (the chapter's first unticked main objective), active (the rest of a started chapter) or locked.
+  static bool MainDone(Chapter c,string mode){foreach(var s in c.Steps)if(!s.Optional&&!IsDone(mode,s.Id))return false;return true;}
+  public static string ChapterState(Chapter c,string mode){if(MainDone(c,mode))return "done";foreach(var r in c.Requires){var rc=Find(r);if(rc!=null&&!MainDone(rc,mode))return "locked";}foreach(var s in c.Steps)if(IsDone(mode,s.Id))return "active";return "open";}
+  public static Step NextOf(Chapter c,string mode){if(ChapterState(c,mode)=="locked")return null;foreach(var s in c.Steps)if(!s.Optional&&!IsDone(mode,s.Id))return s;return null;}
+  public static string StateOf(Step s,string mode){if(IsDone(mode,s.Id))return "done";var cs=ChapterState(s.Chapter,mode);if(cs=="locked")return "locked";if(NextOf(s.Chapter,mode)==s)return "next";return cs=="open"?"locked":"active";}
+  // Part of a choice: a sub-quest that cannot be completed together with another, or the way to one ending.
+  public static bool IsBranch(Step s){if(s.Ending.Length>0)return true;foreach(var b in s.Chapter.Branches)if(b[0]==s.Quest||b[1]==s.Quest)return true;return false;}
+  public static string StateText(string state){return I18n.Text(state=="next"?"다음 목표":state=="active"?"진행 중":state=="locked"?"미해금":state=="done"?"완료":state=="branch"?"분기":"위치 미확인");}
+  public static int DoneCount(Chapter c,string mode,out int total){int n=0;total=0;foreach(var s in c.Steps){if(s.Optional)continue;total++;if(IsDone(mode,s.Id))n++;}return n;}
+  static bool Shown(Step s,string state){if(state=="done"&&HideDone)return false;if(state=="active"&&!ShowActive)return false;if(state=="next"&&!ShowNext)return false;if(state=="locked"&&Only.Length==0)return false;return !BranchOnly||IsBranch(s);}
+  // Image spot of a game x,z: on maps drawn floor by floor only when every floor that takes it agrees (a mark has no height).
+  static double[] Place(string map,string shipped,double x,double z){var fl=FandomMarkers.Floors(map,shipped,x,z);
+   if(fl!=null&&fl.Count>0){double u=0,v=0;foreach(var p in fl){u+=p[0];v+=p[1];}u/=fl.Count;v/=fl.Count;foreach(var p in fl)if(Math.Abs(p[0]-u)>0.02||Math.Abs(p[1]-v)>0.02)return null;return new[]{u,v};}
+   return FandomMarkers.ToImage(map,shipped,x,z);}
+  static int Rank(string state,bool branch){return state=="next"?4:branch&&state!="done"&&state!="locked"?3:state=="active"?2:state=="locked"?1:0;}
+  // Story markers for this map (merged within 2% of the image like quest marks) and the steps on this map with no usable spot.
+  public static List<Pin> Pins(string map,string shipped,string mode,List<Step> unplaced){
+   Load();var pins=new List<Pin>();if(!ShowStory)return pins;
+   foreach(var c in Chapters){bool chapterOn=(Only.Length==0||c.Id==Only)&&!(OpenOnly&&ChapterState(c,mode)=="done");
+    foreach(var s in c.Steps){var st=StateOf(s,mode);if(s.Id!=Focus&&(!chapterOn||!Shown(s,st)))continue;bool here=s.Maps.Contains(map),placed=false;
+     foreach(var mk in s.Marks){if(mk.Map!=map)continue;here=true;var pts=new List<PointF>();
+      for(int i=0;i+1<mk.Pts.Length;i+=2){var q=Place(map,shipped,mk.Pts[i],mk.Pts[i+1]);if(q==null||q[0]<0||q[0]>1||q[1]<0||q[1]>1){pts.Clear();break;}pts.Add(new PointF((float)q[0],(float)q[1]));}
+      if(pts.Count==0)continue;placed=true;float u=0,v=0;foreach(var p in pts){u+=p.X;v+=p.Y;}u/=pts.Count;v/=pts.Count;
+      int total;DoneCount(c,mode,out total);var line=StateText(st)+" · "+T(s.Text);bool branch=IsBranch(s);Pin near=null;
+      foreach(var e in pins)if(Math.Abs(e.X-u)<0.02f&&Math.Abs(e.Y-v)<0.02f){near=e;break;}
+      if(near!=null){if((","+near.Ref+",").IndexOf(","+s.Id+",",StringComparison.Ordinal)>=0)continue;near.Ref+=","+s.Id;near.Count++;near.Condition+="\n"+c.Name+" · "+line;if(near.Chapter!=c.Id)near.Name=I18n.Format("스토리 목표 {0}개",near.Count);
+       if(Rank(st,branch)>Rank(near.Story,near.Branch)){near.Story=st;near.Branch=branch;near.Chapter=c.Id;}continue;}
+      pins.Add(new Pin{Kind="story",Name=I18n.Text("스토리")+" · "+c.Name,Condition=line,X=u,Y=v,Count=1,Ref=s.Id,Chapter=c.Id,Story=st,Branch=branch,Outline=mk.Area&&pts.Count>=3?pts.ToArray():null});}
+     if(here&&!placed&&unplaced!=null)unplaced.Add(s);}}
+   return pins;}
+  // Adds this map's story markers to the canvas; the unplaced ones become the "?" chip (PinClicked with Kind "story").
+  public static void Apply(MapCanvas canvas,string map,string shipped,string mode,string store){
+   Use(System.IO.Path.Combine(store,"story-progress.json"));var unplaced=new List<Step>();canvas.Pins.AddRange(Pins(map,shipped,mode,unplaced));
+   var ids=new List<string>();foreach(var s in unplaced)ids.Add(s.Id);canvas.StoryUnknown=string.Join(",",ids);}
+  // Words that make a step harder in a factual way (no verdict on which branch is easier).
+  static readonly string[] bosses={"Reshala","Cultist Priest","Killa","Tagilla","Glukhar","Sanitar","Shturman","Kaban","Kollontay","Partisan","Zryachiy","Knight","Rogues"};
+  static Dictionary<string,object> Factors(List<Step> steps,Func<string,string> mapName){var maps=new List<string>();bool survive=false,kill=false,items=false,keys=false;var boss=new List<string>();
+   foreach(var s in steps){foreach(var m in s.Maps){var n=mapName(m);if(!maps.Contains(n))maps.Add(n);}var t=s.Text;
+    if(Regex.IsMatch(t,@"\b(Survive|extract|Escape)\b",RegexOptions.IgnoreCase))survive=true;if(Regex.IsMatch(t,@"\b(Eliminate|neutralize)\b",RegexOptions.IgnoreCase))kill=true;
+    if(Regex.IsMatch(t,@"\b(Hand over|Find the item|Bring|Obtain|Collect)\b",RegexOptions.IgnoreCase))items=true;if(Regex.IsMatch(t,@"\bkey(card)?s?\b",RegexOptions.IgnoreCase))keys=true;
+    foreach(var b in bosses)if(t.IndexOf(b,StringComparison.OrdinalIgnoreCase)>=0&&!boss.Contains(b))boss.Add(b);}
+   return new Dictionary<string,object>{{"steps",steps.Count},{"maps",maps},{"survive",survive},{"kill",kill},{"items",items},{"keys",keys},{"bosses",boss}};}
+  static Dictionary<string,object> StepRow(Step s,string mode,Func<string,string> mapName,bool hide){var maps=new List<string>();foreach(var m in s.Maps)maps.Add(mapName(m));
+   bool located=false;foreach(var mk in s.Marks)if(mk.Map.Length>0)located=true;var st=StateOf(s,mode);
+   return new Dictionary<string,object>{{"id",s.Id},{"n",s.Index+1},{"text",hide?I18n.Text("(스포일러 보호됨)"):T(s.Text)},{"en",hide||I18n.Language=="en"?"":s.Text},{"state",st},{"branch",IsBranch(s)},{"optional",s.Optional},{"indent",s.Indent},{"maps",maps},{"located",located},{"done",st=="done"}};}
+  // Everything the story card shows for the picked step (ids: the steps on the clicked marker), in the UI language.
+  public static Dictionary<string,object> Card(List<string> ids,string pick,string mode,string map,Func<string,string> mapName){
+   Load();Step s;if(!Steps.TryGetValue(pick??"",out s)){foreach(var id in ids)if(Steps.TryGetValue(id,out s))break;}if(s==null)return null;var c=s.Chapter;
+   bool spoil=Spoiler=="guide"||Spoiler=="all";
+   var picks=new List<object>();foreach(var id in ids){Step o;if(Steps.TryGetValue(id,out o))picks.Add(new Dictionary<string,object>{{"id",o.Id},{"chapter",o.Chapter.Name},{"color",Hex(ColorOf(o.Chapter.Id))},{"text",T(o.Text)},{"state",StateOf(o,mode)},{"branch",IsBranch(o)}});}
+   var rows=new List<object>();foreach(var x in c.Steps)rows.Add(StepRow(x,mode,mapName,x.Ending.Length>0&&!spoil));
+   Step prev=null,next=null;for(int i=s.Index-1;i>=0;i--)if(!c.Steps[i].Optional){prev=c.Steps[i];break;}for(int i=s.Index+1;i<c.Steps.Count;i++)if(!c.Steps[i].Optional){next=c.Steps[i];break;}
+   var todo=NextOf(c,mode);
+   Func<Step,object> link=x=>{if(x==null)return null;var r=StepRow(x,mode,mapName,x.Ending.Length>0&&!spoil);var other=x.Maps.Count>0&&!x.Maps.Contains(map);r["otherMap"]=other?x.Maps[0]:"";r["otherMapName"]=other?mapName(x.Maps[0]):"";return r;};
+   var floors=new List<string>();foreach(var mk in s.Marks){if(mk.Map!=map||mk.Floor<0)continue;var f=I18n.Format("편집기 층 {0}",mk.Floor);if(!floors.Contains(f))floors.Add(f);}
+   var chapters=new List<object>();foreach(var x in Chapters){int t;int n=DoneCount(x,mode,out t);var req=new List<string>();foreach(var r in x.Requires){var rc=Find(r);if(rc!=null)req.Add(rc.Name);}var nx=NextOf(x,mode);
+    chapters.Add(new Dictionary<string,object>{{"id",x.Id},{"name",x.Name},{"color",Hex(ColorOf(x.Id))},{"state",ChapterState(x,mode)},{"done",n},{"total",t},{"requires",req},{"next",nx==null?"":nx.Id}});}
+   // Branches: each pair of sub-quests that cannot both be completed (from the game's own quest data), only as far as the spoiler level allows.
+   var branches=new List<object>();foreach(var b in c.Branches){var sides=new List<object>();foreach(var q in b){var steps=c.Steps.FindAll(x=>x.Quest==q);var texts=new List<string>();foreach(var x in steps)texts.Add(T(x.Text));
+     sides.Add(new Dictionary<string,object>{{"quest",q},{"steps",Spoiler=="hint"?new List<string>():texts},{"factors",Spoiler=="hint"?null:Factors(steps,mapName)},{"mine",steps.Exists(x=>IsDone(mode,x.Id))}});}
+    branches.Add(new Dictionary<string,object>{{"sides",sides},{"involvesPick",b[0]==s.Quest||b[1]==s.Quest}});}
+   var endings=new List<object>();foreach(var e in c.Endings)endings.Add(new Dictionary<string,object>{{"system",Spoiler=="all"?e[1]:""},{"objectives",Convert.ToInt32(e[3])},{"steps",Spoiler=="all"?c.Steps.FindAll(x=>x.Ending==e[0]).ConvertAll(x=>(object)T(x.Text)):new List<object>()}});
+   int total2;int doneN=DoneCount(c,mode,out total2);
+   return new Dictionary<string,object>{{"mode",ModeLabel(mode)},{"spoiler",Spoiler},{"picks",picks},{"step",StepRow(s,mode,mapName,false)},{"floors",floors},{"here",s.Maps.Contains(map)||s.Marks.Exists(m=>m.Map==map)},{"mapNames",s.Maps.ConvertAll(m=>(object)mapName(m))},
+    {"isNext",todo==s},{"prev",link(prev)},{"next",link(next)},{"todo",todo==null||todo==s?null:link(todo)},
+    {"chapter",new Dictionary<string,object>{{"id",c.Id},{"name",c.Name},{"color",Hex(ColorOf(c.Id))},{"icon",StoryIcon.Svg(c.Id)},{"state",ChapterState(c,mode)},{"done",doneN},{"total",total2},{"activation",T(c.Activation)},{"description",T(c.Description)},
+     {"notes",spoil?T(c.Notes):""},{"rewards",T(c.Rewards)},{"partial",c.Partial},{"referenced",c.Referenced},{"resolved",c.Resolved},{"missing",c.MissingTexts},{"wiki",c.Wiki.StartsWith("https://escapefromtarkov.fandom.com/",StringComparison.Ordinal)},{"steps",rows},{"hasBranch",c.Branches.Count>0||c.Endings.Count>0}}},
+    {"branches",Spoiler=="hide"?new List<object>():branches},{"branchCount",c.Branches.Count},{"endingCount",c.Endings.Count},{"endings",Spoiler=="hide"||Spoiler=="hint"?new List<object>():endings},{"chapters",chapters},
+    {"sources",string.Join(" · ",Sources)},{"checked",Checked}};}
+  static string Hex(Color c){return "#"+c.R.ToString("x2")+c.G.ToString("x2")+c.B.ToString("x2");}
  }
  // Tarkov writes the player's position and rotation into in-raid screenshot names:
  //   2024-01-01[12-00]_123.45, 6.78, -90.12_0.00000, 0.70711, 0.00000, 0.70711_12.34 (0).png
@@ -783,11 +1040,11 @@ namespace ModePulse {
   public MapCanvas(){SetStyle(ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.UserPaint|ControlStyles.Opaque,true);Dock=DockStyle.Fill;BackColor=Theme.Bg;
    settle.Tick+=delegate{settle.Stop();moving=false;Invalidate();};
    // "You are here" pulse: only while the map is visible and a position is shown; repaints just that spot.
-   pulse.Tick+=delegate{bool quests=false;foreach(var p in Pins)if(p.Kind=="quest"){quests=true;break;}
+   pulse.Tick+=delegate{bool quests=false;foreach(var p in Pins)if(p.Kind=="quest"||(p.Kind=="story"&&p.Story=="next")){quests=true;break;}
     if((!MeShown&&Available.Count==0&&!quests&&HighlightRef.Length==0)||!Visible||MapImage==null){pulse.Stop();return;}
     var o=Origin;float s=Scale,e=Radius*3.6f;var area=new Region(Rectangle.Empty);if(MeShown)area.Union(MeArea());
     foreach(var p in Pins)if(p.Kind=="exit"&&Available.Contains(p.Name))area.Union(Rectangle.Round(new RectangleF(o.X+p.X*MapImage.Width*s-e,o.Y+p.Y*MapImage.Height*s-e,2*e,2*e)));
-    if(quests&&!moving)foreach(var p in Pins)if(p.Kind=="quest")area.Union(QuestArea(p));
+    if(quests&&!moving)foreach(var p in Pins)if(p.Kind=="quest")area.Union(QuestArea(p));else if(p.Kind=="story"&&p.Story=="next"){var at=ToScreen(p);float se=Radius*2.6f;area.Union(Rectangle.Round(new RectangleF(at.X-se,at.Y-se,2*se,2*se)));}
     if(HighlightRef.Length>0)foreach(var p in Pins)if(IsHighlighted(p)){var at=ToScreen(p);float ke=Math.Max(70,Radius*6);area.Union(Rectangle.Round(new RectangleF(at.X-ke,at.Y-ke,2*ke,2*ke)));}
     Invalidate(area);area.Dispose();};}
   // Expanding, fading ring around (x,y), one every periodMs.
@@ -841,16 +1098,16 @@ namespace ModePulse {
    }
    g.SmoothingMode=SmoothingMode.AntiAlias;g.TextRenderingHint=System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
    if(pinFont==null){pinFont=new Font(I18n.FontName,9.5f,FontStyle.Bold);tipFont=new Font(I18n.FontName,9.5f);tipBold=new Font(I18n.FontName,10.5f,FontStyle.Bold);}
-   DrawInfo(g);
+   DrawInfo(g);DrawStoryChip(g);
    if(Pins.Count==0&&!MeShown){DrawKeyTip(g);return;}
    float big=Radius,small=big*0.42f;
    using(var plate=new SolidBrush(Color.FromArgb(200,14,14,15)))
    using(var dot=new SolidBrush(Color.FromArgb(225,226,214,170)))using(var dotEdge=new Pen(Color.FromArgb(220,10,10,10),1.5f))using(var pick=new Pen(Color.FromArgb(255,255,214,64),2.5f)){
-    foreach(var p in Pins)if(p.Kind=="quest"&&p.Outline!=null)DrawZone(g,p.Outline);
+    foreach(var p in Pins)if(p.Kind=="quest"&&p.Outline!=null)DrawZone(g,p.Outline);else if(p.Kind=="story"&&p.Outline!=null)DrawZone(g,p.Outline,Story.ColorOf(p.Chapter));
     // After the exit list was read this raid: usable exits keep their green and send a green wave every 3 s,
     // the other exits turn grey. Transits are drawn as usual.
     bool listed=Available.Count>0;
-    foreach(var p in Pins){if(p.Kind=="quest"||IsHighlighted(p))continue;var at=ToScreen(p);float x=at.X,y=at.Y;bool on=p.Kind=="exit"&&p.Name.Length>0&&Available.Contains(p.Name);
+    foreach(var p in Pins){if(p.Kind=="quest"||p.Kind=="story"||IsHighlighted(p))continue;var at=ToScreen(p);float x=at.X,y=at.Y;bool on=p.Kind=="exit"&&p.Name.Length>0&&Available.Contains(p.Name);
      if(on&&!TaxiMarker.IsTaxi(p))DrawWave(g,x,y,small*1.6f,3000,Color.FromArgb(0,230,90));
      if(p.Kind=="key"||p.Kind=="keycard"){
       // A key that would sit on another marker moves up-right a little; a gold dot keeps the exact spot.
@@ -869,6 +1126,7 @@ namespace ModePulse {
    }
    foreach(var p in Pins)if(p.Note.Length>0){var at=ToScreen(p);var size=g.MeasureString(p.Note,tipFont);float nx=at.X+small*1.9f,ny=at.Y-size.Height/2;
     using(var back=new SolidBrush(Color.FromArgb(p.Faded?120:205,12,12,14)))g.FillRectangle(back,nx-2,ny,size.Width+4,size.Height);using(var ink=new SolidBrush(p.Faded?Color.FromArgb(150,255,255,255):Color.White))g.DrawString(p.Note,tipFont,ink,nx,ny);}
+   foreach(var p in Pins)if(p.Kind=="story"){var at=ToScreen(p);DrawStory(g,at.X,at.Y,p);}
    if(Pins.Count>0)foreach(var p in Pins)if(p.Kind=="quest"){var at=ToScreen(p);DrawQuest(g,at.X,at.Y,Radius*0.55f,p.Count);}
    if(MeShown)DrawMe(g);else if((Available.Count>0||HighlightRef.Length>0)&&!pulse.Enabled)pulse.Start();
    foreach(var p in Pins)if(IsHighlighted(p))DrawFocusedKey(g,p,unchecked(Environment.TickCount-keyJumpAt));
@@ -894,10 +1152,43 @@ namespace ModePulse {
    using(var sf=new StringFormat{Alignment=StringAlignment.Center,LineAlignment=StringAlignment.Center})g.DrawString(count>1?count.ToString():"!",badgeFont,Brushes.White,new RectangleF(cx-hr,cy-hr+hr*0.06f,2*hr,2*hr),sf);
    if(!pulse.Enabled)pulse.Start();
   }
-  void DrawZone(Graphics g,PointF[] outline){
+  void DrawZone(Graphics g,PointF[] outline){DrawZone(g,outline,Color.FromArgb(24,160,255));}
+  void DrawZone(Graphics g,PointF[] outline,Color c){
    var o=Origin;float s=Scale;var pts=new PointF[outline.Length];for(int i=0;i<pts.Length;i++)pts[i]=new PointF(o.X+outline[i].X*MapImage.Width*s,o.Y+outline[i].Y*MapImage.Height*s);
-   using(var fill=new SolidBrush(Color.FromArgb(40,24,160,255)))using(var edge=new Pen(Color.FromArgb(210,24,160,255),1.5f){DashStyle=DashStyle.Dash}){g.FillPolygon(fill,pts);g.DrawPolygon(edge,pts);}
+   using(var fill=new SolidBrush(Color.FromArgb(40,c)))using(var edge=new Pen(Color.FromArgb(210,c),1.5f){DashStyle=DashStyle.Dash}){g.FillPolygon(fill,pts);g.DrawPolygon(edge,pts);}
   }
+  // Story marker: a diamond in the chapter's colour with its white symbol (colour is never the only cue), and one small
+  // badge for the state: ▶ next (with a slow ring in the chapter colour), fork = branch, ✓ done (dimmed), lock = not yet
+  // open (grey). A plain diamond is a step in progress. Number at the top right when several objectives share the spot.
+  Font storyBadge;float storyGlyphSize;
+  public string StoryUnknown="",StoryFocus="";Rectangle storyChip;
+  void DrawStory(Graphics g,float x,float y,Pin p){
+   float s=Radius*0.74f,b=s*0.55f;var c=Story.ColorOf(p.Chapter);bool done=p.Story=="done",locked=p.Story=="locked";
+   if(p.Story=="next")DrawWave(g,x,y,s*0.9f,2400,c);
+   if(storyBadge==null||storyGlyphSize!=s){if(storyBadge!=null)storyBadge.Dispose();storyGlyphSize=s;storyBadge=new Font("Segoe MDL2 Assets",b*1.05f,GraphicsUnit.Pixel);}
+   var fill=locked?Color.FromArgb(255,70,76,90):done?Color.FromArgb(150,c):c;
+   using(var path=new GraphicsPath()){var pts=new[]{new PointF(x,y-s*1.25f),new PointF(x+s*1.25f,y),new PointF(x,y+s*1.25f),new PointF(x-s*1.25f,y)};path.AddPolygon(pts);
+    using(var halo=new Pen(Color.FromArgb(220,0,0,0),4.2f){LineJoin=LineJoin.Round})g.DrawPath(halo,path);using(var br=new SolidBrush(fill))g.FillPath(br,path);
+    using(var rim=new Pen(locked?c:Color.FromArgb(done?150:245,255,255,255),locked?2f:1.5f){LineJoin=LineJoin.Round})g.DrawPath(rim,path);}
+   using(var sf=new StringFormat{Alignment=StringAlignment.Center,LineAlignment=StringAlignment.Center})using(var ink=new SolidBrush(Color.FromArgb(done?170:255,255,255,255))){
+    StoryIcon.Draw(g,p.Chapter,x,y,s*1.3f,ink);
+    float bx=x+s*0.9f,by=y+s*0.9f;string glyph=p.Story=="next"?"":done?"":locked?"":null;
+    if(glyph!=null||p.Branch){Color back=done?Color.FromArgb(255,0,150,80):locked?Color.FromArgb(255,24,28,38):Color.White;
+     using(var bb=new SolidBrush(back))using(var be=new Pen(Color.FromArgb(220,0,0,0),1.6f)){g.FillEllipse(bb,bx-b,by-b,2*b,2*b);g.DrawEllipse(be,bx-b,by-b,2*b,2*b);}
+     if(p.Branch&&!done&&!locked){using(var fork=new Pen(Color.FromArgb(255,20,24,34),Math.Max(1.4f,b*0.22f)){StartCap=LineCap.Round,EndCap=LineCap.Round}){g.DrawLine(fork,bx,by+b*0.55f,bx,by);g.DrawLine(fork,bx,by,bx-b*0.45f,by-b*0.5f);g.DrawLine(fork,bx,by,bx+b*0.45f,by-b*0.5f);}}
+     else using(var gi=new SolidBrush(done||locked?Color.White:c))g.DrawString(glyph,storyBadge,gi,new RectangleF(bx-b,by-b,2*b,2*b),sf);}
+    if(p.Count>1){var n=p.Count.ToString();using(var plate=new SolidBrush(Color.FromArgb(230,12,14,20)))g.FillEllipse(plate,x+s*0.55f,y-s*1.45f,b*1.7f,b*1.7f);g.DrawString(n,pinFont,Brushes.White,new RectangleF(x+s*0.55f,y-s*1.45f,b*1.7f,b*1.7f),sf);}}
+   if(StoryFocus.Length>0&&(","+p.Ref+",").Contains(","+StoryFocus+","))using(var ring=new Pen(Color.White,2.4f))using(var halo2=new Pen(Color.FromArgb(200,0,0,0),5f)){float rr=s*2.1f;g.DrawEllipse(halo2,x-rr,y-rr,2*rr,2*rr);g.DrawEllipse(ring,x-rr,y-rr,2*rr,2*rr);}
+  }
+  // Bottom-left chip "? N story objectives on this map without a spot": opens them in the story card.
+  void DrawStoryChip(Graphics g){storyChip=Rectangle.Empty;if(StoryUnknown.Length==0)return;int n=StoryUnknown.Split(',').Length;var text="?  "+I18n.Format("위치 미확인 스토리 목표 {0}개",n);
+   var size=g.MeasureString(text,tipFont);var box=new RectangleF(10,Height-size.Height-26,size.Width+20,size.Height+12);storyChip=Rectangle.Ceiling(box);
+   Theme.Round(g,box,8,Color.FromArgb(225,14,18,26),Color.FromArgb(160,120,140,180),1f);using(var ink=new SolidBrush(Color.FromArgb(240,230,236,248)))g.DrawString(text,tipFont,ink,box.X+10,box.Y+6);}
+  // Centre and zoom on the marker holding this story step; false when it is not on this map.
+  public bool FocusStory(string id){
+   if(MapImage==null||string.IsNullOrEmpty(id))return false;foreach(var p in Pins){if(p.Kind!="story"||(","+p.Ref+",").IndexOf(","+id+",",StringComparison.Ordinal)<0)continue;
+    Zoom=Math.Max(Zoom,2.2f);PanX=(0.5f-p.X)*MapImage.Width*Scale;PanY=(0.5f-p.Y)*MapImage.Height*Scale;StoryFocus=id;Moved();return true;}
+   return false;}
   // "You are here": red dot with a white rim, a red ring growing and fading every 1.2 s, and a cone toward
   // the facing direction, so the eye finds it at once on any map.
   void DrawMe(Graphics g){
@@ -1019,7 +1310,7 @@ namespace ModePulse {
    foreach(var p in Pins){var q=ToScreen(p);if(p.Kind=="quest")q.Y-=Radius*0.55f*(2.2f+1.75f);float dx=q.X-at.X,dy=q.Y-at.Y,d=dx*dx+dy*dy;if(d<=bestD){bestD=d;best=p;}}return best;}
   // Tarkov-style tooltip: name, condition, transit target, and whether the exit list showed it this raid.
   void DrawTip(Graphics g,Pin p){
-   var lines=new List<KeyValuePair<string,Font>>();string kind=I18n.Text(p.Kind=="transit"?"트랜짓":p.Kind=="pmc"?"PMC 스폰":p.Kind=="boss"?"보스":p.Kind=="cultist"?"컬티스트":p.Kind=="quest"?"퀘스트":p.Kind=="key"?"열쇠":p.Kind=="keycard"?"키카드":"");
+   var lines=new List<KeyValuePair<string,Font>>();string kind=I18n.Text(p.Kind=="transit"?"트랜짓":p.Kind=="pmc"?"PMC 스폰":p.Kind=="boss"?"보스":p.Kind=="cultist"?"컬티스트":p.Kind=="quest"?"퀘스트":p.Kind=="key"?"열쇠":p.Kind=="keycard"?"키카드":"");if(p.Kind=="story")kind="";
    lines.Add(new KeyValuePair<string,Font>((kind.Length>0?"["+kind+"] ":"")+(p.Name.Length>0?p.Name:I18n.Text("(이름 없음)")),tipBold));
    if(p.Destination.Length>0)lines.Add(new KeyValuePair<string,Font>(I18n.Text("이동: ")+p.Destination,tipFont));
    // Fandom descriptions can be several lines (conditions, boss chance); exits without one say so.
@@ -1028,6 +1319,7 @@ namespace ModePulse {
    if(TaxiMarker.IsTaxi(p)){TaxiState ts;if(!TaxiStates.TryGetValue(p.Name,out ts))ts=TaxiState.Unknown;lines.Add(new KeyValuePair<string,Font>(I18n.Text(ts==TaxiState.Using?"택시 · 출발 카운트다운 감지":ts==TaxiState.Gone?"택시 · 출발 완료 / 사용 불가":ts==TaxiState.Normal?"택시 · 입금 표시 없음 (차량 유무는 현장에서 확인)":"택시 · 상태 미확인"),tipFont));}
    if(!TaxiMarker.IsTaxi(p)&&Available.Contains(p.Name))lines.Add(new KeyValuePair<string,Font>(I18n.Text("● 이번 레이드에서 사용 가능"),tipFont));
    if(p.Kind=="quest"&&!EditMode)lines.Add(new KeyValuePair<string,Font>(I18n.Text("● 클릭하면 퀘스트 설명과 사진을 봅니다."),tipFont));
+   if(p.Kind=="story"&&!EditMode)lines.Add(new KeyValuePair<string,Font>(I18n.Text(p.Count>1?"● 클릭하면 목표를 골라 공략과 진행도를 봅니다.":"● 클릭하면 공략과 진행도를 봅니다."),tipFont));
    float pad=8,maxW=Math.Max(220,Math.Min(Width*0.45f,560)),limit=Height-2*pad-8;
    float w=0,h=0;var sizes=new List<SizeF>();var shown=new List<KeyValuePair<string,Font>>();
    foreach(var l in lines){var sz=g.MeasureString(l.Key,l.Value,(int)maxW);if(h+sz.Height>limit){var more=new KeyValuePair<string,Font>(I18n.Format("… (+{0}줄)",lines.Count-shown.Count),tipFont);shown.Add(more);sizes.Add(g.MeasureString(more.Key,tipFont));h+=sizes[sizes.Count-1].Height;break;}
@@ -1060,10 +1352,12 @@ namespace ModePulse {
    if(dragging!=null){var o=Origin;float s=Scale;dragging.X=Math.Max(0,Math.Min(1,(e.X-o.X)/(MapImage.Width*s)));dragging.Y=Math.Max(0,Math.Min(1,(e.Y-o.Y)/(MapImage.Height*s)));Invalidate();return;}
    if(drag){PanX+=e.X-last.X;PanY+=e.Y-last.Y;last=e.Location;Moved();return;}
    var h=PinAt(e.Location);if(h!=hover||(h!=null&&e.Location!=hoverAt)){hover=h;hoverAt=e.Location;Invalidate();}
-   Cursor=h!=null&&h.Kind=="quest"&&!EditMode?Cursors.Hand:Cursors.Default;
+   Cursor=(h!=null&&(h.Kind=="quest"||h.Kind=="story")||storyChip.Contains(e.Location))&&!EditMode?Cursors.Hand:Cursors.Default;
   }
   protected override void OnMouseUp(MouseEventArgs e){if(dragging!=null){dragging=null;Dirty=true;}
-   bool click=drag&&downPin!=null&&downPin.Kind=="quest"&&Math.Abs(e.X-downAt.X)<5&&Math.Abs(e.Y-downAt.Y)<5&&PinAt(e.Location)==downPin;var hit=downPin;downPin=null;
+   bool still=Math.Abs(e.X-downAt.X)<5&&Math.Abs(e.Y-downAt.Y)<5;
+   if(drag&&downPin==null&&still&&storyChip.Contains(e.Location)&&storyChip.Contains(downAt))downPin=new Pin{Kind="story",Ref=StoryUnknown,Story="unknown"};
+   bool click=drag&&downPin!=null&&(downPin.Kind=="quest"||downPin.Kind=="story")&&still&&(downPin.Story=="unknown"||PinAt(e.Location)==downPin);var hit=downPin;downPin=null;
    drag=false;Capture=false;base.OnMouseUp(e);if(click){var c=PinClicked;if(c!=null)c(this,new PinEventArgs(hit));}}
   protected override void OnMouseWheel(MouseEventArgs e){ZoomAt(e.Delta>0?1.2f:1/1.2f,e.Location);base.OnMouseWheel(e);}
   protected override void Dispose(bool d){if(d){settle.Dispose();pulse.Dispose();if(MapImage!=null)MapImage.Dispose();foreach(var f in new[]{pinFont,tipFont,tipBold})if(f!=null)f.Dispose();if(cache!=null)cache.Dispose();}base.Dispose(d);}
@@ -1157,12 +1451,13 @@ namespace ModePulse {
    found.EndUpdate();found.Visible=q.Length>0;if(found.Visible){found.BringToFront();found.Height=Math.Max(found.ItemHeight,Math.Min(Height-search.Bottom-10,found.ItemHeight*Math.Max(1,Math.Min(8,found.Items.Count))+2));}
   }
   void Toggle(Entry e){if(mine.Contains(e.Id))mine.Remove(e.Id);else mine.Add(e.Id);Save();Fill();found.Invalidate();search.Focus();}
+  public int ToggleQuestKey(string id){var e=ById(id);if(e==null)return -1;bool before=mine.Contains(id);if(before)mine.Remove(id);else mine.Add(id);bool added=mine.Contains(id);if(!Save()){if(before)mine.Add(id);else mine.Remove(id);return -1;}Fill();found.Invalidate();return added?1:0;}
   void Remove(string id){mine.Remove(id);if(Hover==id||ActiveRef==id)ClearPreview();Save();Fill();}
-  void Save(){
+  bool Save(){
    try{var js=new JavaScriptSerializer();var root=System.IO.File.Exists(myKeysPath)?js.Deserialize<Dictionary<string,object>>(System.IO.File.ReadAllText(myKeysPath)):null;if(root==null)root=new Dictionary<string,object>();
     var m=new Dictionary<string,object>();foreach(var id in mine){var e=ById(id);m[id]=e!=null?e.Name:id;}root[mode]=m;
-    var tmp=myKeysPath+".tmp";System.IO.File.WriteAllText(tmp,js.Serialize(root));if(System.IO.File.Exists(myKeysPath))System.IO.File.Replace(tmp,myKeysPath,null);else System.IO.File.Move(tmp,myKeysPath);}catch{}
-   if(Changed!=null)Changed(this,EventArgs.Empty);
+    var tmp=myKeysPath+".tmp";System.IO.File.WriteAllText(tmp,js.Serialize(root));if(System.IO.File.Exists(myKeysPath))System.IO.File.Replace(tmp,myKeysPath,null);else System.IO.File.Move(tmp,myKeysPath);}catch{return false;}
+   if(Changed!=null)Changed(this,EventArgs.Empty);return true;
   }
   static string IconDir{get{return System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"ModeSwitch","icons");}}
   // Every key icon once, in the background (211 icons, about 0.5 MB): the list then never shows an empty frame.
@@ -1226,29 +1521,170 @@ namespace ModePulse {
    }catch{}return found;}
  }
  public class PinEventArgs:EventArgs{public readonly Pin Pin;public PinEventArgs(Pin p){Pin=p;}}
+ // This PC's AI translator for wiki text the server has no translation of (quest guides and briefings, picture captions,
+ // where a key is found): the same model and llama.cpp server as 모드 번역 (source/local_ai.h downloads and checks them
+ // into %LOCALAPPDATA%\ModeSwitch\ai; asked by WM_APP+207 to the main window, progress in ai-progress.txt). Run here
+ // only while translating: started hidden at below-normal priority on 127.0.0.1, stopped after two idle minutes.
+ // Every line translated is kept in ai-cache\<lang>.txt (hash of the English, tab, translation), so the same text is
+ // translated once on this PC. Not used from an elevated helper (the server is a program in the user's folder).
+ public static class LocalAi {
+  const long ModelSize=2497281120L;
+  static string store="";static System.Diagnostics.Process proc;static int port;static DateTime lastUse;static System.Threading.Timer idle;
+  static readonly object gate=new object();static Dictionary<string,string> cache;static string cacheLang="";
+  public static void Init(string s){store=s;AppDomain.CurrentDomain.ProcessExit+=(o,e)=>Stop();}
+  static string Dir{get{return System.IO.Path.Combine(store,"ai");}}
+  static string Model{get{return System.IO.Path.Combine(Dir,"Qwen3-4B-Instruct-2507-Q4_K_M.gguf");}}
+  static string Server{get{return System.IO.Path.Combine(Dir,"llama-b12065","llama-server.exe");}}
+  static bool Elevated(){try{return new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent()).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);}catch{return true;}}
+  // Ready: downloaded and checked by BlueAsh (the model's .ok stamp is written only after its SHA-256 matched).
+  public static bool Ready{get{try{return store.Length>0&&System.IO.File.Exists(Server)&&System.IO.File.Exists(Model+".ok")&&new System.IO.FileInfo(Model).Length==ModelSize;}catch{return false;}}}
+  public static bool Usable{get{return I18n.Language!="en"&&!Elevated();}}
+  [System.Runtime.InteropServices.DllImport("user32.dll",CharSet=System.Runtime.InteropServices.CharSet.Unicode)] static extern IntPtr FindWindow(string cls,string title);
+  [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool PostMessage(IntPtr h,int msg,IntPtr w,IntPtr l);
+  // Asks BlueAsh to download it (about 2.5 GB, once).
+  public static void Fetch(){var w=FindWindow("ModeSwitch",null);if(w!=IntPtr.Zero)PostMessage(w,0x8000+207,IntPtr.Zero,IntPtr.Zero);}
+  // Download progress: -1 none or finished, 0..1 working, -2 failed.
+  public static double Progress(){try{var f=System.IO.Path.Combine(store,"ai-progress.txt");if(!System.IO.File.Exists(f)||DateTime.UtcNow-System.IO.File.GetLastWriteTimeUtc(f)>TimeSpan.FromMinutes(2))return -1;
+   var t=System.IO.File.ReadAllText(f);if(t.Contains("state=error"))return -2;if(!t.Contains("state=working"))return -1;var m=Regex.Match(t,"part=([0-9.]+)");return m.Success?double.Parse(m.Groups[1].Value,System.Globalization.CultureInfo.InvariantCulture):0;}catch{return -1;}}
+  // "g2": translations made with the game-name glossary and context (earlier ones are not reused).
+  static string Hash(string s){using(var sha=System.Security.Cryptography.SHA256.Create())return BitConverter.ToString(sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes("g2\n"+I18n.Language+"\n"+s))).Replace("-","").Substring(0,24);}
+  // Game names (ai-glossary.tsv beside this DLL, made by source/build-ai-glossary.mjs): English -> the name this language's
+  // game uses. Those found in the text go into the prompt, longest first; capitalised names match only as written.
+  static List<KeyValuePair<string,string>> glossary;static string glossaryLang="";
+  static List<KeyValuePair<string,string>> Glossary(){if(glossary!=null&&glossaryLang==I18n.Language)return glossary;glossary=new List<KeyValuePair<string,string>>();glossaryLang=I18n.Language;
+   try{var f=System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(LocalAi).Assembly.Location),"ai-glossary.tsv");foreach(var l in System.IO.File.ReadAllLines(f,System.Text.Encoding.UTF8)){var p=l.Split('\t');if(p.Length==3&&p[0]==I18n.Language)glossary.Add(new KeyValuePair<string,string>(p[1],p[2]));}}catch{}
+   glossary.Sort((a,b)=>b.Key.Length.CompareTo(a.Key.Length));return glossary;}
+  static bool Word(char c){return char.IsLetterOrDigit(c)||c=='\'';}
+  internal static string NamesIn(string text){var hits=new List<string>();var taken=new List<KeyValuePair<int,int>>();
+   foreach(var g in Glossary()){bool exact=g.Key.Length>0&&char.IsUpper(g.Key[0]);int at=0;while((at=text.IndexOf(g.Key,at,exact?StringComparison.Ordinal:StringComparison.OrdinalIgnoreCase))>=0){int end=at+g.Key.Length;
+     if((at==0||!Word(text[at-1]))&&(end>=text.Length||!Word(text[end]))&&!taken.Exists(t=>at<t.Value&&end>t.Key)){taken.Add(new KeyValuePair<int,int>(at,end));hits.Add(g.Key+" = "+g.Value);break;}at=end;}
+    if(hits.Count>=40)break;}
+   return string.Join("; ",hits);}
+  static void LoadCache(){if(cache!=null&&cacheLang==I18n.Language)return;cache=new Dictionary<string,string>();cacheLang=I18n.Language;
+   try{var f=CacheFile();if(System.IO.File.Exists(f))foreach(var l in System.IO.File.ReadAllLines(f,System.Text.Encoding.UTF8)){int tab=l.IndexOf('\t');if(tab==24)cache[l.Substring(0,24)]=l.Substring(25).Replace("\\n","\n").Replace("\\\\","\\");}}catch{}}
+  static string CacheFile(){return System.IO.Path.Combine(store,"ai-cache",I18n.Language+".txt");}
+  // Cached translations only (no AI): null for a line not translated yet.
+  public static string Cached(string english){if(string.IsNullOrWhiteSpace(english))return english;lock(gate){LoadCache();string t;return cache.TryGetValue(Hash(english),out t)?t:null;}}
+  // A block of English lines in the UI language: from the cache only (now=false) or translating what is missing; null when not complete.
+  public static string Lines(string english,bool now){if(I18n.Language=="en"||string.IsNullOrWhiteSpace(english))return english;var lines=english.Split('\n');
+   if(!now){var found=new List<string>();foreach(var l in lines){var t=l.Trim().Length==0?l:Cached(l);if(t==null)return null;found.Add(t);}return string.Join("\n",found);}
+   var done=Translate(lines);return done==null?null:string.Join("\n",done);}
+  // The text is not in the UI language: for languages with their own script, no letter of it (Latin languages cannot be told apart, so false).
+  public static bool Foreign(string t){if(string.IsNullOrWhiteSpace(t))return false;string p=I18n.Language=="ko"?"[\uAC00-\uD7A3]":I18n.Language=="ja"?"[\u3040-\u30FF\u4E00-\u9FFF]":I18n.Language.StartsWith("zh")?"[\u4E00-\u9FFF]":I18n.Language=="ru"?"[\u0400-\u04FF]":null;return p!=null&&!Regex.IsMatch(t,p);}
+  static readonly Dictionary<string,string> Names=new Dictionary<string,string>{{"ko","Korean"},{"zh-CN","Simplified Chinese"},{"ja","Japanese"},{"ru","Russian"},{"es","Spanish"},{"pt-BR","Brazilian Portuguese"},{"de","German"},{"fr","French"},{"it","Italian"},{"pl","Polish"},{"tr","Turkish"},{"zh-TW","Traditional Chinese (Taiwan)"}};
+  // Blocking (call off the UI thread): every line in the UI language, from the cache or translated now; null when the
+  // translator is not there or did not answer. Lines keep their order; a "• " bullet stays at the line's start.
+  public static List<string> Translate(IList<string> lines,string context=""){
+   if(!Usable||!Ready||lines.Count==0)return null;string lang;if(!Names.TryGetValue(I18n.Language,out lang))return null;
+   lock(gate){LoadCache();var output=new List<string>(lines);var todo=new List<int>();for(int i=0;i<lines.Count;i++){string t;if(string.IsNullOrWhiteSpace(lines[i]))continue;if(cache.TryGetValue(Hash(lines[i]),out t))output[i]=t;else todo.Add(i);}
+    if(todo.Count==0)return output;if(!Start())return null;
+    var system="You translate text from the Escape from Tarkov wiki into "+lang+" for players of the game. Use the names the "+lang+" version of the game uses for maps, traders, items, quests and extracts; keep names you are not sure of in English. Keep numbers, units and a leading \"• \". Translate every string; never add or merge strings. Answer with only a JSON array of the translated strings, in the same order."+(string.IsNullOrWhiteSpace(context)?"":" The strings belong to this text (for meaning only, do not translate it): "+(context.Length>900?context.Substring(0,900):context));
+    var added=new List<string>();int at=0;
+    while(at<todo.Count){var batch=new List<int>();int chars=0;while(at<todo.Count&&batch.Count<20&&(batch.Count==0||chars+lines[todo[at]].Length<2400)){batch.Add(todo[at]);chars+=lines[todo[at]].Length;at++;}
+     var src=batch.ConvertAll(i=>lines[i]);var names=NamesIn(string.Join("\n",src));var sys=names.Length>0?system+" Use exactly these game names (English = "+lang+"): "+names+".":system;var got=Ask(sys,src);
+     if(got==null){got=new List<string>();foreach(var s in src){var one=Ask(sys,new List<string>{s});got.Add(one!=null?one[0]:null);}}
+     for(int k=0;k<batch.Count;k++){var t=got[k];if(string.IsNullOrWhiteSpace(t))continue;t=t.Trim();if(src[k].StartsWith("• ")&&!t.StartsWith("•"))t="• "+t.TrimStart('-','*',' ');
+      output[batch[k]]=t;var h=Hash(src[k]);cache[h]=t;added.Add(h+"\t"+t.Replace("\\","\\\\").Replace("\r","").Replace("\n","\\n"));}}
+    try{System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(CacheFile()));System.IO.File.AppendAllLines(CacheFile(),added,new System.Text.UTF8Encoding(false));}catch{}
+    lastUse=DateTime.UtcNow;return output;}}
+  static List<string> Ask(string system,List<string> src){
+   try{var body=js.Serialize(new Dictionary<string,object>{{"messages",new object[]{new Dictionary<string,object>{{"role","system"},{"content",system}},new Dictionary<string,object>{{"role","user"},{"content",js.Serialize(src)}}}},{"temperature",0.2},{"max_tokens",3072}});
+    var req=(System.Net.HttpWebRequest)System.Net.WebRequest.Create("http://127.0.0.1:"+port+"/v1/chat/completions");req.Method="POST";req.ContentType="application/json; charset=utf-8";req.Timeout=180000;req.ReadWriteTimeout=180000;req.Proxy=null;
+    var bytes=System.Text.Encoding.UTF8.GetBytes(body);using(var s=req.GetRequestStream())s.Write(bytes,0,bytes.Length);string answer;using(var r=req.GetResponse())using(var rd=new System.IO.StreamReader(r.GetResponseStream(),System.Text.Encoding.UTF8))answer=rd.ReadToEnd();
+    var root=js.DeserializeObject(answer) as IDictionary;var choice=((object[])root["choices"])[0] as IDictionary;var text=Convert.ToString(((IDictionary)choice["message"])["content"]).Trim();
+    int a=text.IndexOf('['),b=text.LastIndexOf(']');if(a<0||b<a)return null;var arr=js.DeserializeObject(text.Substring(a,b-a+1)) as object[];if(arr==null||arr.Length!=src.Count)return null;
+    var list=new List<string>();foreach(var o in arr)list.Add(o==null?null:Convert.ToString(o));return list;}catch{return null;}}
+  static bool Alive(){try{var r=(System.Net.HttpWebRequest)System.Net.WebRequest.Create("http://127.0.0.1:"+port+"/health");r.Timeout=1500;r.Proxy=null;using(var x=(System.Net.HttpWebResponse)r.GetResponse())return x.StatusCode==System.Net.HttpStatusCode.OK;}catch{return false;}}
+  // On the graphics card first; when it does not come up there (too little video memory, often while a game runs), the processor.
+  static bool Start(){
+   if(proc!=null&&!proc.HasExited&&Alive())return true;Stop();
+   for(int p=51851;p<51871&&port==0;p++){try{var l=new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback,p);l.Start();l.Stop();port=p;}catch{}}
+   if(port==0)return false;
+   foreach(var layers in new[]{99,0}){
+    try{var si=new System.Diagnostics.ProcessStartInfo(Server,"-m \""+Model+"\" -ngl "+layers+" -c 8192 -np 1 --host 127.0.0.1 --port "+port+" --no-webui"){UseShellExecute=false,CreateNoWindow=true,WorkingDirectory=System.IO.Path.GetDirectoryName(Server)};
+     proc=System.Diagnostics.Process.Start(si);try{proc.PriorityClass=System.Diagnostics.ProcessPriorityClass.BelowNormal;}catch{}
+     for(int i=0;i<360&&!proc.HasExited;i++){if(Alive()){lastUse=DateTime.UtcNow;if(idle==null)idle=new System.Threading.Timer(_=>{lock(gate){if(proc!=null&&DateTime.UtcNow-lastUse>TimeSpan.FromMinutes(2))Stop();}},null,30000,30000);return true;}System.Threading.Thread.Sleep(500);}}catch{}
+    Stop();port=0;for(int p=51851;p<51871&&port==0;p++){try{var l=new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback,p);l.Start();l.Stop();port=p;}catch{}}}
+   return false;}
+  public static void Stop(){try{if(proc!=null&&!proc.HasExited){proc.Kill();proc.WaitForExit(5000);}}catch{}proc=null;port=0;}
+  static readonly JavaScriptSerializer js=new JavaScriptSerializer{MaxJsonLength=int.MaxValue};
+ }
  // Fandom wiki guide of a quest: the text of its Guide section and its pictures (URLs and captions). The page comes from the
  // wiki's API when a quest card opens (kept a week in %LOCALAPPDATA%\ModeSwitch\quest-wiki). The pictures are not downloaded
  // here: the wiki's image server answers non-browser clients with a bot check. The browser card (HtmlQuestCard, Edge
  // WebView2) shows them as any browser does; without it the card opens the page. Content: Escape from Tarkov Wiki (Fandom), CC BY-SA.
+ // The translation pack of the UI language (relay/public/quest-guide/tr/<lang>.json, made on the developer's PC by
+ // source/build-guide-pack.mjs): guide texts and briefings, picture captions and where keys are found. One static file
+ // per language, so it costs the server nothing per player; kept in quest-wiki\pack.<lang>.json and refreshed once a day.
+ // Missing or unreachable: null, and the cards fall back to the server's per-quest answer and this PC's translator.
+ public static class GuidePack {
+  static Dictionary<string,object> pack;static string lang="";static DateTime checkedAt;static readonly object gate=new object();
+  static readonly JavaScriptSerializer js=new JavaScriptSerializer{MaxJsonLength=int.MaxValue};
+  static Dictionary<string,object> Get(string store){
+   if(I18n.Language=="en"||QuestWiki.Relay.Length==0||store.Length==0)return null;
+   lock(gate){
+    if(lang==I18n.Language&&DateTime.UtcNow-checkedAt<TimeSpan.FromHours(1))return pack;
+    lang=I18n.Language;checkedAt=DateTime.UtcNow;var file=System.IO.Path.Combine(store,"quest-wiki","pack."+lang+".json");
+    try{if(!System.IO.File.Exists(file)||DateTime.UtcNow-System.IO.File.GetLastWriteTimeUtc(file)>TimeSpan.FromDays(1)){
+      var body=FandomMarkers.Get(QuestWiki.Relay+"/quest-guide/tr/"+Uri.EscapeDataString(lang)+".json");
+      if(js.DeserializeObject(body) is Dictionary<string,object>){System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(file));System.IO.File.WriteAllText(file,body);}}}catch{}
+    try{pack=System.IO.File.Exists(file)?js.DeserializeObject(System.IO.File.ReadAllText(file)) as Dictionary<string,object>:null;}catch{pack=null;}
+    return pack;}}
+  static string Look(string store,string part,string key){var p=Get(store);object o,v;if(p==null||key==null||!p.TryGetValue(part,out o))return null;var d=o as Dictionary<string,object>;return d!=null&&d.TryGetValue(key,out v)?Convert.ToString(v):null;}
+  public static bool Ready(string store){return Get(store)!=null;}
+  public static string Guide(string store,string id){return Look(store,"guides",id);}
+  public static string Caption(string store,string english){return string.IsNullOrWhiteSpace(english)?null:Look(store,"caps",Regex.Replace(english,"\\s+"," ").Trim());}
+  public static string Key(string store,string id){return Look(store,"keys",id);}
+  // The wiki page in the UI language when that wiki has one (the English wiki's language links, in the pack), else the English guide.
+  public static string Page(string english){object o,v;var p=pack;var d=p!=null&&p.TryGetValue("wiki",out o)?o as Dictionary<string,object>:null;return d!=null&&d.TryGetValue(english,out v)?Convert.ToString(v):english+"#Guide";}
+ }
  public static class QuestWiki {
   public class Picture{public string Thumb="",Large="",Caption="";public int W,H;}
-  public class Guide{public string Text="",Dialogue="";public List<Picture> Pictures=new List<Picture>();public string Error="";public bool Translated;}
+  public class Guide{public string Text="",Dialogue="";public List<Picture> Pictures=new List<Picture>();public string Error="";public bool Translated,DialogueDone,CaptionsDone;}
   // BlueAsh's server (companion/relay.txt, set by the helper): the guide text translated once into the UI language
   // (relay/guide.js), kept a day per quest in quest-wiki\<id>.<lang>.txt. Only when it was made from this same English text.
   public static string Relay="";
   static void Translate(string store,string questId,Guide g){
    if(I18n.Language=="en"||Relay.Length==0)return;
+   // The language's pack first (one static file); the per-quest server answer only when there is no pack.
+   if(GuidePack.Ready(store)){var pt=g.Text.Length>0?GuidePack.Guide(store,questId):null;if(!string.IsNullOrEmpty(pt)){g.Text=pt.Length>6000?pt.Substring(0,6000).TrimEnd()+"…":pt;g.Translated=true;}
+    var pd=g.Dialogue.Length>0?GuidePack.Guide(store,questId+"-b"):null;if(!string.IsNullOrEmpty(pd)){g.Dialogue=pd;g.DialogueDone=true;}
+    bool all=true;foreach(var p in g.Pictures){if(p.Caption.Length==0)continue;var c=GuidePack.Caption(store,p.Caption);if(c!=null)p.Caption=c;else all=false;}if(all)g.CaptionsDone=true;return;}
    var t=g.Text.Length>0?Fetch(store,questId):"";if(t.Length>0){g.Text=t;g.Translated=true;}
    // The briefing (wiki Dialogue, English) of quests whose game text the locale files lack: translated as "<id>-b".
-   var d=g.Dialogue.Length>0?Fetch(store,questId+"-b"):"";if(d.Length>0)g.Dialogue=d;}
+   var d=g.Dialogue.Length>0?Fetch(store,questId+"-b"):"";if(d.Length>0){g.Dialogue=d;g.DialogueDone=true;}
+   TranslateCaptions(store,questId,g);}
+  static void TranslateCaptions(string store,string questId,Guide g){
+   var captions=new List<Picture>();var source=new List<string>();foreach(var p in g.Pictures)if(p.Caption.Length>0){captions.Add(p);source.Add(System.Text.RegularExpressions.Regex.Replace(p.Caption,"\\s+"," ").Trim());}
+   if(source.Count==0)return;try{var joined=string.Join("\n",source);string hash;using(var sha=System.Security.Cryptography.SHA256.Create())hash=Convert.ToBase64String(sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(joined))).TrimEnd('=').Replace('+','-').Replace('/','_').Substring(0,16);
+    var file=System.IO.Path.Combine(store,"quest-wiki",questId+"-c."+I18n.Language+".json");string body=null;
+    if(System.IO.File.Exists(file)&&DateTime.UtcNow-System.IO.File.GetLastWriteTimeUtc(file)<TimeSpan.FromDays(1))body=System.IO.File.ReadAllText(file);
+    if(body==null){try{body=FandomMarkers.Get(Relay+"/quest/guide?id="+questId+"-c&lang="+Uri.EscapeDataString(I18n.Language));}catch{body="{}";}System.IO.File.WriteAllText(file,body);}
+    var data=js.DeserializeObject(body) as IDictionary;if(data==null||!data.Contains("src")||!data.Contains("text")||Convert.ToString(data["src"])!=hash)return;
+    var translated=Convert.ToString(data["text"]).Split('\n');if(translated.Length!=captions.Count)return;
+    for(int i=0;i<captions.Count;i++){var t=translated[i].Trim();if(t.Length==0)return;}
+    for(int i=0;i<captions.Count;i++)captions[i].Caption=translated[i].Trim();
+    g.CaptionsDone=true;
+   }catch{}}
   static string Fetch(string store,string key){
    try{var file=System.IO.Path.Combine(store,"quest-wiki",key+"."+I18n.Language+".json");string body=null;
     if(System.IO.File.Exists(file)&&DateTime.UtcNow-System.IO.File.GetLastWriteTimeUtc(file)<TimeSpan.FromDays(1))body=System.IO.File.ReadAllText(file);
     if(body==null){try{body=FandomMarkers.Get(Relay+"/quest/guide?id="+key+"&lang="+Uri.EscapeDataString(I18n.Language));System.IO.File.WriteAllText(file,body);}catch{body="{}";}}
     var d=js.DeserializeObject(body) as IDictionary;var t=d!=null&&d.Contains("text")?Convert.ToString(d["text"]).Trim():"";return t.Length>6000?t.Substring(0,6000).TrimEnd()+"…":t;}catch{return "";}}
+  // What the server did not translate (English): the guide text, the briefing, the captions, line by line.
+  static List<KeyValuePair<Action<string>,string>> Untranslated(Guide g){var parts=new List<KeyValuePair<Action<string>,string>>();if(I18n.Language=="en")return parts;
+   if(!g.Translated&&g.Text.Length>0){var lines=g.Text.Split('\n');for(int i=0;i<lines.Length;i++){int k=i;parts.Add(new KeyValuePair<Action<string>,string>(t=>{lines[k]=t;g.Text=string.Join("\n",lines);},lines[i]));}}
+   if(!g.DialogueDone&&g.Dialogue.Length>0){var lines=g.Dialogue.Split('\n');for(int i=0;i<lines.Length;i++){int k=i;parts.Add(new KeyValuePair<Action<string>,string>(t=>{lines[k]=t;g.Dialogue=string.Join("\n",lines);},lines[i]));}}
+   if(!g.CaptionsDone)foreach(var p in g.Pictures)if(p.Caption.Length>0){var pic=p;parts.Add(new KeyValuePair<Action<string>,string>(t=>pic.Caption=t,Regex.Replace(p.Caption,"\\s+"," ").Trim()));}
+   parts.RemoveAll(x=>x.Value.Trim().Length==0);return parts;}
+  public static bool Pending(Guide g){return Untranslated(g).Count>0;}
+  // This PC's earlier AI translations (instant, no AI), used only when every part has one; true when nothing is left in English.
+  public static bool UseCached(Guide g){var parts=Untranslated(g);var found=parts.ConvertAll(p=>LocalAi.Cached(p.Value));if(found.Contains(null))return parts.Count==0;for(int i=0;i<parts.Count;i++)parts[i].Key(found[i]);g.Translated=g.DialogueDone=g.CaptionsDone=true;return true;}
+  // Blocking: the rest translated now by this PC's AI. False when it could not.
+  public static bool TranslateHere(Guide g){var parts=Untranslated(g);if(parts.Count==0)return true;var done=LocalAi.Translate(parts.ConvertAll(p=>p.Value),g.Text.Length>0?g.Text:g.Dialogue);if(done==null)return false;for(int i=0;i<parts.Count;i++)if(!string.IsNullOrWhiteSpace(done[i]))parts[i].Key(done[i]);g.Translated=g.DialogueDone=g.CaptionsDone=true;return true;}
   static string Sized(string url,int width){var u=System.Text.RegularExpressions.Regex.Replace(url,"/scale-to-width-down/\\d+","");int at=u.IndexOf("/revision/latest",StringComparison.Ordinal);return at<0?u:u.Insert(at+16,"/scale-to-width-down/"+width);}
   static readonly JavaScriptSerializer js=new JavaScriptSerializer{MaxJsonLength=int.MaxValue};
-  static string Clean(string html){var t=System.Text.RegularExpressions.Regex.Replace(html,"<br\\s*/?>","\n");t=System.Text.RegularExpressions.Regex.Replace(t,"<[^>]+>","");t=System.Net.WebUtility.HtmlDecode(t);return System.Text.RegularExpressions.Regex.Replace(t,"[ \\t]+"," ").Trim();}
+  internal static string Clean(string html){var t=System.Text.RegularExpressions.Regex.Replace(html,"<br\\s*/?>","\n");t=System.Text.RegularExpressions.Regex.Replace(t,"<[^>]+>","");t=System.Net.WebUtility.HtmlDecode(t);return System.Text.RegularExpressions.Regex.Replace(t,"[ \\t]+"," ").Trim();}
   // Blocking: called off the UI thread.
   public static Guide Load(string store,string questId,string wiki){
    var g=new Guide();try{
@@ -1288,6 +1724,10 @@ namespace ModePulse {
  public static class KeyWiki {
   public class Result{public List<QuestWiki.Picture> Lock=new List<QuestWiki.Picture>(),Inside=new List<QuestWiki.Picture>();public bool Failed;}
   static readonly Dictionary<string,Result> known=new Dictionary<string,Result>();
+  public static string LocationText(string html){var section=QuestWiki.Section(html,"Key_Location","Key_Locations","Key_location","Key_locations");section=Regex.Replace(section,"<ul class=\"gallery.*?</ul>|<table.*?</table>","",RegexOptions.Singleline);var lines=new List<string>();
+   foreach(Match m in Regex.Matches(section,"<(h3|p|li)(?:\\s[^>]*)?>(.*?)</\\1>",RegexOptions.Singleline)){var t=QuestWiki.Clean(m.Groups[2].Value);if(t.Length>0)lines.Add((m.Groups[1].Value=="li"?"• ":"")+t);}
+   var text=string.Join("\n",lines);return text.Length>1800?text.Substring(0,1800).TrimEnd()+"…":text;}
+  public static string Location(string store,string id,string wiki){try{var html=QuestWiki.Page(System.IO.Path.Combine(store,"key-wiki"),id,wiki);return html==null?"":LocationText(html);}catch{return "";}}
   public static Result Load(string store,string id,string wiki){
    lock(known){Result r;if(known.TryGetValue(id,out r))return r;}
    var res=new Result();try{var html=QuestWiki.Page(System.IO.Path.Combine(store,"key-wiki"),id,wiki);if(html==null)res.Failed=true;
@@ -1312,6 +1752,10 @@ namespace ModePulse {
   protected override void OnLayout(LayoutEventArgs e){base.OnLayout(e);int s=(int)(34*K);close.SetBounds(Width-s-4,4,s,s);if(close.Font.Size!=11f)close.Font=new Font(I18n.FontName,11f);close.BringToFront();body.Padding=new Padding((int)(14*K),(int)(10*K),(int)(8*K),(int)(10*K));}
   Label Line(string text,float size,FontStyle style,Color color,int top=0){var l=new Label{Text=text,AutoSize=true,ForeColor=color,BackColor=Theme.Panel,Font=new Font(I18n.FontName,size,style),Margin=new Padding(0,top,0,(int)(2*K)),UseMnemonic=false};l.MaximumSize=new Size(Inner,0);return l;}
   // quests: (quest id, quest data) for each quest on the marker; traders: their trader names; map: this map's id.
+  public void ShowText(string title,string text,string button,Action click){generation++;body.SuspendLayout();foreach(Control c in body.Controls)c.Dispose();body.Controls.Clear();
+   body.Controls.Add(Line(title,12.5f,FontStyle.Bold,Theme.Ink,(int)(2*K)));body.Controls.Add(Line(text,9.5f,FontStyle.Regular,Theme.Muted,(int)(8*K)));
+   var b=new ThemeButton{Text=button,AutoSize=false,FlatStyle=FlatStyle.Flat,BackColor=Theme.Accent,ForeColor=Theme.Ink,Cursor=Cursors.Hand,TabStop=false,Font=new Font(I18n.FontName,9.5f),Margin=new Padding(0,(int)(10*K),0,0)};b.FlatAppearance.BorderColor=Theme.Accent;b.Size=new Size(Math.Min(Inner,(int)(220*K)),(int)(34*K));b.Click+=delegate{click();};body.Controls.Add(b);
+   body.ResumeLayout();Visible=true;BringToFront();}
   public void Show(List<KeyValuePair<string,IDictionary>> quests,List<string> traders,string map,string store){
    generation++;int gen=generation;body.SuspendLayout();foreach(Control c in body.Controls)c.Dispose();body.Controls.Clear();
    for(int qi=0;qi<quests.Count;qi++){var q=quests[qi].Value;var name=Convert.ToString(q["name"]);
@@ -1322,11 +1766,11 @@ namespace ModePulse {
     foreach(var o in (q.Contains("steps")?(IEnumerable)q["steps"]:new object[0])){var st=o as IDictionary;if(st==null)continue;bool here=false;foreach(var m in (IEnumerable)st["maps"])if(Convert.ToString(m)==map)here=true;
      var t="• "+Convert.ToString(st["text"])+(Convert.ToBoolean(st["optional"])?" "+I18n.Text("(선택)"):"");body.Controls.Add(Line(t,9.5f,here?FontStyle.Bold:FontStyle.Regular,here?Theme.AccentText:Theme.Muted));}
     if(NeededKeys!=null){var ks=NeededKeys(q);if(ks.Count>0){body.Controls.Add(Line(I18n.Text("필요한 열쇠"),10f,FontStyle.Bold,Theme.Ink,(int)(10*K)));
-     foreach(var k in ks)body.Controls.Add(Line("• "+Convert.ToString(k["name"])+(Convert.ToBoolean(k["optional"])?" "+I18n.Text("(선택)"):"")+(Convert.ToString(k["map"]).Length>0?" · "+k["map"]:"")+(Convert.ToBoolean(k["mine"])?"  ✓ "+I18n.Text("내 열쇠에 있음"):""),9.5f,FontStyle.Regular,Convert.ToBoolean(k["mine"])?Theme.AccentText:Theme.Muted));}}
+     foreach(var k in ks)body.Controls.Add(Line("• "+Convert.ToString(k["name"])+(Convert.ToString(k["need"])=="optional"?" "+I18n.Text("(선택)"):Convert.ToString(k["need"])=="unknown"?" "+I18n.Text("(필요 여부 확인)"):"")+(Convert.ToString(k["map"]).Length>0?" · "+k["map"]:"")+(Convert.ToBoolean(k["mine"])?"  ✓ "+I18n.Text("내 열쇠에 있음"):""),9.5f,FontStyle.Regular,Convert.ToBoolean(k["mine"])?Theme.AccentText:Theme.Muted));}}
     var wiki=q.Contains("wiki")?Convert.ToString(q["wiki"]):"";if(wiki.Length==0)continue;
     var status=Line(I18n.Text("위키 안내를 불러오는 중…"),9f,FontStyle.Regular,Theme.Muted,(int)(10*K));body.Controls.Add(status);
     var open=new ThemeButton{Text=I18n.Text("위키에서 사진 보기"),AutoSize=false,FlatStyle=FlatStyle.Flat,BackColor=Theme.Field,ForeColor=Theme.Ink,Cursor=Cursors.Hand,TabStop=false,Font=new Font(I18n.FontName,9.5f),Margin=new Padding(0,(int)(8*K),0,0)};
-    open.FlatAppearance.BorderColor=Theme.Border;open.Size=new Size(Math.Min(Inner,(int)(220*K)),(int)(32*K));var page=wiki+"#Guide";open.Click+=delegate{try{System.Diagnostics.Process.Start(page);}catch{}};body.Controls.Add(open);
+    open.FlatAppearance.BorderColor=Theme.Border;open.Size=new Size(Math.Min(Inner,(int)(220*K)),(int)(32*K));var page=GuidePack.Page(wiki);open.Click+=delegate{try{System.Diagnostics.Process.Start(page);}catch{}};body.Controls.Add(open);
     if(InstallBrowser!=null&&qi==0){var install=new ThemeButton{Text=I18n.Text("지도에서 사진 보기 설치 (Microsoft WebView2)"),AutoSize=false,FlatStyle=FlatStyle.Flat,BackColor=Theme.Accent,ForeColor=Theme.Ink,Cursor=Cursors.Hand,TabStop=false,Font=new Font(I18n.FontName,9.5f),Margin=new Padding(0,(int)(6*K),0,0)};
      install.FlatAppearance.BorderColor=Theme.Accent;install.Size=new Size(Inner,(int)(32*K));install.Click+=delegate{install.Enabled=false;install.Text=I18n.Text("설치 프로그램을 받는 중…");InstallBrowser(install);};body.Controls.Add(install);}
     var id=quests[qi].Key;
@@ -1359,7 +1803,9 @@ namespace ModePulse {
   }
  }
  public sealed class HtmlQuestCard {
-  readonly Control view;readonly MapWindow owner;readonly string store;bool ready,loaded,expanded,starting;string html;readonly List<string> scripts=new List<string>();List<string> wikis=new List<string>();int generation;int contentHeight;Rectangle card;
+  readonly Control view;readonly MapWindow owner;readonly string store;bool ready,loaded,expanded,starting;string html;readonly List<string> scripts=new List<string>();List<string> wikis=new List<string>();Dictionary<string,string> keyWikis=new Dictionary<string,string>();int generation;int contentHeight;Rectangle card;
+  // Guides still in English, waiting for the AI translator to be downloaded (index -> guide), and the download watch.
+  readonly Dictionary<int,QuestWiki.Guide> waiting=new Dictionary<int,QuestWiki.Guide>();Timer fetchWatch;
   public bool Failed;public bool Visible{get{return view.Visible;}}
   static string Hex(Color c){return "#"+c.R.ToString("x2")+c.G.ToString("x2")+c.B.ToString("x2");}
   static readonly JavaScriptSerializer js=new JavaScriptSerializer{MaxJsonLength=int.MaxValue};
@@ -1387,56 +1833,81 @@ namespace ModePulse {
    if(m=="close"){Hide();owner.Canvas.Focus();}
    else if(m=="esc"){Hide();owner.Canvas.Focus();}
    else if(m.StartsWith("key:",StringComparison.Ordinal)){owner.HideMap();}
+   else if(m.StartsWith("togglekey:",StringComparison.Ordinal)){var id=m.Substring(10);if(!Regex.IsMatch(id,"^[0-9a-f]{24}$"))return;if(!owner.KeyList.Visible){var mode=Quests.CurrentMode(owner.QuestLogs);if(mode.Length>0)owner.KeyList.Load(Quests.CachePath(owner.Store,mode),owner.MyKeys,mode,owner.MapId);}int state=owner.KeyList.ToggleQuestKey(id);if(state>=0)Run("keyState("+Json(id)+","+(state==1?"true":"false")+")");}
+   else if(m.StartsWith("keylocation:",StringComparison.Ordinal)){var id=m.Substring(12);string wiki;if(!Regex.IsMatch(id,"^[0-9a-f]{24}$")||!keyWikis.TryGetValue(id,out wiki)||wiki.Length==0)return;int gen=generation;
+    System.Threading.ThreadPool.QueueUserWorkItem(_=>{var location=KeyWiki.Location(store,id,wiki);Action<string> send=t=>{try{view.BeginInvoke((Action)(()=>{if(gen==generation)Run("keyLocation("+Json(id)+","+Json(t)+")");}));}catch{}};
+     var here=GuidePack.Key(store,id)??LocalAi.Lines(location,false);send(here??location);if(here==null&&LocalAi.Usable&&LocalAi.Ready){var t=LocalAi.Lines(location,true);if(t!=null)send(t);}});}
+   else if(m=="aiget"){LocalAi.Fetch();if(fetchWatch==null){fetchWatch=new Timer{Interval=500};fetchWatch.Tick+=(s3,e3)=>WatchFetch();}fetchWatch.Start();}
    else if(m=="open"){if(!expanded){expanded=true;var c=owner.Canvas.ClientRectangle;view.Bounds=c;}}
    else if(m=="shut"){expanded=false;Fit();}
    else if(m.StartsWith("h:",StringComparison.Ordinal)){int h;if(int.TryParse(m.Substring(2),out h)){contentHeight=h;Fit();}}
-   else if(m.StartsWith("wiki:",StringComparison.Ordinal)){int i;if(int.TryParse(m.Substring(5),out i)&&i>=0&&i<wikis.Count){try{System.Diagnostics.Process.Start(wikis[i]+"#Guide");}catch{}}}
+   else if(m.StartsWith("wiki:",StringComparison.Ordinal)){int i;if(int.TryParse(m.Substring(5),out i)&&i>=0&&i<wikis.Count){try{System.Diagnostics.Process.Start(GuidePack.Page(wikis[i]));}catch{}}}
   }
   public void Show(List<KeyValuePair<string,IDictionary>> quests,List<string> traders,string map,Rectangle bounds){
-   generation++;int gen=generation;scripts.Clear();expanded=false;card=bounds;contentHeight=0;view.Bounds=bounds;wikis=new List<string>();
+   generation++;int gen=generation;scripts.Clear();expanded=false;card=bounds;contentHeight=0;view.Bounds=bounds;wikis=new List<string>();keyWikis=new Dictionary<string,string>();
    var data=new List<object>();for(int i=0;i<quests.Count;i++){var q=quests[i].Value;var steps=new List<object>();
     foreach(var o in (q.Contains("steps")?(IEnumerable)q["steps"]:new object[0])){var st=o as IDictionary;if(st==null)continue;bool here=false;foreach(var m in (IEnumerable)st["maps"])if(Convert.ToString(m)==map)here=true;steps.Add(new Dictionary<string,object>{{"text",Convert.ToString(st["text"])},{"optional",Convert.ToBoolean(st["optional"])},{"here",here}});}
     int level=q.Contains("level")?Convert.ToInt32(q["level"]):0;var wiki=q.Contains("wiki")?Convert.ToString(q["wiki"]):"";wikis.Add(wiki);
-    List<Dictionary<string,object>> keys;try{keys=Quests.NeededKeys(q,owner.QuestLogs,owner.Store,owner.MyKeys);}catch{keys=new List<Dictionary<string,object>>();}
+    List<Dictionary<string,object>> keys;try{keys=Quests.NeededKeys(q,owner.QuestLogs,owner.Store,owner.MyKeys);}catch{keys=new List<Dictionary<string,object>>();}foreach(var k in keys)keyWikis[Convert.ToString(k["id"])]=Convert.ToString(k["wiki"]);
     data.Add(new Dictionary<string,object>{{"keys",keys},{"name",Convert.ToString(q["name"])},{"meta",string.Join(" · ",new List<string>(new[]{traders[i],level>1?I18n.Format("레벨 {0} 이상",level):""}).FindAll(x=>x.Length>0))},{"steps",steps},{"wiki",wiki.Length>0},{"brief",q.Contains("brief")?Convert.ToString(q["brief"]):""}});}
    var text=new Dictionary<string,object>{{"goals",I18n.Text("목표")},{"optional",I18n.Text("(선택)")},{"loading",I18n.Text("위키 안내를 불러오는 중…")},{"failed",I18n.Text("위키를 불러오지 못했습니다.")},
-    {"guide",I18n.Text("위키 안내")},{"brief",I18n.Text("퀘스트 설명")},{"own",I18n.Text("퀘스트 설명")},{"auto",I18n.Text("위키 안내")},{"keys",I18n.Text("필요한 열쇠")},{"mine",I18n.Text("내 열쇠에 있음")},{"open",I18n.Text("위키에서 보기")},{"hint",I18n.Text("사진을 누르면 크게 봅니다.")},{"source",I18n.Text("출처: Escape from Tarkov Wiki (Fandom) · CC BY-SA")},{"close",I18n.Text("닫기 (Esc)")}};
+    {"guide",I18n.Text("위키 안내")},{"brief",I18n.Text("퀘스트 설명")},{"own",I18n.Text("퀘스트 설명")},{"auto",I18n.Text("위키 안내")},{"keys",I18n.Text("필요한 열쇠")},{"unknown",I18n.Text("(필요 여부 확인)")},{"mine",I18n.Text("내 열쇠에 있음")},{"toggle",I18n.Text("눌러서 내 열쇠 등록·해제")},{"keyLocation",I18n.Text("열쇠 획득처 · 위키 원문")},{"keyLoading",I18n.Text("획득처를 불러오는 중…")},{"open",I18n.Text("위키에서 보기")},{"hint",I18n.Text("사진을 누르면 크게 봅니다.")},{"source",I18n.Text("출처: Escape from Tarkov Wiki (Fandom) · CC BY-SA")},{"close",I18n.Text("닫기 (Esc)")},{"aiWorking",I18n.Text("번역하는 중…")},{"aiOffer",I18n.Text("번역하기 (처음 한 번 약 2.5GB 받기)")},{"aiFailed",I18n.Text("번역하지 못했습니다.")}};
    html=Page(Json(data),Json(text));var v=(Microsoft.Web.WebView2.WinForms.WebView2)view;view.Visible=true;view.BringToFront();
    if(ready){loaded=false;v.CoreWebView2.NavigateToString(html);}else if(!starting){starting=true;try{v.EnsureCoreWebView2Async(null);}catch{Failed=true;owner.CardFailed();return;}}
    for(int i=0;i<quests.Count;i++){if(wikis[i].Length==0)continue;var id=quests[i].Key;var url=wikis[i];int index=i;
-    System.Threading.ThreadPool.QueueUserWorkItem(_=>{var g=QuestWiki.Load(store,id,url);var pics=new List<object>();foreach(var p in g.Pictures)pics.Add(new Dictionary<string,object>{{"thumb",p.Thumb},{"large",p.Large},{"caption",p.Caption},{"w",p.W},{"h",p.H}});
-     var payload=Json(new Dictionary<string,object>{{"text",g.Text},{"translated",g.Translated},{"dialogue",g.Dialogue},{"error",g.Error.Length>0&&g.Text.Length==0&&g.Dialogue.Length==0&&g.Pictures.Count==0},{"pictures",pics}});
-     try{view.BeginInvoke((Action)(()=>{if(gen==generation)Run("guide("+index+","+payload+")");}));}catch{}});}
+    // English first; then, for what the server has no translation of, this PC's AI (or the offer to download it).
+    System.Threading.ThreadPool.QueueUserWorkItem(_=>{var g=QuestWiki.Load(store,id,url);QuestWiki.UseCached(g);
+     string ai=!QuestWiki.Pending(g)||!LocalAi.Usable?"":LocalAi.Ready?"working":"offer";Send(gen,index,g,ai);
+     if(ai=="working")Send(gen,index,g,QuestWiki.TranslateHere(g)?"":"failed");else if(ai=="offer")try{view.BeginInvoke((Action)(()=>{if(gen==generation)waiting[index]=g;}));}catch{}});}
   }
+  void Send(int gen,int index,QuestWiki.Guide g,string ai){var pics=new List<object>();foreach(var p in g.Pictures)pics.Add(new Dictionary<string,object>{{"thumb",p.Thumb},{"large",p.Large},{"caption",p.Caption},{"w",p.W},{"h",p.H}});
+   var payload=Json(new Dictionary<string,object>{{"text",g.Text},{"translated",g.Translated},{"dialogue",g.Dialogue},{"error",g.Error.Length>0&&g.Text.Length==0&&g.Dialogue.Length==0&&g.Pictures.Count==0},{"pictures",pics},{"ai",ai}});
+   try{view.BeginInvoke((Action)(()=>{if(gen==generation)Run("guide("+index+","+payload+")");}));}catch{}}
+  // While BlueAsh downloads the translator: its percentage on the card; once it is there, the waiting guides are translated.
+  void WatchFetch(){double p=LocalAi.Progress();int gen=generation;
+   if(LocalAi.Ready){fetchWatch.Stop();var list=new List<KeyValuePair<int,QuestWiki.Guide>>(waiting);waiting.Clear();Run("aiState("+Json(I18n.Text("번역하는 중…"))+")");
+    foreach(var w in list){var x=w;System.Threading.ThreadPool.QueueUserWorkItem(_=>Send(gen,x.Key,x.Value,QuestWiki.TranslateHere(x.Value)?"":"failed"));}return;}
+   if(p==-2){fetchWatch.Stop();Run("aiState("+Json(I18n.Text("번역 준비에 실패했습니다."))+")");return;}
+   if(p>=0)Run("aiState("+Json(I18n.Format("번역 준비 중… {0}%",(int)(p*100)))+")");}
   string Page(string data,string text){
    var css=@"*{box-sizing:border-box}html,body{margin:0;background:transparent;color:INK;font:14px/1.45 'FONT','Segoe UI',sans-serif;overflow:hidden}
 #card{position:absolute;top:0;right:0;width:100%;height:100vh;overflow-y:auto;background:PANEL;border:1px solid BORDER;border-left:3px solid ACCENT;padding:12px 14px 14px 16px;scrollbar-color:BORDER PANEL}
 #x{position:sticky;top:0;float:right;margin:-6px -8px 0 6px;width:32px;height:32px;border:0;border-radius:6px;background:transparent;color:MUTED;font-size:16px;cursor:pointer}#x:hover{background:HOVER;color:INK}
 h1{font-size:17px;margin:2px 0 2px}h2{font-size:13.5px;margin:12px 0 4px}.meta{color:MUTED;font-size:13px}.q+.q{margin-top:20px;border-top:1px solid BORDER;padding-top:14px}
 .step{color:MUTED;margin:3px 0}.step.here{color:ATEXT;font-weight:600}.guide{color:MUTED;font-size:12.5px;white-space:pre-line;margin-top:10px}.hint{color:MUTED;font-size:12px;margin:10px 0 4px}
-.pic{margin:8px 0 0;cursor:zoom-in}.pic img{display:block;width:100%;height:auto;border-radius:6px;background:FIELD;min-height:40px}.pic div{color:MUTED;font-size:12px;margin-top:3px}
-.key{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13.5px}.key img{width:30px;height:30px;border-radius:4px;background:FIELD;flex:none}.km{color:MUTED}.mine{color:ATEXT;font-weight:600}
-a.wiki{display:inline-block;margin-top:10px;color:ATEXT;font-size:13px;cursor:pointer;text-decoration:underline}.src{color:MUTED;font-size:11.5px;margin-top:16px}
+.pic{margin:8px 0 0;cursor:zoom-in}.pic img{display:block;width:100%;height:auto;border-radius:6px}.sk{position:relative;overflow:hidden;border-radius:6px;background:FIELD}.sk:not(.ok){min-height:120px}.sk::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 25%,rgba(255,255,255,.10) 50%,transparent 75%);transform:translateX(-100%);animation:sk 1.4s ease-in-out infinite}.sk.ok{background:none}.sk.ok::after{display:none}@keyframes sk{to{transform:translateX(100%)}}.sk img{opacity:0;transition:opacity .25s ease-out}.sk.ok img{opacity:1}.pic div{color:MUTED;font-size:12px;margin-top:3px}
+.key{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13.5px;cursor:pointer;border-radius:6px;padding:3px}.key:hover{background:HOVER}.key img{width:30px;height:30px;border-radius:4px;background:FIELD;flex:none}.km{color:MUTED}.mine{color:ATEXT;font-weight:600}
+.keytip{position:fixed;display:none;z-index:4;max-width:min(360px,90vw);max-height:60vh;overflow:hidden;white-space:pre-line;background:FIELD;color:INK;border:1px solid BORDER;border-radius:8px;padding:10px 12px;box-shadow:0 6px 20px #0009;font-size:12px;pointer-events:none}
+a.wiki,.ai a{display:inline-block;margin-top:10px;color:ATEXT;font-size:13px;cursor:pointer;text-decoration:underline}.src{color:MUTED;font-size:11.5px;margin-top:16px}
+
+.ai{color:ATEXT;font-size:12px;margin-top:6px}.ai a{margin-top:0;font-size:12px}
 #big{display:none;position:fixed;inset:0;background:#0a0c10;z-index:5;cursor:zoom-out}#big img{position:absolute;inset:24px 24px 56px 24px;margin:auto;max-width:calc(100% - 48px);max-height:calc(100% - 80px);object-fit:contain;cursor:default}
 #big .cap{position:absolute;left:24px;right:24px;bottom:18px;text-align:center;color:INK;font-size:15px}
 #bx{position:absolute;top:14px;right:14px;width:42px;height:42px;border-radius:50%;border:1.5px solid rgba(255,255,255,.8);background:rgba(30,34,44,.86);color:#fff;font-size:20px;cursor:pointer}#bx:hover{background:ACCENT}";
    css=css.Replace("INK",Hex(Theme.Ink)).Replace("PANEL",Hex(Theme.Panel)).Replace("BORDER",Hex(Theme.Border)).Replace("ACCENT",Hex(Theme.Accent)).Replace("MUTED",Hex(Theme.Muted)).Replace("HOVER",Hex(Theme.Hover)).Replace("ATEXT",Hex(Theme.AccentText)).Replace("FIELD",Hex(Theme.Field)).Replace("FONT",I18n.FontName);
    var script=@"const D=DATA,T=TEXT,post=m=>window.chrome.webview.postMessage(m),card=document.getElementById('card'),big=document.getElementById('big'),bi=big.querySelector('img'),bc=big.querySelector('.cap');
 const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+const tip=el('div','keytip'),locations={},pending=new Set();document.body.append(tip);let hovering=null;
+function showTip(r,k){hovering=r;const loc=locations[k.id];tip.textContent=[k.barters,loc?T.keyLocation+'\n'+loc:(k.wiki&&!(k.id in locations)?T.keyLoading:''),T.toggle].filter(Boolean).join('\n\n');tip.style.display='block';const b=r.getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight;tip.style.left=Math.max(4,Math.min(innerWidth-w-4,b.left))+'px';tip.style.top=Math.max(4,Math.min(innerHeight-h-4,b.bottom+4))+'px';if(k.wiki&&!(k.id in locations)&&!pending.has(k.id)){pending.add(k.id);post('keylocation:'+k.id)}}
+function keyLocation(id,text){locations[id]=text;pending.delete(id);if(hovering&&hovering.dataset.key===id)showTip(hovering,hovering._key)}
 document.getElementById('x').title=T.close;document.getElementById('x').onclick=()=>post('close');
 D.forEach((q,i)=>{const s=el('div','q');s.append(el('h1','',q.name));if(q.meta)s.append(el('div','meta',q.meta));s.append(el('h2','',T.goals));
  q.steps.forEach(t=>s.append(el('div','step'+(t.here?' here':''),'• '+t.text+(t.optional?' '+T.optional:''))));
- if(q.keys.length){s.append(el('h2','',T.keys));q.keys.forEach(k=>{const r=el('div','key'),im=document.createElement('img');im.src='https://assets.tarkov.dev/'+k.id+'-icon.jpg';im.onerror=()=>im.remove();r.append(im);const n=el('div','');n.append(el('b','',k.name));if(k.optional)n.append(el('span','km',' '+T.optional));if(k.map)n.append(el('span','km',' · '+k.map));if(k.mine)n.append(el('span','mine',' ✓ '+T.mine));r.append(n);s.append(r)})}
+ if(q.keys.length){s.append(el('h2','',T.keys));q.keys.forEach(k=>{const r=el('div','key'),im=document.createElement('img');r.dataset.key=k.id;r._key=k;r.onmouseenter=()=>showTip(r,k);r.onmouseleave=()=>{hovering=null;tip.style.display='none'};r.onclick=()=>post('togglekey:'+k.id);im.src='https://assets.tarkov.dev/'+k.id+'-icon.jpg';im.onerror=()=>im.remove();r.append(im);const n=el('div','');n.append(el('b','',k.name));if(k.need==='optional')n.append(el('span','km',' '+T.optional));else if(k.need==='unknown')n.append(el('span','km',' '+T.unknown));if(k.map)n.append(el('span','km',' · '+k.map));const m=el('span','mine',k.mine?' ✓ '+T.mine:'');n.append(m);r.append(n);s.append(r)})}
  if(q.brief)s.append(el('div','guide',T.own+'\n'+q.brief));
  if(q.wiki){const g=el('div','guide',T.loading);g.id='g'+i;s.append(g);const p=el('div','');p.id='p'+i;s.append(p);const a=el('a','wiki',T.open);a.onclick=()=>post('wiki:'+i);s.append(a);}
  card.append(s)});
 card.append(el('div','src',T.source));
+function keyState(id,on){document.querySelectorAll('.key').forEach(r=>{if(r.dataset.key===id){const m=r.querySelector('.mine');if(m)m.textContent=on?' ✓ '+T.mine:''}})}
 const size=()=>post('h:'+Math.ceil(card.scrollHeight+2));new ResizeObserver(size).observe(card);size();
-function guide(i,g){const box=document.getElementById('g'+i),p=document.getElementById('p'+i);if(!box)return;
+function guide(i,g){const box=document.getElementById('g'+i),p=document.getElementById('p'+i);if(!box)return;p.replaceChildren();
+ let a=document.getElementById('a'+i);if(!a){a=el('div','ai');a.id='a'+i;box.after(a)}a.replaceChildren();
+ if(g.ai==='working')a.textContent=T.aiWorking;else if(g.ai==='failed')a.textContent=T.aiFailed;else if(g.ai==='offer'){const l=el('a','',T.aiOffer);l.onclick=()=>{post('aiget');a.dataset.wait='1';a.textContent=T.aiWorking};a.append(l)}
  const own=D[i]&&D[i].brief;box.textContent=g.error?(own?'':T.failed):[g.dialogue&&!own?T.brief+'\n'+g.dialogue:'',g.text?(g.translated?T.auto:T.guide)+'\n'+g.text:''].filter(Boolean).join('\n\n');if(g.pictures.length)p.append(el('div','hint',T.hint));
- g.pictures.forEach(x=>{const f=el('div','pic'),im=document.createElement('img');im.src=x.thumb;im.loading='lazy';if(x.w&&x.h)im.style.aspectRatio=x.w+'/'+x.h;im.onerror=()=>f.remove();f.append(im);if(x.caption)f.append(el('div','',x.caption));f.onclick=()=>show(x);p.append(f)});size()}
-function show(x){bi.src=x.thumb;const l=new Image();l.onload=()=>{if(big.dataset.on)bi.src=x.large};l.src=x.large;bc.textContent=x.caption||'';big.dataset.on='1';big.style.display='block';post('open')}
-function hide(){big.style.display='none';delete big.dataset.on;post('shut')}
+ g.pictures.forEach(x=>{const f=el('div','pic'),box=el('div','sk'),im=document.createElement('img');im.loading='lazy';im.onload=()=>{box.classList.add('ok');if(!x.largeImage){x.largeImage=new Image();x.largeImage.src=x.large}};im.src=x.thumb;if(x.w&&x.h){im.style.aspectRatio=x.w+'/'+x.h;box.style.minHeight='0'}im.onerror=()=>f.remove();box.append(im);f.append(box);if(x.caption)f.append(el('div','',x.caption));f.onclick=()=>show(x);p.append(f)});size()}
+function aiState(t){document.querySelectorAll('.ai').forEach(a=>{if(a.dataset.wait||a.querySelector('a')){a.dataset.wait='1';a.textContent=t}});size()}
+let shown=0;function show(x){const id=++shown,l=x.largeImage||new Image();bi.src=l.complete&&l.naturalWidth?x.large:x.thumb;bc.textContent=x.caption||'';big.dataset.on='1';big.style.display='block';post('open');if(!(l.complete&&l.naturalWidth)){l.onload=()=>{if(big.dataset.on&&shown===id)bi.src=x.large};if(!x.largeImage){x.largeImage=l;l.src=x.large}}}
+function hide(){shown++;big.style.display='none';delete big.dataset.on;post('shut')}
 big.onclick=e=>{if(e.target!==bi)hide()};document.getElementById('bx').onclick=e=>{e.stopPropagation();hide()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();if(big.dataset.on)hide();else post('esc')}else if(e.key==='Tab'||(!e.ctrlKey&&!e.altKey&&'wasdWASD'.includes(e.key)&&e.key.length===1)){e.preventDefault();post('key:'+e.key)}});";
    script=script.Replace("DATA",data).Replace("TEXT",text);
@@ -1482,10 +1953,16 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();
    // Shown at once at the last height (the page answers its own height a moment later).
    if(height==0)height=(int)(150*K);Place(height);view.Visible=true;view.BringToFront();Navigate();
    var data=new Dictionary<string,object>{{"id",id},{"name",name},{"places",places},{"description",description},{"card",card},{"wiki",wiki.Length>0}};
-   Run("show("+gen+","+Json(data)+")");if(wiki.Length==0)return;
-   System.Threading.ThreadPool.QueueUserWorkItem(_=>{var r=KeyWiki.Load(store,id,wiki);Func<List<QuestWiki.Picture>,List<object>> list=ps=>ps.ConvertAll(x=>(object)new Dictionary<string,object>{{"src",x.Thumb},{"caption",x.Caption},{"w",x.W},{"h",x.H}});
-    var payload=Json(new Dictionary<string,object>{{"failed",r.Failed},{"lock",list(r.Lock)},{"inside",list(r.Inside)}});
-    try{view.BeginInvoke((Action)(()=>{if(gen==generation)Run("pics("+gen+","+payload+")");}));}catch{}});}
+   Run("show("+gen+","+Json(data)+")");if(wiki.Length==0&&!LocalAi.Foreign(description))return;
+   // The pictures, then (UI language not English) their captions and an English description by this PC's AI.
+   System.Threading.ThreadPool.QueueUserWorkItem(_=>{var r=wiki.Length>0?KeyWiki.Load(store,id,wiki):null;
+    Action<Func<QuestWiki.Picture,string>> pics=cap=>{if(r==null)return;Func<List<QuestWiki.Picture>,List<object>> list=ps=>ps.ConvertAll(x=>(object)new Dictionary<string,object>{{"src",x.Thumb},{"caption",cap(x)},{"w",x.W},{"h",x.H}});
+     var payload=Json(new Dictionary<string,object>{{"failed",r.Failed},{"lock",list(r.Lock)},{"inside",list(r.Inside)}});try{view.BeginInvoke((Action)(()=>{if(gen==generation)Run("pics("+gen+","+payload+")");}));}catch{}};
+    var caps=new List<string>();if(r!=null){var all=new List<QuestWiki.Picture>(r.Lock);all.AddRange(r.Inside);foreach(var p in all)if(p.Caption.Length>0&&!caps.Contains(p.Caption))caps.Add(p.Caption);}bool foreign=LocalAi.Foreign(description);if(foreign)caps.Add(description);
+    Func<bool,Dictionary<string,string>> look=now=>{if(I18n.Language=="en"||caps.Count==0)return new Dictionary<string,string>();var map=new Dictionary<string,string>();var got=now?LocalAi.Translate(caps,name+". "+description):caps.ConvertAll(c=>GuidePack.Caption(store,c)??LocalAi.Cached(c));if(got==null)return null;for(int i=0;i<caps.Count;i++){if(got[i]==null)return null;map[caps[i]]=got[i];}return map;};
+    var known=look(false);Func<Dictionary<string,string>,Func<QuestWiki.Picture,string>> by=m=>x=>{string t;return m!=null&&m.TryGetValue(x.Caption,out t)?t:x.Caption;};
+    Action<Dictionary<string,string>> desc=m=>{string t;if(foreign&&m!=null&&m.TryGetValue(description,out t))try{view.BeginInvoke((Action)(()=>{if(gen==generation)Run("desc("+gen+","+Json(t)+")");}));}catch{}};
+    pics(by(known));desc(known);if(known==null&&LocalAi.Usable&&LocalAi.Ready){var now=look(true);if(now!=null){pics(by(now));desc(now);}}});}
   void Message(string m){
    var parts=m.Split(':');int gen,h;if(parts.Length!=3||parts[0]!="h"||!int.TryParse(parts[1],out gen)||!int.TryParse(parts[2],out h)||gen!=generation)return;
    height=h;Place(h);}
@@ -1496,7 +1973,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();
 .top{display:flex;gap:10px;align-items:center}.top img{width:44px;height:44px;border-radius:5px;background:FIELD;flex:none}.top b{font-size:14.5px}
 .pl{color:ATEXT;margin-top:6px}.ds{color:MUTED;font-size:12.5px;margin-top:6px;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
 .hn{color:ATEXT;font-size:12.5px;margin-top:6px}h2{font-size:12.5px;margin:10px 0 4px;color:INK}.st{color:MUTED;font-size:12px;margin-top:8px}
-.p{margin-top:6px}.p img{display:block;width:100%;max-width:100%;height:auto;margin:0 auto;border-radius:5px;background:FIELD;min-height:30px}.p div{color:MUTED;font-size:11.5px;margin-top:2px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p{margin-top:6px}.p img{display:block;width:100%;max-width:100%;height:auto;margin:0 auto;border-radius:5px}.sk{position:relative;overflow:hidden;border-radius:6px;background:FIELD}.sk:not(.ok){min-height:120px}.sk::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 25%,rgba(255,255,255,.10) 50%,transparent 75%);transform:translateX(-100%);animation:sk 1.4s ease-in-out infinite}.sk.ok{background:none}.sk.ok::after{display:none}@keyframes sk{to{transform:translateX(100%)}}.sk img{opacity:0;transition:opacity .25s ease-out}.sk.ok img{opacity:1}.p div{color:MUTED;font-size:11.5px;margin-top:2px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .src{color:MUTED;font-size:10.5px;margin-top:8px}";
    css=css.Replace("INK",Hex(Theme.Ink)).Replace("PANEL",Hex(Theme.Panel)).Replace("BORDER",Hex(Theme.Border)).Replace("ACCENT",Hex(Theme.Accent)).Replace("MUTED",Hex(Theme.Muted)).Replace("ATEXT",Hex(Theme.AccentText)).Replace("FIELD",Hex(Theme.Field)).Replace("FONT",I18n.FontName);
    var script=@"const T=TEXT,post=m=>window.chrome.webview.postMessage(m),t=document.getElementById('t');let G=0;
@@ -1507,14 +1984,155 @@ const size=()=>{fit();if(G)post('h:'+G+':'+Math.ceil(t.getBoundingClientRect().h
 function show(g,d){G=g;t.replaceChildren();const top=el('div','top'),im=document.createElement('img');im.src='https://assets.tarkov.dev/'+d.id+'-icon.jpg';im.onerror=()=>im.remove();top.append(im,el('b','',d.name));t.append(top);
  if(d.places)t.append(el('div','pl',d.places));if(d.description)t.append(el('div','ds',d.description));t.append(el('div','hn',T.hint));
  const w=el('div','');w.id='w';if(d.wiki)w.append(el('div','st',T.loading));t.append(w);size()}
+function desc(g,t){if(g!==G)return;const d=t&&document.querySelector('#t .ds');if(d){d.textContent=t;size()}}
 function pics(g,r){if(g!==G)return;const w=document.getElementById('w');if(!w)return;w.replaceChildren();
  if(r.failed){w.append(el('div','st',T.failed));size();return}if(!r.lock.length&&!r.inside.length){w.append(el('div','st',T.none));size();return}
  [[T.lock,r.lock],[T.inside,r.inside]].forEach(([h,ps])=>{if(!ps.length)return;w.append(el('h2','',h));const grid=el('div','');
-  ps.forEach(x=>{const f=el('div','p'),im=document.createElement('img');im.src=x.src;if(x.w&&x.h)im.style.aspectRatio=x.w+'/'+x.h;im.onload=size;im.onerror=()=>{f.remove();size()};f.append(im);if(x.caption)f.append(el('div','',x.caption));grid.append(f)});w.append(grid)});
+  ps.forEach(x=>{const f=el('div','p'),box=el('div','sk'),im=document.createElement('img');im.src=x.src;if(x.w&&x.h){im.style.aspectRatio=x.w+'/'+x.h;box.style.minHeight='0'}im.onload=()=>{box.classList.add('ok');size()};im.onerror=()=>{f.remove();size()};box.append(im);f.append(box);if(x.caption)f.append(el('div','',x.caption));grid.append(f)});w.append(grid)});
  w.append(el('div','src',T.source));size()}";
    script=script.Replace("TEXT",Json(text));
    return "<!doctype html><html><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src https://static.wikia.nocookie.net https://assets.tarkov.dev; style-src 'unsafe-inline'; script-src 'unsafe-inline'\"><style>"+css+"</style></head><body><div id=\"t\"></div><script>"+script+"</script></body></html>";
   }
+ }
+ // The story card beside the map (WebView2 page like the quest card): the steps on the clicked marker to choose from,
+ // the chapter with its progress, and tabs [공략] [진행도] [분기·보상] (the last only for chapters with a choice).
+ // Ticking a step saves it at once (Story.SetDone) and redraws the map; the page is re-rendered by script (no reload).
+ // Messages: close, esc, key:<k>, pick:<id>, toggle:<id>, locate:<id>, spoiler:<level>, wiki, tab:<n>.
+ public sealed class HtmlStoryCard {
+  readonly Control view;readonly MapWindow owner;bool ready,loaded,starting;readonly List<string> scripts=new List<string>();
+  public bool Failed;public bool Visible{get{return view.Visible;}}public Control View{get{return view;}}
+  public List<string> Ids=new List<string>();public string Pick="";int tab;
+  static readonly JavaScriptSerializer js=new JavaScriptSerializer{MaxJsonLength=int.MaxValue};
+  static string Json(object o){return js.Serialize(o).Replace("</","<\\/");}
+  static string Hex(Color c){return "#"+c.R.ToString("x2")+c.G.ToString("x2")+c.B.ToString("x2");}
+  public HtmlStoryCard(MapWindow w,string store){owner=w;
+   var v=new Microsoft.Web.WebView2.WinForms.WebView2{Visible=false,DefaultBackgroundColor=Theme.Panel,Anchor=AnchorStyles.Top|AnchorStyles.Right|AnchorStyles.Bottom};view=v;
+   v.CreationProperties=new Microsoft.Web.WebView2.WinForms.CoreWebView2CreationProperties{UserDataFolder=System.IO.Path.Combine(store,"webview2")};
+   v.CoreWebView2InitializationCompleted+=(s,e)=>{if(!e.IsSuccess){Failed=true;view.Visible=false;owner.StoryCardFailed();return;}
+    var c=v.CoreWebView2;c.Settings.AreDevToolsEnabled=false;c.Settings.AreDefaultContextMenusEnabled=false;c.Settings.IsZoomControlEnabled=false;c.Settings.IsStatusBarEnabled=false;c.Settings.AreDefaultScriptDialogsEnabled=false;c.Settings.IsPasswordAutosaveEnabled=false;c.Settings.IsGeneralAutofillEnabled=false;
+    c.NavigationStarting+=(s2,n)=>{if(!(n.Uri.StartsWith("data:",StringComparison.Ordinal)||n.Uri.StartsWith("about:",StringComparison.Ordinal)))n.Cancel=true;};
+    c.NewWindowRequested+=(s2,n)=>{n.Handled=true;};
+    c.NavigationCompleted+=(s2,n)=>{loaded=true;foreach(var sc in scripts)c.ExecuteScriptAsync(sc);scripts.Clear();};
+    c.WebMessageReceived+=(s2,m)=>{string msg;try{msg=m.TryGetWebMessageAsString();}catch{return;}Message(msg);};
+    ready=true;loaded=false;c.NavigateToString(Page());};}
+  void Run(string script){var v=(Microsoft.Web.WebView2.WinForms.WebView2)view;if(ready&&loaded)v.CoreWebView2.ExecuteScriptAsync(script);else{scripts.RemoveAll(x=>x.StartsWith("render(",StringComparison.Ordinal));scripts.Add(script);}}
+  public void Warm(){if(ready||starting)return;starting=true;var h=view.Handle;try{((Microsoft.Web.WebView2.WinForms.WebView2)view).EnsureCoreWebView2Async(null);}catch{Failed=true;}}
+  public void Hide(){view.Visible=false;owner.Canvas.StoryFocus="";owner.Canvas.Invalidate();}
+  public void Show(List<string> ids,string pick,Rectangle bounds){Ids=ids;Pick=pick;view.Bounds=bounds;view.Visible=true;view.BringToFront();
+   if(!ready&&!starting){starting=true;try{((Microsoft.Web.WebView2.WinForms.WebView2)view).EnsureCoreWebView2Async(null);}catch{Failed=true;owner.StoryCardFailed();return;}}Refresh();}
+  // Re-render with the current progress (after a tick here, or when the map reloads).
+  public void Refresh(){if(!view.Visible)return;var data=owner.StoryCardData(Ids,Pick);if(data==null){Hide();return;}data["tab"]=tab;Run("render("+Json(data)+")");}
+  void Message(string m){
+   int colon=m.IndexOf(':');string cmd=colon<0?m:m.Substring(0,colon),arg=colon<0?"":m.Substring(colon+1);
+   if(cmd=="close"||cmd=="esc"){Hide();owner.Canvas.Focus();}
+   else if(cmd=="key"){owner.HideMap();}
+   else if(cmd=="tab"){int.TryParse(arg,out tab);}
+   else if(!Regex.IsMatch(arg,"^([0-9a-f]{24}|hide|hint|guide|all|)$"))return;
+   else if(cmd=="pick"){if(!Ids.Contains(arg))Ids=new List<string>{arg};Pick=arg;owner.Canvas.StoryFocus=arg;owner.Canvas.Invalidate();Refresh();}
+   else if(cmd=="toggle"){owner.ToggleStory(arg);}
+   else if(cmd=="locate"){owner.LocateStory(arg);}
+   else if(cmd=="spoiler"){Story.Spoiler=arg;Story.Save();Refresh();}
+   else if(cmd=="wiki"){Story.Step s;if(Story.Steps.TryGetValue(Pick,out s)&&s.Chapter.Wiki.StartsWith("https://escapefromtarkov.fandom.com/",StringComparison.Ordinal))try{System.Diagnostics.Process.Start(s.Chapter.Wiki);}catch{}}
+  }
+  string Page(){
+   var text=new Dictionary<string,object>();foreach(var k in new[]{"공략","진행도","분기·보상","이 자리의 목표","단계 {0} / {1}","선택 목표","완료로 표시","완료 취소","위치","지도에서 위치 보기","이 지도에는 표시할 위치가 없습니다.","위치 데이터가 없습니다. 대략적인 지역만 안내합니다.","층","준비물·열쇠",
+    "따로 확인된 준비물 데이터가 없습니다. 목표 문장의 아이템·열쇠를 확인하세요.","완료 조건","목표 문장대로 하면 완료됩니다. 게임 로그로는 확인할 수 없어 직접 체크합니다.","챕터 시작 방법","이전 단계","다음 단계","다음 목표","지도로 이동","보기","챕터 진행","모든 챕터","필요:","이 챕터 데이터는 일부만 확인됐습니다. 하위 퀘스트 {0}/{1}개 확인, 문장 없는 목표 {2}개.","스포일러",
+    "숨김","힌트","공략","전체 공개","스포일러 보호 중입니다. 보려면 위에서 공개 수준을 고르세요.","이 챕터에는 함께 끝낼 수 없는 선택이 {0}곳 있습니다. 한쪽을 끝내면 다른 쪽은 끝낼 수 없습니다.","엔딩으로 갈라지는 길 {0}개가 있습니다.","선택 {0}","선택 A","선택 B","이 선택에 포함된 목표","목표 {0}개","목표 수","맵","생존·탈출 조건 있음","제거 조건 있음","아이템 전달·획득 있음","열쇠·키카드 언급","보스·위험 세력",
+    "포기하게 되는 것","다른 쪽 하위 퀘스트를 끝낼 수 없게 됩니다.","되돌릴 수 있는지","되돌릴 수 없습니다 (게임 데이터상 함께 완료 불가).","보상","미확인","우호도·엔딩 영향","난이도 요소 비교 (어느 쪽이 쉽다고 단정하지 않습니다)","선택한 쪽","엔딩","목표가 확인된 길","목표 데이터 없음","출처 메모",
+    "출처","확인 날짜","위키에서 챕터 보기","진행도는 이 PC에만 저장되며 모드별로 따로 기록됩니다.","보상·우호도·엔딩 영향은 확인된 데이터가 없으면 '미확인'으로 표시합니다.","PvP·PvE 공통 데이터로 공개돼 있습니다. 모드별 차이는 확인되지 않았습니다.","챕터 보상","닫기 (Esc)",
+    "진행 중","다음 목표","미해금","완료","분기","시작 전","잠김"})text[k]=I18n.Text(k);
+   var css=@"*{box-sizing:border-box}html,body{margin:0;background:PANEL;color:INK;font:14px/1.5 'FONT','Segoe UI',sans-serif;overflow:hidden;user-select:none}
+#card{position:absolute;inset:0;overflow-y:auto;border:1px solid BORDER;border-left:3px solid ACCENT;padding:14px 16px 18px 18px;scrollbar-color:BORDER PANEL}
+#x{position:sticky;top:0;float:right;margin:-6px -8px 0 8px;width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:MUTED;font-size:16px;cursor:pointer;z-index:2}#x:hover{background:HOVER;color:INK}
+.ico{font-family:'Segoe MDL2 Assets';font-style:normal}.head{display:flex;gap:12px;align-items:center;margin:2px 0 6px}.dia{width:34px;height:34px;transform:rotate(45deg);border-radius:6px;display:grid;place-items:center;flex:none;box-shadow:0 0 0 1.5px #fff8}.dia svg{transform:rotate(-45deg);width:21px;height:21px;fill:#fff}
+h1{font-size:18px;margin:0;line-height:1.25}.sub{color:MUTED;font-size:12.5px}.bar{height:6px;border-radius:3px;background:FIELD;margin:8px 0 2px;overflow:hidden}.bar i{display:block;height:100%;border-radius:3px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:1px 9px;border-radius:999px;border:1px solid BORDER;color:INK;white-space:nowrap}.chip .ico{font-size:11px}
+.st-next{border-color:#fff;background:#ffffff1a}.st-active{border-color:ATEXT;color:ATEXT}.st-locked{color:MUTED}.st-done{border-color:#2ecc71;color:#5fe39a}.st-branch{border-color:#f1c40f;color:#f5d76e}.st-unknown{border-style:dashed;color:MUTED}
+.tabs{display:flex;gap:6px;margin:14px 0 12px;border-bottom:1px solid BORDER}.tabs button{background:none;border:0;color:MUTED;font:inherit;font-size:13.5px;padding:7px 10px 9px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}.tabs button.on{color:INK;border-color:ACCENT;font-weight:600}.tabs button:hover{color:INK}
+h2{font-size:12.5px;color:MUTED;font-weight:600;margin:16px 0 6px;letter-spacing:.02em}.big{font-size:16.5px;font-weight:600;line-height:1.35;margin:6px 0 2px}.en{color:MUTED;font-size:12.5px;font-style:italic}
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid BORDER;background:FIELD;color:INK;border-radius:8px;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer}.btn:hover{background:HOVER}.btn.primary{background:ACCENT;border-color:ACCENT}.btn.primary:hover{background:AHOVER}.btn.ok{background:#14532d;border-color:#2ecc71}
+.box{background:FIELD;border:1px solid BORDER;border-radius:10px;padding:10px 12px;margin:6px 0}.muted{color:MUTED;font-size:12.5px}.warn{color:#f5d76e;font-size:12.5px}
+.nav{display:grid;grid-template-columns:1fr 1fr;gap:8px}.nav .box{margin:0;cursor:pointer}.nav .box:hover{border-color:ACCENT}.nav b{display:block;font-size:12px;color:MUTED;font-weight:600}
+.row{display:flex;gap:10px;align-items:flex-start;padding:6px 6px;border-radius:8px;cursor:pointer}.row:hover{background:HOVER}.row.cur{background:#2f6cff22}
+.ck{width:18px;height:18px;border-radius:5px;border:1.5px solid MUTED;flex:none;margin-top:2px;display:grid;place-items:center;color:#fff;font-size:11px}.ck.on{background:#22a35a;border-color:#22a35a}
+.row .t{flex:1}.row .t small{display:block;color:MUTED;font-size:11.5px}.opt{color:MUTED;font-size:11.5px}
+.pick{display:flex;gap:8px;align-items:center;padding:7px 9px;border-radius:8px;border:1px solid BORDER;margin:5px 0;cursor:pointer;font-size:13px}.pick:hover,.pick.on{border-color:ACCENT;background:#2f6cff1a}.dot{width:10px;height:10px;transform:rotate(45deg);border-radius:2px;flex:none}
+.seg{display:flex;border:1px solid BORDER;border-radius:9px;overflow:hidden;margin:4px 0 10px}.seg button{flex:1;background:none;border:0;color:MUTED;font:inherit;font-size:12.5px;padding:7px 0;cursor:pointer}.seg button.on{background:ACCENT;color:#fff}
+.sides{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sides .box{margin:0}.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12.5px}.kv span:nth-child(odd){color:MUTED}
+.chap{display:flex;gap:10px;align-items:center;padding:6px;border-radius:8px;cursor:pointer}.chap:hover{background:HOVER}.chap .n{margin-left:auto;color:MUTED;font-size:12px}
+.src{color:MUTED;font-size:11.5px;margin-top:20px;border-top:1px solid BORDER;padding-top:10px}a{color:ATEXT;cursor:pointer;text-decoration:underline}";
+   css=css.Replace("AHOVER",Hex(Theme.AccentHover)).Replace("INK",Hex(Theme.Ink)).Replace("PANEL",Hex(Theme.Panel)).Replace("BORDER",Hex(Theme.Border)).Replace("ACCENT",Hex(Theme.Accent)).Replace("MUTED",Hex(Theme.Muted)).Replace("HOVER",Hex(Theme.Hover)).Replace("ATEXT",Hex(Theme.AccentText)).Replace("FIELD",Hex(Theme.Field)).Replace("FONT",I18n.FontName);
+   var script=@"const T=TEXT,post=m=>window.chrome.webview.postMessage(m),card=document.getElementById('card');let D=null,tab=0;
+const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+const fmt=(s,...a)=>s.replace(/\{(\d)\}/g,(m,i)=>a[i]);
+const ICON={next:'',active:'',locked:'',done:'',branch:'',unknown:'?'};
+function chip(state,label){const c=el('span','chip st-'+state);const i=el('i','ico',ICON[state]||'');if(state==='unknown')i.className='';c.append(i,document.createTextNode(label||T[{next:'다음 목표',active:'진행 중',locked:'미해금',done:'완료',branch:'분기',open:'시작 전'}[state]]||''));return c}
+function btn(label,cls,on,icon){const b=el('button','btn '+(cls||''));if(icon)b.append(el('i','ico',icon));b.append(document.createTextNode(label));b.onclick=on;return b}
+function render(d){D=d;tab=Math.min(d.tab||0,d.chapter.hasBranch?2:1);const top=card.scrollTop,same=card.dataset.pick===d.step.id;card.dataset.pick=d.step.id;card.replaceChildren(document.getElementById('x')||mkX());draw();if(same)card.scrollTop=top}
+function mkX(){const x=el('button','','✕');x.id='x';x.title=T['닫기 (Esc)'];x.onclick=()=>post('close');return x}
+function draw(){const d=D,c=d.chapter;
+ if(d.picks.length>1){card.append(el('h2','',T['이 자리의 목표']+' · '+d.picks.length));d.picks.forEach(p=>{const r=el('div','pick'+(p.id===d.step.id?' on':''));const dt=el('span','dot');dt.style.background=p.color;r.append(dt,el('span','',p.chapter+' · '+p.text));r.append(chip(p.branch&&p.state!=='done'&&p.state!=='locked'?'branch':p.state));r.onclick=()=>post('pick:'+p.id);card.append(r)})}
+ const h=el('div','head'),dia=el('div','dia');dia.style.background=c.color;const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');for(const d of c.icon){const pa=document.createElementNS('http://www.w3.org/2000/svg','path');pa.setAttribute('d',d);pa.setAttribute('fill-rule','evenodd');svg.append(pa);}dia.append(svg);const tt=el('div','');tt.append(el('h1','',c.name));
+ const sub=el('div','sub',d.mode+' · '+T['챕터 진행']+' '+c.done+' / '+c.total);tt.append(sub);h.append(dia,tt);card.append(h);
+ const bar=el('div','bar'),fill=el('i');fill.style.width=(c.total?100*c.done/c.total:0)+'%';fill.style.background=c.color;bar.append(fill);card.append(bar);
+ const tabs=el('div','tabs');[T['공략'],T['진행도']].concat(c.hasBranch?[T['분기·보상']]:[]).forEach((n,i)=>{const b=el('button',i===tab?'on':'',n);b.onclick=()=>{tab=i;post('tab:'+i);card.replaceChildren(card.querySelector('#x'));draw()};tabs.append(b)});card.append(tabs);
+ [guide,progress,branch][tab]();
+ const s=el('div','src');s.append(document.createTextNode(T['출처']+': '+d.sources+' · '+T['확인 날짜']+' '+d.checked+'. '+T['PvP·PvE 공통 데이터로 공개돼 있습니다. 모드별 차이는 확인되지 않았습니다.']+' '+T['진행도는 이 PC에만 저장되며 모드별로 따로 기록됩니다.']+' '));
+ if(c.wiki){const a=el('a','',T['위키에서 챕터 보기']);a.onclick=()=>post('wiki');s.append(a)}card.append(s)}
+function guide(){const d=D,s=d.step,c=d.chapter;
+ const line=el('div','');line.style.cssText='display:flex;gap:8px;align-items:center;flex-wrap:wrap';line.append(el('span','sub',fmt(T['단계 {0} / {1}'],s.n,c.steps.length)),chip(s.branch&&!s.done&&s.state!=='locked'?'branch':s.state));if(s.optional)line.append(el('span','opt',T['선택 목표']));card.append(line);
+ card.append(el('div','big',s.text));if(s.en)card.append(el('div','en',s.en));
+ const act=el('div','');act.style.marginTop='10px';act.append(btn(s.done?T['완료 취소']:T['완료로 표시'],s.done?'ok':'primary',()=>post('toggle:'+s.id),s.done?'':''));card.append(act);
+ if(d.todo){const b=el('div','box');b.append(el('div','muted',T['다음 목표']+' · '+d.todo.text));const g=btn(T['보기'],'',()=>post('pick:'+d.todo.id));g.style.marginTop='6px';b.append(g);card.append(b)}
+ card.append(el('h2','',T['위치']));const loc=el('div','box');
+ if(s.maps.length)loc.append(el('div','',s.maps.join(' · ')));
+ if(s.located&&d.here){if(d.floors.length)loc.append(el('div','muted',T['층']+': '+d.floors.join(', ')));const b=btn(T['지도에서 위치 보기'],'',()=>post('locate:'+s.id),'');b.style.marginTop='8px';loc.append(b)}
+ else if(s.located){const b=btn(T['지도로 이동'],'',()=>post('locate:'+s.id),'');b.style.marginTop='6px';loc.append(b)}
+ else loc.append(el('div','muted',T['위치 데이터가 없습니다. 대략적인 지역만 안내합니다.']));card.append(loc);
+ if(s.n===1||c.state==='open'){if(c.activation){card.append(el('h2','',T['챕터 시작 방법']));card.append(el('div','box',c.activation))}}
+ card.append(el('h2','',T['준비물·열쇠']));card.append(el('div','box muted',T['따로 확인된 준비물 데이터가 없습니다. 목표 문장의 아이템·열쇠를 확인하세요.']));
+ card.append(el('h2','',T['완료 조건']));card.append(el('div','box muted',T['목표 문장대로 하면 완료됩니다. 게임 로그로는 확인할 수 없어 직접 체크합니다.']));
+ const nav=el('div','nav');[[T['이전 단계'],d.prev],[T['다음 단계'],d.next]].forEach(([n,x])=>{const b=el('div','box');b.append(el('b','',n));if(!x){b.append(el('span','muted','-'));b.style.cursor='default'}else{b.append(el('div','',x.text));if(x.otherMap){const g=btn(x.otherMapName+' · '+T['지도로 이동'],'',e=>{e.stopPropagation();post('locate:'+x.id)},'');g.style.marginTop='6px';b.append(g)}b.onclick=()=>post('pick:'+x.id)}nav.append(b)});
+ card.append(el('h2','',T['이전 단계']+' / '+T['다음 단계']));card.append(nav)}
+function progress(){const d=D,c=d.chapter;
+ if(c.partial)card.append(el('div','warn',fmt(T['이 챕터 데이터는 일부만 확인됐습니다. 하위 퀘스트 {0}/{1}개 확인, 문장 없는 목표 {2}개.'],c.resolved,c.referenced,c.missing)));
+ c.steps.forEach(x=>{const r=el('div','row'+(x.id===d.step.id?' cur':''));r.style.paddingLeft=(6+16*x.indent)+'px';const k=el('div','ck'+(x.done?' on':''),x.done?'✓':'');k.onclick=e=>{e.stopPropagation();post('toggle:'+x.id)};
+  const t=el('div','t',x.n+'. '+x.text);if(x.optional)t.append(el('span','opt',' · '+T['선택 목표']));if(x.maps.length)t.append(el('small','',x.maps.join(' · ')));r.append(k,t);if(!x.done&&x.state!=='locked'&&x.state!=='active')r.append(chip(x.branch?'branch':x.state));else if(x.branch&&!x.done)r.append(chip('branch'));r.onclick=()=>post('pick:'+x.id);card.append(r)});
+ card.append(el('h2','',T['모든 챕터']));d.chapters.forEach(x=>{const r=el('div','chap'),dt=el('span','dot');dt.style.background=x.color;r.append(dt,el('span','',x.name));
+  r.append(chip(x.state==='open'?'open':x.state));if(x.requires.length&&x.state==='locked')r.append(el('span','muted',T['필요:']+' '+x.requires.join(', ')));r.append(el('span','n',x.done+' / '+x.total));if(x.next)r.onclick=()=>post('pick:'+x.next);card.append(r)})}
+function branch(){const d=D,c=d.chapter;card.append(el('div','muted',T['스포일러']));const seg=el('div','seg');[['hide','숨김'],['hint','힌트'],['guide','공략'],['all','전체 공개']].forEach(([k,n])=>{const b=el('button',d.spoiler===k?'on':'',T[n]);b.onclick=()=>post('spoiler:'+k);seg.append(b)});card.append(seg);
+ if(d.spoiler==='hide'){card.append(el('div','box muted',T['스포일러 보호 중입니다. 보려면 위에서 공개 수준을 고르세요.']));return}
+ if(d.branchCount)card.append(el('div','box',fmt(T['이 챕터에는 함께 끝낼 수 없는 선택이 {0}곳 있습니다. 한쪽을 끝내면 다른 쪽은 끝낼 수 없습니다.'],d.branchCount)));
+ if(d.endingCount)card.append(el('div','box',fmt(T['엔딩으로 갈라지는 길 {0}개가 있습니다.'],d.endingCount)));
+ if(d.spoiler==='hint')return;
+ d.branches.forEach((b,i)=>{card.append(el('h2','',fmt(T['선택 {0}'],i+1)));const g=el('div','sides');b.sides.forEach((s,j)=>{const x=el('div','box');x.append(el('b','',T[j?'선택 B':'선택 A']+(s.mine?' · '+T['선택한 쪽']:'')));
+  const ul=el('div','muted');s.steps.forEach(t=>ul.append(el('div','','• '+t)));x.append(ul);const f=s.factors,kv=el('div','kv');kv.style.marginTop='8px';
+  const add=(k,v)=>{kv.append(el('span','',k),el('span','',v))};add(T['목표 수'],String(f.steps));add(T['맵'],f.maps.length?f.maps.join(', '):'-');
+  [['survive','생존·탈출 조건 있음'],['kill','제거 조건 있음'],['items','아이템 전달·획득 있음'],['keys','열쇠·키카드 언급']].forEach(([k,n])=>{if(f[k])kv.append(el('span','','•'),el('span','',T[n]))});if(f.bosses.length)add(T['보스·위험 세력'],f.bosses.join(', '));x.append(kv);g.append(x)});card.append(g);
+  const kv=el('div','kv box');[[T['포기하게 되는 것'],T['다른 쪽 하위 퀘스트를 끝낼 수 없게 됩니다.']],[T['되돌릴 수 있는지'],T['되돌릴 수 없습니다 (게임 데이터상 함께 완료 불가).']],[T['보상'],T['미확인']],[T['우호도·엔딩 영향'],T['미확인']]].forEach(([k,v])=>kv.append(el('span','',k),el('span','',v)));card.append(kv)});
+ if(d.branches.length)card.append(el('div','muted',T['난이도 요소 비교 (어느 쪽이 쉽다고 단정하지 않습니다)']));
+ if(c.notes){card.append(el('h2','',T['출처 메모']));card.append(el('div','box',c.notes))}
+ if(d.endings.length){card.append(el('h2','',T['엔딩']));d.endings.forEach(e=>{const x=el('div','box');x.append(el('b','',e.system||'?'));x.append(el('div','muted',e.objectives?T['목표가 확인된 길']+' · '+fmt(T['목표 {0}개'],e.objectives):T['목표 데이터 없음']));e.steps.forEach(t=>x.append(el('div','muted','• '+t)));card.append(x)})}
+ card.append(el('h2','',T['챕터 보상']));card.append(el('div','box'+(c.rewards?'':' muted'),c.rewards||T['미확인']));card.append(el('div','muted',T['보상·우호도·엔딩 영향은 확인된 데이터가 없으면 \'미확인\'으로 표시합니다.']))}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();post('esc')}else if(e.key==='Tab'||(!e.ctrlKey&&!e.altKey&&'wasdWASD'.includes(e.key)&&e.key.length===1)){e.preventDefault();post('key:'+e.key)}});";
+   script=script.Replace("TEXT",Json(text));
+   return "<!doctype html><html><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'\"><style>"+css+"</style></head><body><div id=\"card\"></div><script>"+script+"</script></body></html>";
+  }
+ }
+ // Dark menu for the map's filter list (the system menu is white).
+ public class DarkMenu:ToolStripProfessionalRenderer {
+  public DarkMenu():base(new Colors()){RoundedEdges=false;}
+  protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e){e.TextColor=e.Item.Enabled?Theme.Ink:Theme.Muted;base.OnRenderItemText(e);}
+  protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e){e.ArrowColor=Theme.Muted;base.OnRenderArrow(e);}
+  protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e){var r=e.ImageRectangle;r.Inflate(-1,-1);e.Graphics.SmoothingMode=SmoothingMode.AntiAlias;using(var b=new SolidBrush(Theme.Accent))e.Graphics.FillRectangle(b,r);
+   using(var p=new Pen(Color.White,1.8f)){e.Graphics.DrawLines(p,new[]{new PointF(r.X+r.Width*0.22f,r.Y+r.Height*0.52f),new PointF(r.X+r.Width*0.42f,r.Y+r.Height*0.72f),new PointF(r.X+r.Width*0.78f,r.Y+r.Height*0.3f)});}}
+  class Colors:ProfessionalColorTable{
+   public override Color ToolStripDropDownBackground{get{return Theme.Panel;}}public override Color MenuBorder{get{return Theme.Border;}}public override Color MenuItemBorder{get{return Theme.Hover;}}
+   public override Color MenuItemSelected{get{return Theme.Hover;}}public override Color MenuItemSelectedGradientBegin{get{return Theme.Hover;}}public override Color MenuItemSelectedGradientEnd{get{return Theme.Hover;}}
+   public override Color MenuItemPressedGradientBegin{get{return Theme.Field;}}public override Color MenuItemPressedGradientEnd{get{return Theme.Field;}}
+   public override Color ImageMarginGradientBegin{get{return Theme.Panel;}}public override Color ImageMarginGradientMiddle{get{return Theme.Panel;}}public override Color ImageMarginGradientEnd{get{return Theme.Panel;}}
+   public override Color SeparatorDark{get{return Theme.Border;}}public override Color SeparatorLight{get{return Theme.Panel;}}
+   public override Color CheckBackground{get{return Theme.Accent;}}public override Color CheckSelectedBackground{get{return Theme.Accent;}}public override Color CheckPressedBackground{get{return Theme.Accent;}}}
  }
  public class MapWindow:Form {
   [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr h);
@@ -1537,9 +2155,45 @@ function pics(g,r){if(g!==G)return;const w=document.getElementById('w');if(!w)re
   public QuestCard Card=new QuestCard{Visible=false};public string MapId="",QuestLogs="",Store="";
   public bool Typing{get{return ActiveControl is TextBox||ActiveControl==PinName;}}
   Pin shownPin;
+  // ---- Story helper: card, ticks, locate, filters ----
+  public event EventHandler StoryChanged;public event EventHandler<KeyLocationEventArgs> StoryLocateRequested;
+  HtmlStoryCard story;bool storyFailed;
+  public string Mode{get{try{return Quests.CurrentMode(QuestLogs);}catch{return "";}}}
+  public string MapName(string id){try{var root=FandomMarkers.Parsed(Quests.CachePath(Store,Mode));var n=root!=null&&root.Contains("mapNames")?root["mapNames"] as IDictionary:null;if(n!=null&&n.Contains(id))return Convert.ToString(n[id]);}catch{}
+   string en;return Story.MapEnglish.TryGetValue(id,out en)?en:id;}
+  public Dictionary<string,object> StoryCardData(List<string> ids,string pick){return Story.Card(ids,pick,Mode,MapId,MapName);}
+  bool StoryBrowser(){if(storyFailed||Store.Length==0)return false;if(story!=null)return true;try{if(!HtmlQuestCard.Runtime())return false;story=new HtmlStoryCard(this,Store);Canvas.Controls.Add(story.View);return true;}catch{storyFailed=true;story=null;return false;}}
+  public void StoryCardFailed(){storyFailed=true;if(story!=null)story.View.Visible=false;}
+  Rectangle CardRect(){float k=DeviceDpi/96f;int w=Math.Min((int)(420*k),Math.Max(200,Canvas.Width-(int)(40*k)));return new Rectangle(Canvas.Width-w-(int)(12*k),(int)(12*k),w,Math.Max(100,Canvas.Height-(int)(24*k)));}
+  public void ShowStory(List<string> ids,string pick){if(ids.Count==0)return;CloseCard();Canvas.StoryFocus=pick;Canvas.Invalidate();
+   if(StoryBrowser()){story.Show(ids,pick,CardRect());return;}
+   // Without WebView2: the plain card with the step, its chapter progress and the tick.
+   var d=StoryCardData(ids,pick);if(d==null)return;var st=(Dictionary<string,object>)d["step"];var ch=(Dictionary<string,object>)d["chapter"];bool on=Convert.ToBoolean(st["done"]);var id=Convert.ToString(st["id"]);
+   Card.Bounds=CardRect();Card.ShowText(Convert.ToString(ch["name"]),I18n.Format("단계 {0} / {1}",st["n"],((IList)ch["steps"]).Count)+" · "+Story.StateText(Convert.ToString(st["state"]))+"\n\n"+st["text"]+(Convert.ToString(st["en"]).Length>0?"\n("+st["en"]+")":"")+"\n\n"+I18n.Text("챕터 진행")+" "+ch["done"]+" / "+ch["total"],
+    I18n.Text(on?"완료 취소":"완료로 표시"),()=>{ToggleStory(id);ShowStory(ids,id);});}
+  public void ToggleStory(string id){Story.Step s;if(!Story.Steps.TryGetValue(id,out s))return;var mode=Mode;Story.SetDone(mode,id,!Story.IsDone(mode,id));StoryUpdated();}
+  void StoryUpdated(){var h=StoryChanged;if(h!=null)h(this,EventArgs.Empty);if(story!=null)story.Refresh();}
+  // Show where a step is: this map, or the helper switches maps (StoryLocateRequested) and then calls Canvas.FocusStory.
+  public void LocateStory(string id){Story.Step s;if(!Story.Steps.TryGetValue(id,out s))return;string target=s.Maps.Contains(MapId)?MapId:"";foreach(var m in s.Marks)if(target.Length==0||m.Map==MapId){target=m.Map;if(m.Map==MapId)break;}if(target.Length==0&&s.Maps.Count>0)target=s.Maps[0];if(target.Length==0)return;
+   Story.Focus=id;if(story!=null)story.Pick=id;
+   if(target==MapId){var h=StoryChanged;if(h!=null)h(this,EventArgs.Empty);if(!Canvas.FocusStory(id))State.Text=I18n.Text("이 지도에서 이 목표의 위치를 찾지 못했습니다.");return;}
+   var r=StoryLocateRequested;if(r!=null)r(this,new KeyLocationEventArgs(id,target));if(story!=null)story.Refresh();}
+  readonly ContextMenuStrip filterMenu=new ContextMenuStrip{Renderer=new DarkMenu(),ShowImageMargin=false,ShowCheckMargin=true};
+  void OpenFilters(Control under){filterMenu.Items.Clear();var mode=Mode;
+   Func<string,bool,Action<bool>,ToolStripMenuItem> check=(text,on,set)=>{var i=new ToolStripMenuItem(I18n.Text(text)){Checked=on,CheckOnClick=true};i.CheckedChanged+=delegate{set(i.Checked);Story.Save();StoryUpdated();};return i;};
+   filterMenu.Items.Add(check("일반 퀘스트",Story.ShowGeneral,v=>Story.ShowGeneral=v));filterMenu.Items.Add(check("스토리 퀘스트",Story.ShowStory,v=>Story.ShowStory=v));filterMenu.Items.Add(new ToolStripSeparator());
+   filterMenu.Items.Add(check("진행 중",Story.ShowActive,v=>Story.ShowActive=v));filterMenu.Items.Add(check("다음 목표",Story.ShowNext,v=>Story.ShowNext=v));filterMenu.Items.Add(check("완료 숨기기",Story.HideDone,v=>Story.HideDone=v));filterMenu.Items.Add(new ToolStripSeparator());
+   filterMenu.Items.Add(check("미완료 챕터만",Story.OpenOnly,v=>Story.OpenOnly=v));filterMenu.Items.Add(check("분기 관련만",Story.BranchOnly,v=>Story.BranchOnly=v));filterMenu.Items.Add(new ToolStripSeparator());
+   var chapters=new ToolStripMenuItem(I18n.Text("챕터")+(Story.Only.Length>0?" · "+Story.Find(Story.Only).Name:""));Story.Load();
+   Action<string,string> pick=(id,text)=>{var i=new ToolStripMenuItem(text){Checked=Story.Only==id};i.Click+=delegate{Story.Only=id;Story.Save();StoryUpdated();filterMenu.Close();};chapters.DropDownItems.Add(i);};
+   pick("",I18n.Text("모든 챕터"));foreach(var c in Story.Chapters){int t;int n=Story.DoneCount(c,mode,out t);pick(c.Id,c.Name+"   "+n+"/"+t);}
+   var spoil=new ToolStripMenuItem(I18n.Text("스포일러 보호"));foreach(var lv in new[]{new[]{"hide","숨김"},new[]{"hint","힌트"},new[]{"guide","공략"},new[]{"all","전체 공개"}}){var key=lv[0];var i=new ToolStripMenuItem(I18n.Text(lv[1])){Checked=Story.Spoiler==key};i.Click+=delegate{Story.Spoiler=key;Story.Save();StoryUpdated();filterMenu.Close();};spoil.DropDownItems.Add(i);}
+   foreach(var dd in new[]{chapters,spoil}){dd.DropDown.Renderer=filterMenu.Renderer;((ToolStripDropDownMenu)dd.DropDown).ShowImageMargin=false;((ToolStripDropDownMenu)dd.DropDown).ShowCheckMargin=true;}
+   filterMenu.Items.Add(chapters);filterMenu.Items.Add(spoil);filterMenu.Font=Font;filterMenu.Show(under,new Point(0,under.Height));}
   public void ShowQuest(Pin p){if(p==null||p.Ref.Length==0)return;
+   if(p.Kind=="story"){var ids=new List<string>(p.Ref.Split(','));if(story!=null&&story.Visible&&story.Ids.Count==ids.Count&&ids.Contains(story.Pick)){CloseCard();Canvas.Focus();return;}ShowStory(ids,ids[0]);return;}
    // The same marker again closes its card.
-   if(p==shownPin&&CardOpen){CloseCard();shownPin=null;Canvas.Focus();return;}shownPin=p;var quests=new List<KeyValuePair<string,IDictionary>>();var traders=new List<string>();
+   if(p==shownPin&&CardOpen){CloseCard();shownPin=null;Canvas.Focus();return;}CloseCard();shownPin=p;var quests=new List<KeyValuePair<string,IDictionary>>();var traders=new List<string>();
    foreach(var id in p.Ref.Split(',')){string trader;IDictionary q=null;try{q=Quests.Quest(QuestLogs,Store,id,out trader);}catch{trader="";}if(q!=null){quests.Add(new KeyValuePair<string,IDictionary>(id,q));traders.Add(trader);}}
    if(quests.Count==0)return;float k=DeviceDpi/96f;int w=Math.Min((int)(400*k),Math.Max(200,Canvas.Width-(int)(40*k)));var bounds=new Rectangle(Canvas.Width-w-(int)(12*k),(int)(12*k),w,Math.Max(100,Canvas.Height-(int)(24*k)));
    lastQuests=quests;lastTraders=traders;lastBounds=bounds;
@@ -1548,17 +2202,17 @@ function pics(g,r){if(g!==G)return;const w=document.getElementById('w');if(!w)re
   // The browser card (pictures) when WebView2 works; otherwise QuestCard. A failure is final for this run.
   HtmlQuestCard html;bool htmlFailed;List<KeyValuePair<string,IDictionary>> lastQuests;List<string> lastTraders;Rectangle lastBounds;
   bool Browser(){if(htmlFailed)return false;if(html!=null)return true;try{if(!HtmlQuestCard.Runtime())return false;html=Create();Canvas.Controls.Add(html.View);return true;}catch{htmlFailed=true;html=null;return false;}}
-  public void Warm(){if(Store.Length==0||!Browser())return;var h=Handle;html.Warm();if(KeyTipBrowser())keyTip.Warm();}
+  public void Warm(){if(Store.Length==0||!Browser())return;var h=Handle;html.Warm();if(KeyTipBrowser())keyTip.Warm();if(StoryBrowser())story.Warm();}
   HtmlKeyTip keyTip;bool keyTipFailed;
   bool KeyTipBrowser(){if(keyTipFailed||htmlFailed||Store.Length==0)return false;if(keyTip!=null)return true;try{if(!HtmlQuestCard.Runtime())return false;keyTip=new HtmlKeyTip(this,Store);Canvas.Controls.Add(keyTip.View);return true;}catch{keyTipFailed=true;keyTip=null;return false;}}
   public void KeyTipFailed(){keyTipFailed=true;if(keyTip!=null)keyTip.View.Visible=false;if(KeyList.HoverName.Length>0){int y=Canvas.PointToClient(KeyList.PointToScreen(new Point(0,KeyList.HoverY))).Y;Canvas.SetKeyTip(KeyList.HoverName,KeyList.HoverDescription,KeyList.HoverPlaces,y);}}
   public bool BrowserMissing{get{try{return !htmlFailed&&!HtmlQuestCard.Runtime();}catch{return false;}}}
   HtmlQuestCard Create(){return new HtmlQuestCard(this,Store);}
   public void CardFailed(){htmlFailed=true;if(html!=null){html.View.Visible=false;}if(lastQuests!=null){Card.Bounds=lastBounds;Card.Show(lastQuests,lastTraders,MapId,Store);}}
-  bool CardOpen{get{return Card.Visible||(html!=null&&html.Visible);}}
+  bool CardOpen{get{return Card.Visible||(html!=null&&html.Visible)||(story!=null&&story.Visible);}}
   // Where the open quest card is on the canvas (empty when none), so the key tip goes beside it.
-  public Rectangle CardBounds{get{if(html!=null&&html.Visible)return html.View.Bounds;if(Card.Visible)return Card.Bounds;return Rectangle.Empty;}}
-  void CloseCard(){Card.Hide();if(html!=null)html.Hide();}
+  public Rectangle CardBounds{get{if(html!=null&&html.Visible)return html.View.Bounds;if(story!=null&&story.Visible)return story.View.Bounds;if(Card.Visible)return Card.Bounds;return Rectangle.Empty;}}
+  void CloseCard(){Card.Hide();if(html!=null)html.Hide();if(story!=null)story.Hide();}
   public string MyKeys="";
   public IntPtr ReturnTo=IntPtr.Zero;Label title=new Label();Panel header=new Panel(),editBar=new Panel();Button editButton;bool binding;
   readonly Dictionary<string,string> knownConditions=new Dictionary<string,string>();
@@ -1594,9 +2248,9 @@ function pics(g,r){if(g!==G)return;const w=document.getElementById('w');if(!w)re
      using(var b=new SolidBrush(sel?Theme.Hover:Theme.Field))e.Graphics.FillRectangle(b,e.Bounds);
      if(e.Index>=0)TextRenderer.DrawText(e.Graphics,box.Items[e.Index].ToString(),box.Font,e.Bounds,box.ForeColor,TextFormatFlags.VerticalCenter|TextFormatFlags.Left|TextFormatFlags.EndEllipsis);};}
    Maps.Width=200;Role.Width=80;
-   var fit=Flat(I18n.Text("맞춤"));fit.Click+=delegate{Canvas.ResetView();};var edit=Flat(I18n.Text("편집"));editButton=edit;edit.Click+=delegate{SetEditMode(!editBar.Visible);};
+   var filters=Flat(I18n.Text("필터"));filters.Click+=delegate{OpenFilters(filters);};var fit=Flat(I18n.Text("맞춤"));fit.Click+=delegate{Canvas.ResetView();};var edit=Flat(I18n.Text("편집"));editButton=edit;edit.Click+=delegate{SetEditMode(!editBar.Visible);};
    var close=new ThemeButton{Text="✕",FlatStyle=FlatStyle.Flat,BackColor=CloseBg,ForeColor=Theme.Ink,TabStop=false,Cursor=Cursors.Hand};close.FlatAppearance.BorderSize=0;close.FlatAppearance.MouseOverBackColor=Theme.AccentHover;close.Click+=delegate{HideMap();};
-   tools.Controls.AddRange(new Control[]{Maps,Role,fit,edit,close});header.Controls.Add(title);header.Controls.Add(tools);
+   tools.Controls.AddRange(new Control[]{Maps,Role,filters,fit,edit,close});header.Controls.Add(title);header.Controls.Add(tools);
    // Drag the panel by its header like a game window.
    MouseEventHandler grab=(s,e)=>{if(e.Button==MouseButtons.Left){ReleaseCapture();SendMessage(Handle,0xA1,new IntPtr(2),IntPtr.Zero);}};header.MouseDown+=grab;title.MouseDown+=grab;
    // Pin editing tools stay hidden until "편집".
@@ -1620,7 +2274,8 @@ function pics(g,r){if(g!==G)return;const w=document.getElementById('w');if(!w)re
     else{if(keyTip!=null)keyTip.Hide();Canvas.SetKeyTip(KeyList.HoverName,KeyList.HoverDescription,KeyList.HoverPlaces,y);}};
    VisibleChanged+=delegate{if(!Visible){KeyList.ClearPreview();CloseCard();}};
    Card.Anchor=AnchorStyles.Top|AnchorStyles.Right|AnchorStyles.Bottom;Canvas.Controls.Add(Card);
-   Canvas.PinClicked+=(s,e)=>ShowQuest(e.Pin);Card.NeededKeys=q=>Quests.NeededKeys(q,QuestLogs,Store,MyKeys);
+   filterMenu.Closing+=(s,e)=>{if(e.CloseReason==ToolStripDropDownCloseReason.ItemClicked)e.Cancel=true;};
+   Canvas.PinClicked+=(s,e)=>{if(e.Pin.Story=="unknown"){var ids=new List<string>(e.Pin.Ref.Split(','));ShowStory(ids,ids[0]);}else ShowQuest(e.Pin);};Card.NeededKeys=q=>Quests.NeededKeys(q,QuestLogs,Store,MyKeys);
    Controls.Add(Canvas);Controls.Add(KeyList);Controls.Add(State);Controls.Add(editBar);Controls.Add(header);Bind();
    EventHandler retitle=delegate{title.Text=I18n.Text("지도")+"  ·  "+Maps.SelectedItem+"  ·  "+Role.SelectedItem;};Maps.SelectedIndexChanged+=retitle;Role.SelectedIndexChanged+=retitle;
    FormClosing+=delegate(object s,FormClosingEventArgs e){if(e.CloseReason==CloseReason.UserClosing){e.Cancel=true;HideMap();}};

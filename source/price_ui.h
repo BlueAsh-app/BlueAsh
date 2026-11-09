@@ -91,9 +91,9 @@ LRESULT CALLBACK priceProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
   priceWatch.dialog=h;
   // The game page switch is "켜면 타르코프와 함께 자동 실행" (PriceAuto); this page shows the worker and its shortcut.
   pageLabel(h,i18n::text(L"지금 상태"),24,28,688,28,2);
-  addSetting(h,L"EDIT",L"",WS_BORDER|ES_READONLY|ES_MULTILINE|ES_AUTOVSCROLL|WS_VSCROLL,24,60,688,70,190);
+  addSetting(h,L"EDIT",L"",WS_BORDER|ES_READONLY|ES_MULTILINE|ES_AUTOVSCROLL,24,60,688,70,190);
   pageButton(h,i18n::text(L"지금 켜기"),24,142,160,191);
-  pageLabel(h,i18n::text(L"게임별 기능에서 켜 두면 타르코프와 함께 자동으로 켜지고 꺼집니다."),198,150,514,24,1);
+  pageLabel(h,i18n::text(L"게임 도우미에서 켜 두면 타르코프와 함께 자동으로 켜지고 꺼집니다."),198,150,514,24,1);
   pageLabel(h,i18n::text(L"켜고 끄는 단축키"),24,212,688,28,2);
   pageLabel(h,L"",24,250,240,26,0,194);
   pageButton(h,i18n::text(L"직접 눌러 지정"),276,244,200,192);

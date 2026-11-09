@@ -44,7 +44,7 @@ $script:sections=@();$script:hints=@();$script:primary=@()
 function Label($text,$x,$y,$width,$height=30){$c=New-Object Windows.Forms.Label;$c.Text=$text;$c.SetBounds($x,$y,$width,$height);$form.Controls.Add($c);return $c}
 function Section($text,$y){$c=Label $text 8 $y 688 28;$script:sections+=$c;return $c}
 function Hint($text,$x,$y,$width,$height=24){$c=Label $text $x $y $width $height;$script:hints+=$c;return $c}
-function Check($text,$y,$value){$c=New-Object Windows.Forms.CheckBox;$c.Text=$text;$c.SetBounds(8,$y,688,30);$c.Checked=$value;$form.Controls.Add($c);return $c}
+function Check($text,$y,$value){$c=New-Object ModePulse.ThemeSwitch;$c.Text=$text;$c.SetBounds(8,$y,688,30);$c.Checked=$value;$form.Controls.Add($c);return $c}
 function Button($text,$x,$y,$width,[switch]$Primary){$c=New-Object ModePulse.ThemeButton;$c.Text=$text;$c.SetBounds($x,$y,$width,40);$form.Controls.Add($c);if($Primary){$script:primary+=$c};return $c}
 # Status lines are plain text (they looked like a box to type into); long text wraps inside the given height.
 function StatusBox($y,$height,[switch]$Compact){$c=New-Object Windows.Forms.Label;$c.AutoSize=$false;$c.UseMnemonic=$false;$c.SetBounds(8,$y,688,$height);$c.Text=(T '준비 중');$c.Font=$hintFont;$form.Controls.Add($c);return $c}
@@ -85,12 +85,13 @@ function Unprotect([string]$s){if(!$s){return ''};try{(New-Object Net.NetworkCre
 # Relay URL ships with the build (companion/relay.txt). Empty = one-click connect not set up; webhook still works.
 $relay='';$relayFile=Join-Path $PSScriptRoot 'relay.txt';if(Test-Path $relayFile){$relay=([IO.File]::ReadAllText($relayFile)).Trim().TrimEnd('/');if($relay -notmatch '^https://[A-Za-z0-9.-]+(/[A-Za-z0-9._/-]*)?$'){$relay=''}}
 [ModePulse.QuestWiki]::Relay=$relay
+[ModePulse.LocalAi]::Init($store)
 $script:relayKey=Unprotect $config.relayKey
 # Phone alerts (web push: rings even while Discord is open on the PC). Server status alerts are sent by the relay
 # itself and switched on the phone. Discord DMs and the webhook were dropped from the page (2026-10-12): their controls
 # still exist, hidden, because DiscordTransport.ps1 reads them; a build without the relay keeps the webhook route.
 $phoneTitle=Section (T '휴대폰 알림') 12
-$phoneLabel=Hint '' 8 50 466 28
+$phoneLabel=New-Object ModePulse.StatusPill;$phoneLabel.SetBounds(8,50,466,30);$form.Controls.Add($phoneLabel) # connection state as a coloured badge (Update-Phone)
 $phoneBtn=Button (T '휴대폰 연결') 486 44 210 -Primary;$phoneBtn.Visible=[bool]$relay
 $phoneHelp=Hint (T "휴대폰 연결을 누르면 PC에 QR이 뜹니다. 휴대폰 카메라로 찍고 알림 허용을 누르세요.`r`n게임이 시작될 때 PC에 움직임이 없으면 자리 비움으로 보고 휴대폰으로 바로 알려 드립니다.") 8 84 688 48
 $linkLabel=Hint '' 8 180 466 28
@@ -104,7 +105,7 @@ foreach($c in $linkLabel,$connectBtn){$c.Visible=$false}
 $webhookRoute=!$relay;foreach($c in $helpBtn,$hookLabel,$hook){$c.Visible=$webhookRoute}
 $top=$(if($webhookRoute){196}else{142})
 $alertTitle=Section (T '알림 받을 상황') $top
-$discordCheck=Check (T '타르코프 · 자리를 비운 사이 레이드가 시작되면') ($top+32) $config.discord
+$discordCheck=Check (T '알림을 지원하는 게임 중 자리를 비우면 알려 드립니다') ($top+32) $config.discord
 $maintenanceCheck=Check '' 0 $false;$maintenanceCheck.Visible=$false
 $idleLabel=Label (T '자리 비움 기준') 8 ($top+78) 130
 # The seconds are kept in a NumericUpDown that is never shown (its white spin buttons did not fit the app);
@@ -342,12 +343,17 @@ function Load-Map {
  try{[ModePulse.Quests]::Decorate($map.Canvas.Pins,$row[0].id,$questLogs,$store)}catch{}
  # Top-left box: every boss this mode's game data lists on this map, with its chance (also ones the map has no marker for).
  $map.Canvas.Info='';try{$map.Canvas.Info=[ModePulse.Quests]::BossSummary($row[0].id,$questLogs,$store,$map.Canvas.Pins)}catch{}
+ # Active quests missing from the quest data (new event quests): say so instead of showing nothing.
+ if($config.showQuests -and $row[0].role -ne 'SCAV'){try{$n=[ModePulse.Quests]::Unlisted($questLogs,$store);if($n -gt 0){$line=T '진행 중 퀘스트 {0}개는 아직 위치 데이터가 없습니다 (이벤트 퀘스트 등)' @($n);$map.Canvas.Info=$(if($map.Canvas.Info){$map.Canvas.Info+"`n"+$line}else{$line})}}catch{}}
  if($config.showKeys){try{foreach($pin in [ModePulse.Quests]::KeyPins($row[0].id,$questLogs,$store,$markerShipped,(Join-Path $store 'my-keys.json'))){$map.Canvas.Pins.Add($pin)}}catch{}}
  # The key list beside the map (add / remove there; its Changed event redraws the map).
  $map.KeyList.Visible=[bool]$config.showKeys
  if($config.showKeys){try{$map.KeyList.Load([ModePulse.Quests]::CachePath($store,$mode),(Join-Path $store 'my-keys.json'),$mode,$row[0].id)}catch{}}
  # Quest marks only on the PMC map: a Scav run cannot do PMC quests, the marks would only cover the map.
- if($config.showQuests -and $row[0].role -ne 'SCAV'){try{foreach($pin in [ModePulse.Quests]::Pins($row[0].id,$questLogs,$store,$markerShipped)){$map.Canvas.Pins.Add($pin)}}catch{}}
+ [ModePulse.Story]::Use((Join-Path $store 'story-progress.json'))
+ if($config.showQuests -and $row[0].role -ne 'SCAV' -and [ModePulse.Story]::ShowGeneral){try{foreach($pin in [ModePulse.Quests]::Pins($row[0].id,$questLogs,$store,$markerShipped)){$map.Canvas.Pins.Add($pin)}}catch{}}
+ # Story chapters (ticked by the player, per mode): PMC map only, like the quest marks.
+ $map.Canvas.StoryUnknown='';if($row[0].role -ne 'SCAV'){try{[ModePulse.Story]::Apply($map.Canvas,$row[0].id,$markerShipped,[ModePulse.Quests]::CurrentMode($questLogs),$store)}catch{}}
  Set-Suggestions $row[0].id $row[0].role
  $exits=@($map.Canvas.Pins|Where-Object {$_.Kind -in 'exit','transit'}).Count
  $map.Canvas.Invalidate();$map.State.Text=T '탈출구 {0}곳 · 레이드 시작 시 자동 확인 · 확인 키로 재확인\n초록 비상구: 탈출구 · 두 사람: 협동 탈출구 · 주황 비상구: 트랜짓 · 미확인: 회색 · 신호탄 권총: 플레어 탈출' @($exits)
@@ -360,6 +366,12 @@ function Locate-Key($sender,$e){
  if(!$map.Canvas.FocusKey([string]$e.Id)){$map.State.Text=T '이 지도의 열쇠 사용처 좌표를 찾지 못했습니다.'}
 }
 $map.KeyList.add_LocateRequested({param($sender,$e)Locate-Key $sender $e})
+# Story card: a tick or a filter change redraws the map; "show on map" for a step on another map switches to it (PMC).
+$map.add_StoryChanged({Load-Map})
+$map.add_StoryLocateRequested({param($sender,$e)
+ $target=@($catalog|Where-Object {$_.id -eq $e.MapId -and $_.role -eq 'PMC'}|Select-Object -First 1);if(!$target.Count){return}
+ $map.Role.SelectedItem='PMC';$map.Maps.SelectedItem=$target[0].displayName;Load-Map
+ if(!$map.Canvas.FocusStory([string]$e.Id)){$map.State.Text=T '이 지도에서 이 목표의 위치를 찾지 못했습니다.'}})
 $map.KeyList.add_Changed({Load-Map});$map.Maps.add_SelectedIndexChanged({Load-Map});$map.Role.add_SelectedIndexChanged({Load-Map})
 $map.ClearPins.add_Click({if([Windows.Forms.MessageBox]::Show((T '이 지도에서 직접 고친 탈출구를 지우고 기본(공유) 데이터로 되돌릴까요?'),'BlueAsh','YesNo') -eq 'Yes'){$pins.Remove($script:mapId);Save-Pins;$script:mapId='';Load-Map}})
 function Reset-Raid {$script:exitGeneration++;$script:autoExits=$null;$map.Canvas.MeShown=$false;$script:seen=@();$script:lastFrame=@();$script:captures=0;$script:pendingAt=[DateTime]::MaxValue;$map.Canvas.Available.Clear();$map.Canvas.TaxiStates.Clear();$script:taxiLastFrame=@{};$map.Canvas.Invalidate()}
@@ -420,7 +432,7 @@ function Apply-Theme($parent){[ModePulse.Theme]::Apply($parent)}
 Apply-Theme $mapForm;Apply-Theme $discordForm;Apply-Theme $map
 # Same look as BlueAsh pages: graphite surfaces, bold headings, muted hints, cobalt primary actions.
 foreach($f in $mapForm,$discordForm){$f.BackColor=[ModePulse.Theme]::Panel}
-foreach($c in $script:sections){$c.Font=$sectionFont};foreach($c in $script:hints){$c.Font=$hintFont;$c.ForeColor=[ModePulse.Theme]::Muted}
+foreach($c in $script:sections){$c.Font=$sectionFont};foreach($c in $script:hints){$c.Font=$hintFont;$c.ForeColor=[ModePulse.Theme]::Muted};$phoneLabel.Font=$hintFont
 foreach($b in $script:primary){$b.BackColor=[ModePulse.Theme]::Accent;$b.FlatAppearance.BorderColor=[ModePulse.Theme]::Accent}
 # Rows retain their original gaps. Longer translations wrap and scroll at the native page size.
 function Fit-Page($f){
@@ -470,8 +482,8 @@ function Layout-Notifications {
   $body=$script:discordBody;$body.SuspendLayout();$w=[Math]::Max(420,$body.ClientSize.Width-16);$inner=$w-32;$y=16
   $phoneTitle.SetBounds(16,$y,$inner,28);$y+=36
   $buttonWidth=[Math]::Min(224,[Math]::Max(210,[Windows.Forms.TextRenderer]::MeasureText($phoneBtn.Text,$phoneBtn.Font).Width+24))
-  $labelWidth=$(if($relay){$inner-$buttonWidth-16}else{$inner});$rowHeight=Text-Height $phoneLabel $labelWidth 40
-  $phoneLabel.SetBounds(16,$y,$labelWidth,$rowHeight);$phoneLabel.TextAlign='MiddleLeft';$phoneBtn.SetBounds(($w-16-$buttonWidth),$y,$buttonWidth,40);$y+=$rowHeight+12
+  $labelWidth=$(if($relay){$inner-$buttonWidth-16}else{$inner});$rowHeight=40
+  $phoneLabel.SetBounds(16,($y+5),[Math]::Min($labelWidth,$phoneLabel.PreferredWidthFor($phoneLabel.Text)),30);$phoneBtn.SetBounds(($w-16-$buttonWidth),$y,$buttonWidth,40);$y+=$rowHeight+12
   $hintHeight=Text-Height $phoneHelp $inner 42;$phoneHelp.SetBounds(16,$y,$inner,$hintHeight);$y+=$hintHeight+12
   if($webhookRoute){
    $labelWidth=[Math]::Max(130,[Windows.Forms.TextRenderer]::MeasureText($hookLabel.Text,$hookLabel.Font).Width+8)
@@ -516,7 +528,7 @@ function Read-Screenshots {
  # The game may still be writing the PNG: delete a little later, retrying briefly.
  foreach($d in @($script:shotDeletes)){if($now -lt $d.at){continue};try{Remove-Item -LiteralPath $d.path -ErrorAction Stop;$script:shotDeletes.Remove($d)}catch{if(!(Test-Path -LiteralPath $d.path) -or $now -gt $d.until){$script:shotDeletes.Remove($d)}else{$d.at=$now.AddSeconds(1)}}}
 }
-Load-Map;if(Test-Path $pagePath){try{$Page=[IO.File]::ReadAllText($pagePath).Trim();Remove-Item $pagePath}catch{}};if($Page){Open-Page $Page}elseif(!$Hidden){$mapForm.Show()};Status (T '대기 중 · 레이드에서 탈출구 확인 키를 누르면 쓸 수 있는 탈출구가 지도에 초록으로 표시됩니다.');DStatus $(if($config.discord){(T '대기 중 · 자리를 비운 사이 레이드가 시작되면 알려 드립니다.')}else{(T '알림이 꺼져 있습니다. 받을 상황을 고르고 저장하세요.')})
+Load-Map;if(Test-Path $pagePath){try{$Page=[IO.File]::ReadAllText($pagePath).Trim();Remove-Item $pagePath}catch{}};if($Page){Open-Page $Page}elseif(!$Hidden){$mapForm.Show()};Status (T '대기 중 · 레이드에서 탈출구 확인 키를 누르면 쓸 수 있는 탈출구가 지도에 초록으로 표시됩니다.');DStatus $(if($config.discord){(T '대기 중 · 알림을 지원하는 게임 중 자리를 비우면 알려 드립니다.')}else{(T '알림이 꺼져 있습니다. 받을 상황을 고르고 저장하세요.')})
 $script:mapsOn=$true;$script:mapsCheck=[DateTime]::MinValue
 $script:fleaPending=New-Object System.Collections.ArrayList;$script:fleaSince=$null;$script:fleaSentAt=[DateTime]::MinValue;$script:fleaNext=[DateTime]::MinValue
 # Item names for sale alerts: the price helper's catalogue for the current mode (price-<mode>.tsv: id TAB name ...).

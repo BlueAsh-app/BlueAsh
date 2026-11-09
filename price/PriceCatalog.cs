@@ -97,11 +97,34 @@ namespace ModeSwitchPrice {
    var cats=new string[byCat.Count];byCat.Keys.CopyTo(cats,0);
    return new Snapshot{Exact=exact,Rows=unique.ToArray(),Folded=folded,ByCategory=byCat,Categories=cats,Time=time};
   }
-  public void Load(IList<Item> rows,DateTime time){snap=Build(rows,time);}
+  public void Load(IList<Item> rows,DateTime time){snap=Build(rows,time);BuildAlt();}
+
+  // English names as a second table (when the game language is not English): Tarkov writes the text language to Game.ini
+  // only when the game closes, so a game switched to English in the middle of a session still has "kr" there, and its
+  // English titles (read correctly) found nothing in the Korean names. The alt table maps English names to the same items;
+  // an English name shared by different items is left out, as duplicates are in the main table. Every id of a merged row
+  // (items sharing their name in the game language) brings its own English name.
+  volatile Snapshot alt;volatile Dictionary<string,string> enNames;
+  string EnPath{get{return Path.Combine(Path.GetDirectoryName(cachePath),"price-names-"+Mode+".en.json");}}
+  void BuildAlt(){
+   var s=snap;var en=enNames;if(s==null||en==null||Locale=="en"){alt=null;return;}
+   var groups=new Dictionary<string,List<Item>>();var spelled=new Dictionary<string,string>();
+   foreach(var r in s.Rows)foreach(var id in (r.Ids??r.Id??"").Split(',')){string n;if(id.Length==0||!en.TryGetValue(id,out n)||string.IsNullOrEmpty(n))continue;var k=Core.Normalize(n);List<Item> g;if(!groups.TryGetValue(k,out g)){groups[k]=g=new List<Item>();spelled[k]=n;}if(!g.Contains(r))g.Add(r);}
+   var exact=new Dictionary<string,Item>();var rows=new List<Item>();var folded=new List<string>();
+   foreach(var g in groups){if(g.Value.Count!=1)continue;exact[g.Key]=g.Value[0];rows.Add(g.Value[0]);folded.Add(Core.Fold(spelled[g.Key]));}
+   alt=new Snapshot{Exact=exact,Rows=rows.ToArray(),Folded=folded.ToArray(),ByCategory=new Dictionary<string,List<int>>(),Categories=new string[0],Time=s.Time};
+  }
+  void LoadEnNames(){if(Locale=="en"||!File.Exists(EnPath))return;try{enNames=new JavaScriptSerializer{MaxJsonLength=int.MaxValue}.Deserialize<Dictionary<string,string>>(File.ReadAllText(EnPath,Encoding.UTF8));BuildAlt();}catch{}}
 
   // Exact normalized title first; otherwise one unambiguous OCR-tolerant near match. Duplicate names never match.
+  // An exact name in either table wins over any near match: some Korean names are English ("5.56x45mm M856 ammo pack"), so
+  // a near match there must not beat the exact English name of another item (M855).
   public Item Find(string text){
-   var s=snap;if(s==null||string.IsNullOrEmpty(text))return null;Item hit;
+   if(string.IsNullOrEmpty(text))return null;var key=Core.Normalize(text);Item hit;var s=snap;var a=alt;
+   if(s!=null&&s.Exact.TryGetValue(key,out hit))return hit;if(a!=null&&a.Exact.TryGetValue(key,out hit))return hit;
+   return Find(s,text)??Find(a,text);}
+  static Item Find(Snapshot s,string text){
+   if(s==null||string.IsNullOrEmpty(text))return null;Item hit;
    if(s.Exact.TryGetValue(Core.Normalize(text),out hit))return hit;
    int i=Core.Closest(text,s.Folded);if(i>=0)return s.Rows[i];
    // Long titles can be cut with an ellipsis: accept the single name that starts with the visible part.
@@ -138,7 +161,7 @@ namespace ModeSwitchPrice {
     var head=lines.Length>0?lines[0].Split('\t'):new string[0];if(head.Length!=3||(head[0]!="v2"&&head[0]!="v3"&&head[0]!="v4")||head[1]!=Mode)return false;
     var rows=new List<Item>();
     for(int i=1;i<lines.Length;i++){var f=lines[i].Split('\t');if(f.Length<7)continue;rows.Add(new Item{Id=f[0],Name=f[1],Banned=f[2]=="1",Price=Opt(f[3]),Offers=Opt(f[4]),Updated=f[5],Mode=Mode,Category=f[6],Grid=f.Length>7&&f[7]=="1",TraderPrice=f.Length>8?Opt(f[8]):null,TraderId=f.Length>9?f[9]:""});}
-    if(rows.Count<1)return false;Load(rows,head[0]!="v4"?DateTime.MinValue:new DateTime(long.Parse(head[2]),DateTimeKind.Utc));return true;
+    if(rows.Count<1)return false;Load(rows,head[0]!="v4"?DateTime.MinValue:new DateTime(long.Parse(head[2]),DateTimeKind.Utc));LoadEnNames();return true;
    }catch{return false;}
   }
   static double? Opt(string s){double d;return double.TryParse(s,System.Globalization.NumberStyles.Float,System.Globalization.CultureInfo.InvariantCulture,out d)?d:(double?)null;}
@@ -158,7 +181,8 @@ namespace ModeSwitchPrice {
     try{
      var root="https://json.tarkov.dev/"+Mode+"/";
      var items=http.GetStringAsync(root+"items").Result;var rows=Parse(items,http.GetStringAsync(root+"items_"+Locale).Result,Mode);
-     var time=DateTime.UtcNow;snap=Build(rows,time);Error=null;ErrorDetail=null;
+     var time=DateTime.UtcNow;snap=Build(rows,time);BuildAlt();Error=null;ErrorDetail=null;
+     if(Locale!="en")try{var en=new Dictionary<string,string>();foreach(var r in Parse(items,http.GetStringAsync(root+"items_en").Result,Mode))en[r.Id]=r.Name;enNames=en;BuildAlt();File.WriteAllText(EnPath,new JavaScriptSerializer{MaxJsonLength=int.MaxValue}.Serialize(en),new UTF8Encoding(false));}catch{}
      try{SaveCache(rows,time);}catch{}
      try{var js=new JavaScriptSerializer{MaxJsonLength=int.MaxValue};var tr=(js.DeserializeObject(http.GetStringAsync(root+"traders").Result) as IDictionary)["data"] as IDictionary;var loc=(js.DeserializeObject(http.GetStringAsync(root+"traders_"+Language.ApiLocale).Result) as IDictionary)["data"] as IDictionary;
       var names=new Dictionary<string,string>();foreach(DictionaryEntry e in tr){var t=e.Value as IDictionary;if(t==null)continue;var key=Convert.ToString(t["name"]);names[Convert.ToString(t.Contains("id")?t["id"]:e.Key)]=loc!=null&&loc.Contains(key)?Convert.ToString(loc[key]):key;}

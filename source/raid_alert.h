@@ -64,7 +64,7 @@ struct RaidWatch {
     void reset(){capture.stop();unsigned token=deployment.token+1;deployment={};deployment.token=token;captureRetry=0;auto pmc=context.pmc;context=raid::Context{};context.pmc=pmc;publishRaidContext(context);file.clear();offset=0;baseline=true;streams.clear();bytesRead=0;readFailures=0;lastAlert=0;lastRead=i18n::text(L"아직 없음");lastEvent=i18n::text(L"아직 없음");FILETIME t;GetSystemTimeAsFileTime(&t);startedAt=number(t);}
     static std::wstring clock(){SYSTEMTIME t;GetLocalTime(&t);wchar_t b[32];swprintf(b,32,L"%02u:%02u:%02u",t.wHour,t.wMinute,t.wSecond);return b;}
     std::wstring diagnostics(){
-        std::wstring d=i18n::text(L"BlueAsh 2.24.1\r\n알림: ")+std::wstring(enabled?L"ON":L"OFF")+i18n::text(L" / 볼륨: ")+std::to_wstring(loudness)+L"\r\nLogs: "+folder+
+        std::wstring d=i18n::text(L"BlueAsh 2.27.0\r\n알림: ")+std::wstring(enabled?L"ON":L"OFF")+i18n::text(L" / 볼륨: ")+std::to_wstring(loudness)+L"\r\nLogs: "+folder+
             i18n::text(L"\r\n상태: ")+status+i18n::text(L"\r\n최근 읽기: ")+lastRead+i18n::text(L" / 신규 읽은 바이트: ")+std::to_wstring(bytesRead)+i18n::text(L" / 읽기 오류: ")+std::to_wstring(readFailures)+
             i18n::text(L"\r\n최근 알림: ")+lastEvent+i18n::text(L"\r\n감시 파일 수: ")+std::to_wstring(streams.size());
         for(const auto& entry:streams)d+=L"\r\n"+entry.first+L" ["+std::to_wstring(entry.second.offset)+L" / "+std::to_wstring(entry.second.size)+L"]";
@@ -132,8 +132,8 @@ struct RaidWatch {
     void poll(){
         pollDeployment();
         if(!dialog&&GetTickCount64()>=nextDiscovery){nextDiscovery=GetTickCount64()+10000;discoverMissing();}
-        // The auto-started map helper needs raid context even when the sound alert is off.
-        if(!enabled&&!companionEnabled()&&!(companionProcess&&WaitForSingleObject(companionProcess,0)==WAIT_TIMEOUT)){showStatus();return;}
+        // The auto-started map helper and the server badge (server_badge.h) need raid context even when the sound alert is off.
+        if(!enabled&&!serverBadgeOn&&!companionEnabled()&&!(companionProcess&&WaitForSingleObject(companionProcess,0)==WAIT_TIMEOUT)){showStatus();return;}
         if(!raidpaths::directory(folder)){status=i18n::text(L"로그 폴더를 기다리는 중 · 자동 찾기나 직접 선택을 눌러 주세요.");showStatus();return;}
         // The Logs folder holds hundreds of past sessions: walk all of it only every 10 s to find the newest
         // session, and list just that session's folder on the other ticks (this walk was most of the exe's CPU).
@@ -181,7 +181,7 @@ struct RaidWatch {
         folder=regString(configPath,L"RaidLogs");enabled=regString(configPath,L"RaidEnabled")==L"1";
         unsigned v=70;if(settings::parseVolume(regString(configPath,L"RaidVolume"),v))loudness=v;
         loadProfiles();reset();discoverMissing();nextDiscovery=GetTickCount64()+10000;
-        if(!enabled&&raidpaths::directory(folder))status=i18n::text(L"알림이 꺼져 있습니다 · 게임별 기능에서 켜세요.");
+        if(!enabled&&raidpaths::directory(folder))status=i18n::text(L"알림이 꺼져 있습니다 · 게임 도우미에서 켜세요.");
     }
     bool save(){return saveString(configPath,L"RaidLogs",folder)&&saveString(configPath,L"RaidEnabled",enabled?L"1":L"0")&&saveString(configPath,L"RaidVolume",std::to_wstring(loudness));}
 } raidWatch;
@@ -204,6 +204,8 @@ LRESULT CALLBACK raidProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         pageLabel(h,raidWatch.status.c_str(),24,320,688,44,0,76);
         HWND detail=addSetting(h,L"EDIT",raidWatch.diagnostics().c_str(),WS_BORDER|ES_READONLY|ES_MULTILINE|ES_AUTOVSCROLL|WS_VSCROLL,24,372,688,116,78);
         SendMessageW(detail,WM_SETFONT,(WPARAM)smallFont,TRUE);
+        // Not part of the alert: the matched server badge reads the same log lines (saved at once).
+        pageSwitch(h,i18n::text(L"매칭 서버 나라 표시 (PvP·시즌 매칭 때 게임 화면 오른쪽 위)"),24,504,688,30,81);checkBox(h,81,serverBadgeOn);
         pageButton(h,i18n::text(L"진단 내용 복사"),24,556,170,79);
         pageButton(h,i18n::text(L"닫기"),440,556,120,80);
         pageButton(h,i18n::text(L"저장"),572,556,140,75,true);
@@ -211,16 +213,15 @@ LRESULT CALLBACK raidProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
     }
     case WM_COMMAND:{
         int id=LOWORD(wp);
-        if(id==79){
+        if(id==81){checkBox(h,81,!checked(h,81));serverBadgeOn=checked(h,81);if(!saveString(configPath,L"TarkovServerBadge",serverBadgeOn?L"1":L"0"))SetDlgItemTextW(h,76,i18n::text(L"설정을 저장하지 못했습니다."));
+        }else if(id==79){
             bool ok=raidWatch.copyDiagnostics();SetDlgItemTextW(h,76,ok?i18n::text(L"진단 내용을 복사했습니다. 문의할 때 Ctrl+V로 붙여 넣으세요."):i18n::text(L"복사 실패. 아래 진단 내용을 직접 선택해 복사하세요."));
         }else if(id==77){
             auto found=raidpaths::discover();
             if(found.empty())SetDlgItemTextW(h,76,i18n::text(L"찾지 못했습니다. 타르코프를 한 번 실행한 뒤 다시 눌러 주세요."));
             else {SetDlgItemTextW(h,71,found.c_str());SetDlgItemTextW(h,76,i18n::text(L"로그 폴더를 찾았습니다. 저장을 누르세요."));}
         }else if(id==72){
-            BROWSEINFOW bi={};bi.hwndOwner=h;bi.lpszTitle=i18n::text(L"타르코프 설치 폴더의 Logs 선택");bi.ulFlags=BIF_RETURNONLYFSDIRS|BIF_NEWDIALOGSTYLE;
-            PIDLIST_ABSOLUTE p=SHBrowseForFolderW(&bi);
-            if(p){wchar_t path[MAX_PATH];if(SHGetPathFromIDListW(p,path))SetDlgItemTextW(h,71,path);CoTaskMemFree(p);}
+            std::wstring path=pickFolder(GetAncestor(h,GA_ROOT),i18n::text(L"타르코프 설치 폴더의 Logs 선택"));if(!path.empty()){SetDlgItemTextW(h,71,path.c_str());}
         }else if(id==80){DestroyWindow(h);
         }else if(id==74||id==75){
             unsigned v=(unsigned)levelValue(h,73);
@@ -233,7 +234,7 @@ LRESULT CALLBACK raidProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
             raidWatch.folder=path;raidWatch.loudness=v;
             if(reset)raidWatch.reset();
             if(!raidWatch.save()){SetDlgItemTextW(h,76,i18n::text(L"설정 저장 실패. 현재 실행에는 적용되지만 재실행 시 유지되지 않을 수 있습니다."));return 0;}
-            raidWatch.status=on?(*path?i18n::text(L"저장했습니다 · 출격 신호를 기다립니다."):i18n::text(L"저장했습니다 · 타르코프를 실행하면 로그 폴더를 찾습니다.")):i18n::text(L"저장했습니다 · 알림은 꺼져 있습니다 (게임별 기능에서 켜기).");raidWatch.nextDiscovery=0;raidWatch.showStatus();
+            raidWatch.status=on?(*path?i18n::text(L"저장했습니다 · 출격 신호를 기다립니다."):i18n::text(L"저장했습니다 · 타르코프를 실행하면 로그 폴더를 찾습니다.")):i18n::text(L"저장했습니다 · 알림은 꺼져 있습니다 (게임 도우미에서 켜기).");raidWatch.nextDiscovery=0;raidWatch.showStatus();
         }return 0;
     }
     case WM_ERASEBKGND:return eraseCarbon(h,(HDC)wp);

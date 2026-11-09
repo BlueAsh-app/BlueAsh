@@ -43,7 +43,7 @@ jobs:
         shell: msys2 {0}
         run: |
           cd source
-          for t in *_tests.cpp; do g++ -std=c++17 -Wall -Wextra -Werror "$t" -o t.exe -lgdi32 -luser32 && ./t.exe; done
+          for t in *_tests.cpp; do g++ -std=c++17 -Wall -Wextra -Werror "$t" -o t.exe -lgdi32 -luser32 -lbcrypt -lwintrust -lcrypt32 -lversion -lwinhttp -lole32 -loleaut32 -lwbemuuid -lpowrprof -lpdh -ld3d11 -ldxgi -lwinmm -luuid -lshell32 -lpsapi && ./t.exe; done
 
       - name: Self-test (scripts parse, DLLs load)
         shell: powershell

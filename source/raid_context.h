@@ -20,6 +20,7 @@ inline std::string nextId(std::string s){
 }
 struct Context {
  std::string partial,map,role="UNKNOWN",id,phase="unknown";unsigned serial=0;
+ std::string server; // online raids: the matched server's region code from the NetworkGameCreate Sid ("JP-TK"); PvE has none
  // Transit: the side the player crossed with (PvE "transit hop ... side:Pmc"), or the last raid's role when the new raid
  // says it was reached by transit ("[Transit] ... Count:1"). The new map loads with role UNKNOWN otherwise.
  std::string transitRole,lastRole="UNKNOWN";
@@ -37,11 +38,12 @@ struct Context {
  bool line(const std::string& s){
   bool changed=false;std::smatch m;learn(s);
   if(s.find("transit hop")!=std::string::npos&&std::regex_search(s,m,std::regex("side:(Pmc|Savage|Scav)",std::regex::icase))){transitRole=(m[1]=="Pmc"||m[1]=="pmc")?"PMC":"SCAV";}
-  if(s.find("application|scene preset path:")!=std::string::npos){if(role!="UNKNOWN")lastRole=role;map=presetMap(s);role=transitRole.empty()?"UNKNOWN":transitRole;transitRole.clear();id.clear();phase="loading";serial++;changed=true;}
+  if(s.find("application|scene preset path:")!=std::string::npos){if(role!="UNKNOWN")lastRole=role;map=presetMap(s);role=transitRole.empty()?"UNKNOWN":transitRole;transitRole.clear();id.clear();server.clear();phase="loading";serial++;changed=true;}
   if(s.find("application|[Transit] Flag:")!=std::string::npos&&role=="UNKNOWN"&&lastRole!="UNKNOWN"&&std::regex_search(s,m,std::regex("Count:([0-9]+)"))&&m[1]!="0"){role=lastRole;changed=true;}
   if(s.find("application|TRACE-NetworkGameCreate profileStatus")!=std::string::npos){
    if(std::regex_search(s,m,std::regex("Location: ([A-Za-z0-9_]+)"))){map=m[1];changed=true;}
    if(std::regex_search(s,m,std::regex("shortId: ([A-Z0-9]{6})"))){id=m[1];changed=true;}
+   if(std::regex_search(s,m,std::regex("Sid: ([A-Z]{2})-([A-Z]{2,4})[0-9]"))){server=std::string(m[1])+"-"+std::string(m[2]);changed=true;}
    if(std::regex_search(s,m,std::regex("Profileid: ([0-9a-f]{24})"))){auto r=roleOf(m[1]);if(r!="UNKNOWN"){role=r;changed=true;}}
    if(std::regex_search(s,m,std::regex("Side: (Savage|Usec|Bear)"))){role=m[1]=="Savage"?"SCAV":"PMC";changed=true;}
   }

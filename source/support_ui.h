@@ -38,12 +38,12 @@ void removeElevatedTask(){
     if(gone){HKEY k=nullptr;if(RegOpenKeyExW(HKEY_CURRENT_USER,configPath,0,KEY_SET_VALUE,&k)==ERROR_SUCCESS){RegDeleteValueW(k,L"ElevatedTaskPath");RegCloseKey(k);}}
 }
 // Start an elevated copy that takes over, through the Windows prompt.
-bool elevateWithPrompt(bool hidden){
-    std::wstring exe=executable(),args=hidden?L"--takeover --tray":L"--takeover";
+bool elevateWithPrompt(bool hidden,const wchar_t* extra=L""){
+    std::wstring exe=executable(),args=std::wstring(hidden?L"--takeover --tray":L"--takeover")+extra;
     SHELLEXECUTEINFOW s={};s.cbSize=sizeof(s);s.lpVerb=L"runas";s.lpFile=exe.c_str();s.lpParameters=args.c_str();s.nShow=SW_SHOWNORMAL;
     return ShellExecuteExW(&s)!=FALSE; // FALSE: declined at the prompt, keep running as is
 }
-void restartAsAdmin(){elevateWithPrompt(false);}
+void restartAsAdmin(const wchar_t* extra=L""){elevateWithPrompt(false,extra);}
 void pollAdmin(){
     static DWORD tried=0;if(!adminMismatch()||tried==tarkovPid)return;tried=tarkovPid;reportProblem(L"tarkov-admin");
     if(elevateWithPrompt(true))return;

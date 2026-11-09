@@ -1,0 +1,408 @@
+﻿# English story text (tarkov-data-overlay) <TAB> ja, translated for BlueAsh
+Escape Ground Zero	Ground Zero から脱出する
+Hand over the cash to Therapist	Therapist に現金を渡す
+Talk to Therapist	Therapist と話す
+Collect the required amount in RUB	必要な金額（ルーブル）を集める
+Talk to Ragman	Ragman と話す
+Survive and extract from Interchange or visit Interchange 3 times	Interchange から生還する、または Interchange を 3 回訪れる
+Tell Ragman what you found during the recon	偵察で見つけたことを Ragman に伝える
+Visit Interchange	Interchange を訪れる
+Hand over any Building materials items to Skier	Skier に[建築資材]カテゴリのアイテムをどれか渡す
+Survive and extract from Customs or visit Customs 3 times	Customs から生還する、または Customs を 3 回訪れる
+Find any item in raid from the Building materials category	レイド内で[建築資材]カテゴリのアイテムをどれか見つける
+Visit Customs	Customs を訪れる
+Talk to Skier	Skier と話す
+Hand over any weapon to Mechanic	Mechanic に武器をどれか渡す
+Talk to Mechanic	Mechanic と話す
+Find any weapon in raid	レイド内で武器をどれか見つける
+Survive and extract from Factory or visit Factory 3 times	Factory から生還する、または Factory を 3 回訪れる
+Visit Factory	Factory を訪れる
+Eliminate any target on Woods	Woods で任意の敵を倒す
+Visit Woods	Woods を訪れる
+Survive and extract from Woods or visit Woods 3 times	Woods から生還する、または Woods を 3 回訪れる
+Locate the entrance to the port Terminal	港のターミナルの入口を見つける
+Find a way to contact the soldiers at the Terminal	ターミナルの兵士と連絡を取る方法を見つける
+Use the intercom to contact the port garrison	インターホンで港の守備隊に連絡する
+Learn how to escape Tarkov	タルコフから脱出する方法を知る
+Hand over the cash to Mechanic	Mechanic に現金を渡す
+Collect the required amount in USD	必要な金額（ドル）を集める
+Hand over the item to Prapor: PMC dogtag	Prapor にアイテムを渡す：[PMC ドッグタグ]
+Find the item in raid: PMC dogtag	レイド内でアイテムを見つける：[PMC ドッグタグ]
+Survive and extract from Shoreline or visit Shoreline 3 times	Shoreline から生還する、または Shoreline を 3 回訪れる
+Visit Shoreline	Shoreline を訪れる
+Locate the escape path through the drainage system in The Lab	The Lab で排水設備を通る脱出路を見つける
+Search the server room in The Lab	The Lab のサーバールームを捜索する
+Search the top management offices in The Lab	The Lab の経営陣オフィスを捜索する
+Obtain a keycard or access codes to enter the facility	施設に入るためのキーカードかアクセスコードを入手する
+Access the secret TerraGroup facility	TerraGroup の秘密施設に入る
+Locate the entrance to the facility on Streets of Tarkov	Streets of Tarkov で施設の入口を見つける
+Locate the entrance to the facility on Factory	Factory で施設の入口を見つける
+Ensure access to Streets of Tarkov	Streets of Tarkov へのアクセスを確保する
+Ensure access to Lighthouse	Lighthouse へのアクセスを確保する
+Ensure access to Reserve	Reserve へのアクセスを確保する
+Ensure access to The Lab	The Lab へのアクセスを確保する
+Starting quest - automatically unlocked at the beginning of the storyline	最初のクエスト - ストーリー開始時に自動で解放されます
+Unlocks achievement Pathfinder, traders (Skier, Mechanic, Prapor, Peacekeeper), and direct access to all locations	実績 Pathfinder、トレーダー（Skier・Mechanic・Prapor・Peacekeeper）、全ロケーションへの直接アクセスが解放されます
+Learn details about the SUV from Therapist	Therapist から SUV の詳細を聞く
+Ask the traders about the fallen plane	トレーダーに墜落した飛行機について尋ねる
+Retrieve the flash drive from one of the G-Wagon SUVs	G-Wagon SUV のどれかから USB メモリを回収する
+Locate the right G-Wagon SUV	該当する G-Wagon SUV を見つける
+Hand over the flash drive to Prapor	Prapor に USB メモリを渡す
+Reach Loyalty Level 2 with Prapor	Prapor の信頼度をレベル 2 にする
+Ask Prapor about the fallen plane	Prapor に墜落した飛行機について尋ねる
+Wait for information from Prapor	Prapor からの情報を待つ
+Retrieve the plane's flight recorder	飛行機のフライトレコーダーを回収する
+Leave the flight recorder in the specified spot	フライトレコーダーを指定の場所に置く
+Visit Prapor	Prapor を訪ねる
+Find the item in raid: Toolset	レイド内でアイテムを見つける：[工具セット]
+Hand over the item to Prapor: Toolset	Prapor にアイテムを渡す：[工具セット]
+Find the item in raid: Printed circuit board	レイド内でアイテムを見つける：[プリント基板]
+Hand over the item to Prapor: Printed circuit board	Prapor にアイテムを渡す：[プリント基板]
+Find the item in raid: Rechargeable battery	レイド内でアイテムを見つける：[充電式バッテリー]
+Hand over the item to Prapor: Rechargeable battery	Prapor にアイテムを渡す：[充電式バッテリー]
+Wait for the information from Prapor	Prapor からの情報を待つ
+Find the pilots' transcript	パイロットの交信記録を見つける
+Find Elektronik's secure flash drive	Elektronik のセキュア USB メモリを見つける
+Hand over Elektronik's secure flash drive to Prapor	Prapor に Elektronik のセキュア USB メモリを渡す
+Hand over the flight crew's transcript to Prapor	Prapor に乗員の交信記録を渡す
+Retrieve the armored case	装甲ケースを回収する
+Hand over the armored case to Prapor	Prapor に装甲ケースを渡す
+Find any additional clues	追加の手がかりを探す
+Keep the armored case for yourself	装甲ケースを自分で持っておく
+Ask Mechanic about the downed plane while progressing through Tour.	Tour を進めながら Mechanic に墜落した飛行機について尋ねます。
+Investigate the crashed aircraft operation and decide what to do with the armored case.	墜落機の作戦を調査し、装甲ケースをどうするか決めます。
+Keeping the armored case results in -0.3 Prapor reputation and changes The Ticket routes.	装甲ケースを手元に残すと Prapor の評判が -0.3 になり、The Ticket のルートが変わります。
+Locate the traces of the BEAR special squad	BEAR 特殊部隊の痕跡を見つける
+Locate and obtain the Bogatyr squad patch	Bogatyr 部隊のパッチを見つけて入手する
+Locate and obtain a dogtag of one of the Bogatyrs	Bogatyr 隊員のドッグタグを見つけて入手する
+Locate and obtain a personal item of one of the Bogatyrs	Bogatyr 隊員の私物を見つけて入手する
+Locate and obtain a keepsake of one of the Bogatyrs	Bogatyr 隊員の形見を見つけて入手する
+Locate and obtain the squad commander's recorder	部隊長のレコーダーを見つけて入手する
+Gather all the found items related to the squad	部隊に関係する見つけたアイテムをすべて集める
+Learn more about the Bogatyr squad from the traders	トレーダーから Bogatyr 部隊についてさらに聞く
+Locate the Gnezdo outpost	Gnezdo 前哨基地を見つける
+Figure out what happened to the Bogatyr squad	Bogatyr 部隊に何が起きたのか突き止める
+Figure out where the Bogatyr squad got ambushed	Bogatyr 部隊がどこで待ち伏せされたのか突き止める
+Search the Gnezdo outpost	Gnezdo 前哨基地を捜索する
+Learn more about the Bogatyr squad's activities	Bogatyr 部隊の活動についてさらに調べる
+Learn more about the Bogatyr squad's members	Bogatyr 部隊の隊員についてさらに調べる
+Locate the ambush spot	待ち伏せの場所を見つける
+Inspect Moreman's body	Moreman の遺体を調べる
+Obtain more information about the Bogatyr squad	Bogatyr 部隊についてさらに情報を得る
+Locate and obtain Moreman's phone	Moreman の携帯電話を見つけて入手する
+Retrieve more information about the ambush from Moreman’s phone	Moreman の携帯電話から待ち伏せの情報をさらに得る
+Study the data from Moreman's phone	Moreman の携帯電話のデータを調べる
+Upgrade the Intelligence Center to Level 3 in the Hideout	ハイドアウトのインテリジェンスセンターをレベル 3 にする
+Locate the Ryabina outpost	Ryabina 前哨基地を見つける
+Find more information about the Bogatyr squad	Bogatyr 部隊についてさらに情報を探す
+Locate the Carousel outpost	Carousel 前哨基地を見つける
+Learn more about Voevoda	Voevoda についてさらに調べる
+Find the Bogatyr squad's personal notes	Bogatyr 部隊の個人メモを見つける
+Learn more about Taran	Taran についてさらに調べる
+Learn more about Strelets	Strelets についてさらに調べる
+Find Voevoda's personal belongings	Voevoda の私物を見つける
+Contact the Bogatyr squad	Bogatyr 部隊と連絡を取る
+Hand over the Bogatyr squad patch to Lightkeeper	Lightkeeper に Bogatyr 部隊のパッチを渡す
+Hand over Moreman's dogtag to Lightkeeper	Lightkeeper に Moreman のドッグタグを渡す
+Hand over Strelets' amulet to Lightkeeper	Lightkeeper に Strelets のお守りを渡す
+Hand over Taran's postcard to Lightkeeper	Lightkeeper に Taran の絵葉書を渡す
+Hand over Voevoda's audio recorder to Lightkeeper	Lightkeeper に Voevoda のボイスレコーダーを渡す
+Bring all the Bogatyr squad's items to Lightkeeper	Bogatyr 部隊の品をすべて Lightkeeper に届ける
+Gain access to Lightkeeper	Lightkeeper に会えるようになる
+Stay on good terms with Lightkeeper	Lightkeeper との良好な関係を保つ
+Wait for Voevoda to reach out	Voevoda からの連絡を待つ
+Reach the Strength skill level 15	筋力スキルをレベル 15 にする
+Reach the Stress Resistance skill level 10	ストレス耐性スキルをレベル 10 にする
+Reach the Light Machine Guns skill level 5	軽機関銃スキルをレベル 5 にする
+Reach the Assault Rifles skill level 10	アサルトライフルスキルをレベル 10 にする
+Eliminate PMC operatives without dying	死なずに PMC を倒す
+Eliminate any target without dying	死なずに任意の敵を倒す
+Contact Voevoda	Voevoda に連絡する
+Locate the traces of the traitors	裏切り者の痕跡を見つける
+Investigate the BEAR camp east of the Ultra mall on Interchange	Interchange の ULTRA モール東側にある BEAR のキャンプを調べる
+Investigate the BEAR camp on Lighthouse	Lighthouse の BEAR のキャンプを調べる
+Investigate the command bunker on Reserve	Reserve の指揮バンカーを調べる
+Interrogate Prapor	Prapor を問い詰める
+Figure out how the cultists are connected to the General	カルティストと将軍のつながりを突き止める
+Investigate the cultist circle on Shoreline	Shoreline のカルティストの円陣を調べる
+Investigate the cultist circle on Woods	Woods のカルティストの円陣を調べる
+Investigate the cultist circle on Reserve	Reserve のカルティストの円陣を調べる
+Investigate the cultist circle on Customs	Customs のカルティストの円陣を調べる
+Talk to Lightkeeper	Lightkeeper と話す
+Wait for Lightkeeper to prepare the documents on The Unheard	Lightkeeper が The Unheard の資料を用意するのを待つ
+Read the agent network deployment report	エージェント網の配置報告書を読む
+Visit one of the marked BEAR trace locations on Customs, Reserve, Shoreline, or Woods.	Customs・Reserve・Shoreline・Woods にある BEAR の痕跡地点のどれかを訪れます。
+Investigate the Bogatyr BEAR squad, recover their trail, and coordinate with Lightkeeper and Voevoda.	BEAR の Bogatyr 部隊を調査して足取りをたどり、Lightkeeper と Voevoda と連携します。
+Learn more about The Unheard	The Unheard についてさらに調べる
+Learn more about TerraGroup's activities	TerraGroup の活動についてさらに調べる
+Learn more about the "fuel" mentioned in the note	メモにあった「燃料」についてさらに調べる
+Find more information about the special catalyst shipment	特殊触媒の輸送についてさらに情報を探す
+Locate Rzhevsky's service vehicle	Rzhevsky の公用車を見つける
+Obtain Rzhevsky's personal belongings	Rzhevsky の私物を入手する
+Retrieve the data from the hard drive in Rzhevsky's car	Rzhevsky の車のハードドライブからデータを回収する
+Read the transcript of Rzhevsky's conversation	Rzhevsky の会話記録を読む
+Take the hard drive from Rzhevsky's car	Rzhevsky の車からハードドライブを持ち出す
+Locate and obtain the documents on the Blue Ice fuel catalyst research	ブルーアイス燃料触媒の研究資料を見つけて入手する
+Find as much information as possible about the plans of The Unheard	The Unheard の計画についてできるだけ多くの情報を集める
+Learn more about A.P.'s activities	A.P. の活動についてさらに調べる
+Learn more about A.P.'s role	A.P. の役割についてさらに調べる
+Search for any mention of A.P. in The Lab	The Lab で A.P. に関する記述を探す
+Locate A.P.'s room in the Health Resort	療養所で A.P. の部屋を見つける
+Find out which room A.P. was assigned to	A.P. がどの部屋を割り当てられていたか突き止める
+Obtain A.P.'s personal belongings	A.P. の私物を入手する
+Obtain A.P.'s data storage device	A.P. のデータ記録装置を入手する
+Decrypt the flash drive from A.P.'s room	A.P. の部屋の USB メモリを解読する
+Take the flash drive from A.P.'s room	A.P. の部屋から USB メモリを持ち出す
+Ask Mechanic for help	Mechanic に助けを求める
+Hand over the A.P. flash drive to Mechanic	Mechanic に A.P. の USB メモリを渡す
+Wait for the news from Elektronik	Elektronik からの知らせを待つ
+Integrate the tech files from A.P.'s flash drive into a TerraGroup keycard	A.P. の USB メモリの技術ファイルを TerraGroup のキーカードに組み込む
+Access A.P.'s corporate apartment	A.P. の社宅に入る
+Investigate A.P.'s apartment	A.P. のアパートを調べる
+Access the hidden room in A.P.'s apartment	A.P. のアパートの隠し部屋に入る
+Study the TerraGroup documentation in A.P.'s office	A.P. のオフィスで TerraGroup の資料を調べる
+Study the role of the Blue Ice catalyst in The Unheard's protocol	The Unheard のプロトコルにおけるブルーアイス触媒の役割を調べる
+Learn more about The Unheard's protocol	The Unheard のプロトコルについてさらに調べる
+Figure out how The Unheard are connected to Tarkov	The Unheard とタルコフのつながりを突き止める
+Pick up and read the Purification note in one of the TerraGroup locations on Streets or Ground Zero.	Streets of Tarkov か Ground Zero の TerraGroup の場所のどこかで「浄化」のメモを拾って読みます。
+Trace The Unheard's Blue Ice protocol through TerraGroup records, A.P.'s network, and encrypted data.	TerraGroup の記録、A.P. の人脈、暗号化データをたどり、The Unheard のブルーアイス・プロトコルを追跡します。
+Talk to Mechanic about the EMP blast	Mechanic と EMP 爆発について話す
+Gain access to Mechanic	Mechanic に会えるようになる
+Locate and obtain the device fragment	装置の破片を見つけて入手する
+Hand over the device fragment to Mechanic	Mechanic に装置の破片を渡す
+Plant the hacking device in the server room in The Lab	The Lab のサーバールームにハッキング装置を設置する
+Hand over the fragment of Item 1156 to Mechanic	Mechanic にアイテム 1156 の破片を渡す
+Keep the fragment of Item 1156 for yourself	アイテム 1156 の破片を自分で持っておく
+Find a lead on Item 1156	アイテム 1156 の手がかりを見つける
+Investigate the Rus Post office	ロシア郵便の局を調べる
+Locate the Rus Post car	ロシア郵便の車両を見つける
+Obtain the blueprint for Item 1156	アイテム 1156 の設計図を入手する
+Pick up and read an EMERCOM leaflet or Item 1156 note from Woods, Interchange, or The Labyrinth.	Woods・Interchange・The Labyrinth で EMERCOM のビラかアイテム 1156 のメモを拾って読みます。
+Investigate the EMP incident, secure Item 1156 intel, and follow the Rus Post lead chain.	EMP 事件を調査し、アイテム 1156 の情報を確保して、ロシア郵便の手がかりをたどります。
+Planting the hacking device takes 60 seconds.	ハッキング装置の設置には 60 秒かかります。
+Locate a place connected to the Eye of the World	「世界の目」に関係する場所を見つける
+Learn more about the cultists' victim from the torture room	拷問部屋のカルト犠牲者についてさらに調べる
+Locate the cult victim's apartment	カルト犠牲者のアパートを見つける
+Obtain the key to the apartment	アパートの鍵を入手する
+Obtain and read the book that the cultists planted with Igor	カルティストが Igor に残した本を入手して読む
+Investigate the victim's apartment	犠牲者のアパートを調べる
+Obtain the victim's first audio tape	犠牲者の最初のカセットテープを入手する
+Ask Mechanic about the Eye of the World	Mechanic に「世界の目」について尋ねる
+Locate and neutralize Cultist Priest	カルティストの司祭を見つけて倒す
+Obtain more information on the Eye of the World	「世界の目」についてさらに情報を得る
+Locate the place marked with the Eye of the World on Shoreline	Shoreline で「世界の目」が描かれた場所を見つける
+Investigate the area around the Sordi communications tower	Sordi 通信塔の周辺を調べる
+Repair the Sordi tower	Sordi 通信塔を修理する
+Locate the place marked with the Eye of the World on Woods	Woods で「世界の目」が描かれた場所を見つける
+Investigate the cultists' house marked with the Eye of the World	「世界の目」が描かれたカルティストの家を調べる
+Locate the place marked with the Eye of the World on Lighthouse	Lighthouse で「世界の目」が描かれた場所を見つける
+Locate the victim's belongings	犠牲者の遺品を見つける
+Learn more about the victim	犠牲者についてさらに調べる
+Investigate the ransacked cultist room in the chalet	シャレーの荒らされたカルティストの部屋を調べる
+Locate and obtain the key mentioned in the victim's note	犠牲者のメモにあった鍵を見つけて入手する
+Learn more about Station 14-4 KORD from Mechanic	Mechanic から 14-4 KORD 基地についてさらに聞く
+Restore Arshavin's keycard	Arshavin のキーカードを復元する
+Locate and obtain K. Arshavin's pass	K. Arshavin の通行証を見つけて入手する
+Gain access to NGO Cobalt's secret facility	NGO Cobalt の秘密施設に入る
+Restore power at the station	基地の電力を復旧する
+Turn on the cooling system in the server room	サーバールームの冷却システムを入れる
+Install a flash drive to download the data	データをダウンロードする USB メモリを差し込む
+Survive and extract from Interchange	Interchange から生還する
+Bring a flash drive to install in the facility	施設に差し込む USB メモリを持っていく
+Collect the flash drive from the ARRS station	ARRS 基地から USB メモリを回収する
+Hand over the flash drive with data to Mechanic	Mechanic にデータ入りの USB メモリを渡す
+Investigate ARRS Station 14-4 KORD thoroughly	ARRS 14-4 KORD 基地を徹底的に調べる
+Find a way to disconnect the station from external agents	基地を外部エージェントから切り離す方法を見つける
+Check that the station power is turned on	基地の電源が入っているか確認する
+Restore the ARRS station to backup settings	ARRS 基地をバックアップ設定に戻す
+Read the ARRS station specifications	ARRS 基地の仕様書を読む
+Pick up and read the Note about the Eye of the World from Customs, Reserve, Woods, or Shoreline.	Customs・Reserve・Woods・Shoreline で「世界の目」についてのメモを拾って読みます。
+Follow the Eye of the World trail through cultist sites, Sordi infrastructure, and ARRS Station 14-4 KORD.	カルトの拠点、Sordi の施設、ARRS 14-4 KORD 基地を通じて「世界の目」の足跡をたどります。
+Figure out where Kozlov lived	Kozlov がどこに住んでいたか突き止める
+Read the note on Kozlov's door	Kozlov の部屋のドアのメモを読む
+Access Kozlov's room	Kozlov の部屋に入る
+Figure out where to get Kozlov's key	Kozlov の鍵をどこで手に入れるか突き止める
+Find out what Kozlov was involved in	Kozlov が何に関わっていたか突き止める
+Investigate Kozlov's room	Kozlov の部屋を調べる
+Ask the traders about Anastasia	トレーダーに Anastasia について尋ねる
+Access Skier's accomplice's apartment	Skier の共犯者のアパートに入る
+Find the key to the apartment	アパートの鍵を見つける
+Learn more about Skier's accomplice	Skier の共犯者についてさらに調べる
+Read the documents in Skier's accomplice's apartment	Skier の共犯者のアパートで書類を読む
+Survive and extract from Streets of Tarkov	Streets of Tarkov から生還する
+Investigate the apartment	アパートを調べる
+Report to Skier	Skier に報告する
+Locate Anastasia's apartment	Anastasia のアパートを見つける
+Investigate the entrance to Anastasia's building	Anastasia の住む建物の入口を調べる
+Learn more about Anastasia	Anastasia についてさらに調べる
+Locate courier Pasha	配達員 Pasha を見つける
+Search the ambush spot	待ち伏せの場所を捜索する
+Locate Reshala's stash	Reshala の隠し場所を見つける
+Obtain the key to Reshala's stash	Reshala の隠し場所の鍵を入手する
+Obtain courier Pasha's belongings	配達員 Pasha の持ち物を入手する
+Obtain Reshala's work notes	Reshala の業務メモを入手する
+Locate and neutralize Reshala	Reshala を見つけて倒す
+Investigate Reshala's bunkhouse	Reshala の宿舎を調べる
+Locate Kozlov's hideout	Kozlov の隠れ家を見つける
+Locate and obtain Kozlov's evidence	Kozlov の証拠を見つけて入手する
+Locate the scribbled-over car in the Customs dormitory courtyard.	Customs の寮の中庭で落書きされた車を見つけます。
+Track Kozlov's evidence chain through Dorms, Streets, and Reshala's stash network.	寮、Streets、Reshala の隠し場所を通じて Kozlov の証拠をたどります。
+Ask the traders about the underground facility	トレーダーに地下施設について尋ねる
+Ask Therapist how to access the underground facility	Therapist に地下施設への入り方を尋ねる
+Wait for Jaeger to gather the keycards	Jaeger がキーカードを集めるのを待つ
+Figure out what happened to the BEAR squad	BEAR 部隊に何が起きたのか突き止める
+Locate the entrance to the underground facility beneath the Health Resort	療養所の下にある地下施設の入口を見つける
+Access the facility	施設に入る
+Locate the traces of the BEAR squad in The Labyrinth	The Labyrinth で BEAR 部隊の痕跡を見つける
+Investigate the BEAR squad regroup spot at Item 1156	アイテム 1156 付近の BEAR 部隊の集合地点を調べる
+Locate the squad leader	部隊長を見つける
+Gather more information about the squad	部隊についてさらに情報を集める
+Access the locked office	鍵のかかったオフィスに入る
+Listen to the audio tape from the office	オフィスのカセットテープを聞く
+Investigate the lab staff bodies	研究所職員の遺体を調べる
+Hand over the audio tape to Jaeger	Jaeger にカセットテープを渡す
+Locate and obtain the Labyrinth facility research report	The Labyrinth 施設の研究報告書を見つけて入手する
+Read the Labyrinth facility research report	The Labyrinth 施設の研究報告書を読む
+Locate the Labyrinth transit in the Shoreline resort west wing basement with the Knossos key.	Knossos の鍵で Shoreline 療養所西棟地下の The Labyrinth へのトランジットを見つけます。
+Investigate the underground Labyrinth incident, recover scientist data, and trace the missing BEAR squad.	地下の The Labyrinth 事件を調査し、研究者のデータを取り戻して、行方不明の BEAR 部隊を追います。
+Extremely dangerous area with traps, poison hazards, and miniboss encounters.	罠、毒の危険、ミニボスがいる非常に危険なエリアです。
+Talk to Mr. Kerman	Kerman 氏と話す
+Wait for Mr. Kerman to reach out	Kerman 氏からの連絡を待つ
+Talk to Prapor	Prapor と話す
+Locate the camp of Prapor's people on Lighthouse	Lighthouse で Prapor の手下のキャンプを見つける
+Find any clues about Prapor's people's intentions	Prapor の手下の狙いについて手がかりを探す
+Obtain the item: TerraGroup "Blue Folders" materials	アイテムを入手する：[TerraGroup「ブルーフォルダー」資料]
+Bring the found items to Lightkeeper	見つけたアイテムを Lightkeeper に届ける
+Launch a yellow signal flare in front of ULTRA's main entrance on Interchange	Interchange の ULTRA 正面入口前で黄色の信号弾を撃つ
+Eliminate any target in one raid on Interchange	Interchange の 一回のレイドで任意の敵を倒す
+Get the armored case from Lightkeeper	Lightkeeper から装甲ケースを受け取る
+Unlock the armored case	装甲ケースを開ける
+Obtain the "Ticket"	「チケット」を入手する
+Read the instruction from the armored case	装甲ケースの説明書を読む
+Obtain the experimental signal jammer	試作型の信号ジャマーを入手する
+Obtain the TerraGroup Labs access keycard	TerraGroup Labs のアクセスキーカードを入手する
+Gain access to The Lab	The Lab へのアクセスを得る
+Use the experimental signal jammer to unlock the case	試作型の信号ジャマーでケースを開ける
+Contact Mr. Kerman	Kerman 氏に連絡する
+Accept Mr. Kerman's offer	Kerman 氏の提案を受け入れる
+Obtain a blank RFID card	空の RFID カードを入手する
+Activate the RFID card from the case	ケースの RFID カードを有効化する
+Construct the Solar Power zone in the Hideout	ハイドアウトにソーラー発電エリアを建設する
+Obtain the Laboratory master pass	研究所のマスターパスを入手する
+Use the Laboratory master pass to activate Kruglov's keycard	研究所のマスターパスで Kruglov のキーカードを有効化する
+Access Kruglov's office in The Lab	The Lab にある Kruglov のオフィスに入る
+Access Kruglov's apartment on Streets of Tarkov	Streets of Tarkov にある Kruglov のアパートに入る
+Gain access to Streets of Tarkov	Streets of Tarkov へのアクセスを得る
+Obtain an RFID card encryption device	RFID カード暗号化装置を入手する
+Wait for a response from Mechanic	Mechanic の返事を待つ
+Hand over the Physical Bitcoins to Mechanic	Mechanic に[物理ビットコイン]を渡す
+Obtain Physical Bitcoins to pay for Elektronik's services	Elektronik への支払いに使う[物理ビットコイン]を入手する
+Construct a Bitcoin Farm in the Hideout	ハイドアウトにビットコインファームを建設する
+Collect the RFID card encryption device	RFID カード暗号化装置を受け取る
+Use the RFID card encryption device to activate Kruglov's keycard	RFID カード暗号化装置で Kruglov のキーカードを有効化する
+Arrive at the entrance pathway to the port Terminal	港のターミナルへの進入路の入口に着く
+Swipe the keycard at the intercom reader	インターホンの読み取り機にキーカードを通す
+Agree to find dirt on TerraGroup for Mr. Kerman	Kerman 氏のために TerraGroup の弱みを探すことに同意する
+Deliver the minor TerraGroup evidence to Mr. Kerman	Kerman 氏に TerraGroup の小さな証拠を届ける
+Deliver the major TerraGroup evidence to Mr. Kerman	Kerman 氏に TerraGroup の大きな証拠を届ける
+Confirm with Mr. Kerman that all the evidence has been delivered	Kerman 氏に証拠をすべて届けたか確認する
+Wait for Mr. Kerman's trusted contact to get in touch	Kerman 氏の信頼する連絡役からの連絡を待つ
+Talk to Fence	Fence と話す
+Complete Fence's assignment	Fence の依頼を完了する
+Keep the reputation with Fence above 4.0	Fence の評判を 4.0 より上に保つ
+Tell Fence that the assignment is complete	Fence に依頼が終わったと伝える
+Eliminate PMC operatives on Interchange (in one raid)	Interchange で PMC を倒す（一回のレイド内）
+Eliminate PMC operatives on Shoreline (in one raid)	Shoreline で PMC を倒す（一回のレイド内）
+Reach 0.4 reputation with BTR Driver	BTR ドライバーの評判を 0.4 にする
+Bring the reprogrammed RFID card with Mr. Kerman's hash codes	Kerman 氏のハッシュコードを書き込んだ再プログラム済み RFID カードを持っていく
+Bring the Secure container Alpha-1 with TerraGroup evidence	TerraGroup の証拠が入った[セキュアコンテナ Alpha-1]を持っていく
+Access the port Terminal	港のターミナルに入る
+Pass the security check	保安検査を通過する
+Retrieve the Secure container Alpha-1	[セキュアコンテナ Alpha-1]を取り戻す
+Escape from Tarkov	タルコフから脱出する
+Locate the armory with the confiscated equipment	押収された装備のある武器庫を見つける
+Locate the exit leading to the Terminal loading zone	ターミナルの荷役エリアへ続く出口を見つける
+Obtain the keycard to unlock the service passage	業務用通路を開けるキーカードを入手する
+Unlock the service passage inside the seaport building	港の建物内の業務用通路を開ける
+Figure out how to reach the evacuation zone on the pier	桟橋の避難エリアへの行き方を突き止める
+Obtain the key to the gate blocking the road to the pier	桟橋への道をふさぐゲートの鍵を入手する
+Locate the way into the fuel depot	燃料貯蔵所への入り方を見つける
+Access the fuel depot	燃料貯蔵所に入る
+Access the Terminal loading zone	ターミナルの荷役エリアに入る
+Locate the pumping station inside the fuel depot	燃料貯蔵所内のポンプ場を見つける
+Drain the water in the pumping station	ポンプ場の水を抜く
+Locate the exit leading to the pier	桟橋へ続く出口を見つける
+Reach the evacuation area at the pier	桟橋の避難エリアに着く
+Figure out how to restore power to the pumping station	ポンプ場の電力を復旧する方法を突き止める
+Obtain the diagram of the electrical panels	配電盤の配線図を入手する
+Negotiate with Mr. Kerman	Kerman 氏と交渉する
+Continue from Falling Skies after obtaining the armored case and start the Mr. Kerman terminal chain.	Falling Skies で装甲ケースを入手した後に続き、Kerman 氏のターミナル連絡クエストが始まります。
+Branches into the storyline's four endings, listed in `endings` with the real ids the client serves in ending_list. The wiki describes the decision points as helping or betraying Mr. Kerman, paying Prapor, or seeking the Lightkeeper; each ending is gated by its own sub-quest.	ストーリーの四つのエンディングに分かれます。Wiki は分岐点を Kerman 氏を助けるか裏切るか、Prapor に支払うか、Lightkeeper を頼るかと説明しており、エンディングごとに専用のサブクエストがあります。
+The reference capture's mutually exclusive sub-quest completions are emitted at chapter level as `mutuallyExclusiveQuestPairs`. Partial objective progress on both sides is allowed. Only pairs of resolved sub-quests within this chapter are included. Objective coverage is partial (see `referenceCoverage`): the client only returns a story sub-quest template once the player has reached it, so only the endings whose `objectiveCount` is above zero have objective-level evidence here. The armored case choice in Falling Skies affects available optional objectives (Lightkeeper access).	（データについて）同時に完了できないサブクエストの組は、ゲームの記録で確認されたものだけを入れています。この章は一部のみ確認済みです：ゲームは到達したサブクエストしか表示しないため、目標のあるエンディングだけが目標単位で確認されています。Falling Skies の装甲ケースの選択は Lightkeeper 関連の任意目標に影響します。
+Find out from traders more about the connection between TerraGroup and Paradigm Shipping	トレーダーから TerraGroup と Paradigm 海運の関係をさらに聞く
+Locate the equipment under the cellular tower on Woods	Woods の携帯基地局タワーの下にある機器を見つける
+Repair the equipment under the cellular tower on Woods	Woods の携帯基地局タワーの下にある機器を修理する
+Report back to Mechanic	Mechanic に結果を報告する
+Locate and obtain the Paradigm Shipping documentation	Paradigm 海運の書類を見つけて入手する
+Tell Mechanic about "Boreas"	Mechanic に「Boreas」について伝える
+Arrange a transport to the icebreaker	砕氷船への移動手段を手配する
+Tell Mechanic you found transport to the icebreaker	砕氷船への移動手段が見つかったと Mechanic に伝える
+Find an alternative transport to the icebreaker	砕氷船への別の移動手段を探す
+Locate and obtain the AMG-10 fluid on Reserve	Reserve で[AMG-10 作動油]を見つけて入手する
+Hand over the AMG-10 fluid to Prapor	Prapor に[AMG-10 作動油]を渡す
+Return to the Hideout	ハイドアウトに戻る
+Return to the BTR driver	BTR ドライバーのところに戻る
+Board the smuggler hovercraft on Shoreline	Shoreline で密輸業者のホバークラフトに乗る
+Arrive at the icebreaker	砕氷船に着く
+Check if any crew members survived on the ship	船に生存した乗組員がいるか確認する
+Access the engine room	機関室に入る
+Locate and obtain the engine room keycard	機関室のキーカードを見つけて入手する
+Find a way into the icebreaker superstructure	砕氷船の上部構造に入る方法を見つける
+Bring Roubles to pay for the insertion onto the icebreaker	砕氷船への乗船費用としてルーブルを持っていく
+Bring Euros to pay for the evacuation from the icebreaker	砕氷船からの脱出費用としてユーロを持っていく
+Bring a green RSP signal flare	緑の RSP 信号弾を持っていく
+Ask Mechanic about explosives	Mechanic に爆薬について尋ねる
+Ask Prapor about explosives	Prapor に爆薬について尋ねる
+Reach the engine room	機関室に着く
+Reach the damaged door on the roof of the engine room	機関室の屋根にある壊れたドアに着く
+Obtain the SZ-1 explosive charge	[SZ-1 爆薬]を入手する
+Break the chain on the door on the roof of the engine room using the SZ-1 charge	[SZ-1 爆薬]で機関室の屋根のドアの鎖を断ち切る
+Enter the icebreaker superstructure from the roof of the engine room	機関室の屋根から砕氷船の上部構造に入る
+Inspect the crew living quarters in the icebreaker superstructure	砕氷船の上部構造にある乗組員居住区を調べる
+Find a way to the upper decks of the icebreaker superstructure	砕氷船の上部構造の上甲板へ行く道を見つける
+Ask the surviving scientist how to open the code-locked door on level 6	生き残った科学者に 6 階の暗号錠付きドアの開け方を尋ねる
+Ask Mechanic for help with finding the second part of the code for the locked door on level 6	6 階の施錠ドアの暗号の後半を探すため Mechanic に助けを求める
+Return to Mechanic	Mechanic のところに戻る
+Use the correct access code	正しいアクセスコードを入力する
+Reach the code-locked door	暗号錠付きドアに着く
+Access the upper levels of the icebreaker	砕氷船の上層に入る
+Locate compartment C-1	C-1 区画を見つける
+Access compartment C-1	C-1 区画に入る
+Locate and obtain the keycard with access to compartment C-1	C-1 区画のキーカードを見つけて入手する
+Locate the entrance to the bridge	ブリッジの入口を見つける
+Locate an alternative path to the bridge	ブリッジへの別のルートを見つける
+Find something to thaw the hatch on the roof of the bridge	ブリッジ屋根のハッチを溶かす物を見つける
+Thaw the hatch on the roof of the bridge	ブリッジ屋根のハッチを溶かす
+Search the servers in compartment C-1	C-1 区画のサーバーを捜索する
+Search the area near the workstation in compartment C-1	C-1 区画の作業台付近を捜索する
+Search the shelves in compartment C-1	C-1 区画の棚を捜索する
+Ask Mechanic for help decoding the hard drives from the icebreaker	砕氷船のハードドライブの解読を Mechanic に頼む
+Inspect the upper decks of the icebreaker superstructure	砕氷船の上部構造の上甲板を調べる
+Find the item in raid: Ultralink satellite communication module	レイド内でアイテムを見つける：[Ultralink 衛星通信モジュール]
+Hand over the Ultralink satellite modules to Mechanic	Mechanic に[Ultralink 衛星モジュール]を渡す
+Reach the upper decks	上甲板に着く
+Rescue the icebreaker captain	砕氷船の船長を救出する
+Inform the scientist about the captain’s death	科学者に船長の死を伝える
+Ask the BTR driver if he can help evacuate the scientist from the icebreaker	BTR ドライバーに科学者を砕氷船から避難させられるか尋ねる
+Assist the smugglers with their conflict against the Rogues	密輸業者と Rogue の争いに手を貸す
+Obtain respirators for the BTR driver	BTR ドライバーのためにガスマスクを入手する
+Eliminate any target on the icebreaker	砕氷船で任意の敵を倒す
+Obtain the Kirasa-N body armor	[Kirasa-N ボディアーマー]を入手する
+Hand over the Kirasa-N body armor to the BTR driver	BTR ドライバーに[Kirasa-N ボディアーマー]を渡す
+Obtain class 5+ ballistic plates	クラス 5 以上の防弾プレートを入手する
+Hand over class 5 or higher ballistic plates to the BTR driver	BTR ドライバーにクラス 5 以上の防弾プレートを渡す
+Hand over the respirators to the BTR driver	BTR ドライバーにガスマスクを渡す
+Ask the BTR driver what to do next	BTR ドライバーに次に何をすべきか尋ねる
+Continue exploring the icebreaker	砕氷船の探索を続ける
+Ask Mechanic about the connection between TerraGroup and Paradigm Shipping, then follow the lead to the nuclear icebreaker "Boreas".	Mechanic に TerraGroup と Paradigm 海運の関係を尋ね、原子力砕氷船「Boreas」の手がかりを追います。
+Investigate Paradigm Shipping's icebreaker "Boreas", board it, and recover the hard drives from compartment C-1 for Mechanic.	Paradigm 海運の砕氷船「Boreas」を調査して乗り込み、C-1 区画のハードドライブを Mechanic のために回収します。

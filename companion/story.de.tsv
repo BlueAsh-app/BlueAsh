@@ -1,0 +1,408 @@
+﻿# English story text (tarkov-data-overlay) <TAB> de, translated for BlueAsh
+Escape Ground Zero	Aus Ground Zero entkommen
+Hand over the cash to Therapist	Das Bargeld an Therapist übergeben
+Talk to Therapist	Mit Therapist sprechen
+Collect the required amount in RUB	Den nötigen Betrag in Rubel sammeln
+Talk to Ragman	Mit Ragman sprechen
+Survive and extract from Interchange or visit Interchange 3 times	Interchange überleben und verlassen oder Interchange 3-mal besuchen
+Tell Ragman what you found during the recon	Ragman berichten, was du bei der Aufklärung gefunden hast
+Visit Interchange	Interchange besuchen
+Hand over any Building materials items to Skier	Skier einen beliebigen Gegenstand der Kategorie [Baumaterialien] übergeben
+Survive and extract from Customs or visit Customs 3 times	Customs überleben und verlassen oder Customs 3-mal besuchen
+Find any item in raid from the Building materials category	Im Raid einen beliebigen Gegenstand der Kategorie [Baumaterialien] finden
+Visit Customs	Customs besuchen
+Talk to Skier	Mit Skier sprechen
+Hand over any weapon to Mechanic	Mechanic eine beliebige Waffe übergeben
+Talk to Mechanic	Mit Mechanic sprechen
+Find any weapon in raid	Im Raid eine beliebige Waffe finden
+Survive and extract from Factory or visit Factory 3 times	Factory überleben und verlassen oder Factory 3-mal besuchen
+Visit Factory	Factory besuchen
+Eliminate any target on Woods	Ein beliebiges Ziel in Woods ausschalten
+Visit Woods	Woods besuchen
+Survive and extract from Woods or visit Woods 3 times	Woods überleben und verlassen oder Woods 3-mal besuchen
+Locate the entrance to the port Terminal	Den Eingang zum Hafen-Terminal finden
+Find a way to contact the soldiers at the Terminal	Einen Weg finden, die Soldaten am Terminal zu kontaktieren
+Use the intercom to contact the port garrison	Über die Gegensprechanlage die Hafengarnison kontaktieren
+Learn how to escape Tarkov	Herausfinden, wie man aus Tarkov entkommt
+Hand over the cash to Mechanic	Das Bargeld an Mechanic übergeben
+Collect the required amount in USD	Den nötigen Betrag in Dollar sammeln
+Hand over the item to Prapor: PMC dogtag	Prapor den Gegenstand übergeben: [PMC-Erkennungsmarke]
+Find the item in raid: PMC dogtag	Im Raid den Gegenstand finden: [PMC-Erkennungsmarke]
+Survive and extract from Shoreline or visit Shoreline 3 times	Shoreline überleben und verlassen oder Shoreline 3-mal besuchen
+Visit Shoreline	Shoreline besuchen
+Locate the escape path through the drainage system in The Lab	Den Fluchtweg durch das Entwässerungssystem im The Lab finden
+Search the server room in The Lab	Den Serverraum im The Lab durchsuchen
+Search the top management offices in The Lab	Die Büros der Geschäftsleitung im The Lab durchsuchen
+Obtain a keycard or access codes to enter the facility	Eine Schlüsselkarte oder Zugangscodes für die Anlage besorgen
+Access the secret TerraGroup facility	In die geheime TerraGroup-Anlage gelangen
+Locate the entrance to the facility on Streets of Tarkov	Den Eingang zur Anlage auf Streets of Tarkov finden
+Locate the entrance to the facility on Factory	Den Eingang zur Anlage in Factory finden
+Ensure access to Streets of Tarkov	Zugang zu Streets of Tarkov sichern
+Ensure access to Lighthouse	Zugang zu Lighthouse sichern
+Ensure access to Reserve	Zugang zu Reserve sichern
+Ensure access to The Lab	Zugang zum The Lab sichern
+Starting quest - automatically unlocked at the beginning of the storyline	Startauftrag – wird zu Beginn der Geschichte automatisch freigeschaltet
+Unlocks achievement Pathfinder, traders (Skier, Mechanic, Prapor, Peacekeeper), and direct access to all locations	Schaltet den Erfolg Pathfinder, die Händler (Skier, Mechanic, Prapor, Peacekeeper) und den direkten Zugang zu allen Gebieten frei
+Learn details about the SUV from Therapist	Von Therapist Details über den SUV erfahren
+Ask the traders about the fallen plane	Die Händler nach dem abgestürzten Flugzeug fragen
+Retrieve the flash drive from one of the G-Wagon SUVs	Den USB-Stick aus einem der G-Wagon-SUVs holen
+Locate the right G-Wagon SUV	Den richtigen G-Wagon-SUV finden
+Hand over the flash drive to Prapor	Den USB-Stick an Prapor übergeben
+Reach Loyalty Level 2 with Prapor	Loyalitätsstufe 2 bei Prapor erreichen
+Ask Prapor about the fallen plane	Prapor nach dem abgestürzten Flugzeug fragen
+Wait for information from Prapor	Auf Informationen von Prapor warten
+Retrieve the plane's flight recorder	Den Flugschreiber des Flugzeugs bergen
+Leave the flight recorder in the specified spot	Den Flugschreiber an der angegebenen Stelle hinterlegen
+Visit Prapor	Prapor besuchen
+Find the item in raid: Toolset	Im Raid den Gegenstand finden: [Werkzeugset]
+Hand over the item to Prapor: Toolset	Prapor den Gegenstand übergeben: [Werkzeugset]
+Find the item in raid: Printed circuit board	Im Raid den Gegenstand finden: [Leiterplatte]
+Hand over the item to Prapor: Printed circuit board	Prapor den Gegenstand übergeben: [Leiterplatte]
+Find the item in raid: Rechargeable battery	Im Raid den Gegenstand finden: [Akku]
+Hand over the item to Prapor: Rechargeable battery	Prapor den Gegenstand übergeben: [Akku]
+Wait for the information from Prapor	Auf die Informationen von Prapor warten
+Find the pilots' transcript	Das Funkprotokoll der Piloten finden
+Find Elektronik's secure flash drive	Den gesicherten USB-Stick von Elektronik finden
+Hand over Elektronik's secure flash drive to Prapor	Prapor den gesicherten USB-Stick von Elektronik übergeben
+Hand over the flight crew's transcript to Prapor	Prapor das Funkprotokoll der Besatzung übergeben
+Retrieve the armored case	Den gepanzerten Koffer bergen
+Hand over the armored case to Prapor	Den gepanzerten Koffer an Prapor übergeben
+Find any additional clues	Weitere Hinweise finden
+Keep the armored case for yourself	Den gepanzerten Koffer selbst behalten
+Ask Mechanic about the downed plane while progressing through Tour.	Frage Mechanic während Tour nach dem abgeschossenen Flugzeug.
+Investigate the crashed aircraft operation and decide what to do with the armored case.	Untersuche den Flugzeugabsturz und entscheide, was mit dem gepanzerten Koffer geschieht.
+Keeping the armored case results in -0.3 Prapor reputation and changes The Ticket routes.	Wer den gepanzerten Koffer behält, bekommt -0.3 Ruf bei Prapor, und die Wege von The Ticket ändern sich.
+Locate the traces of the BEAR special squad	Die Spuren der BEAR-Spezialeinheit finden
+Locate and obtain the Bogatyr squad patch	Das Abzeichen der Bogatyr-Einheit finden und mitnehmen
+Locate and obtain a dogtag of one of the Bogatyrs	Die Erkennungsmarke eines Bogatyr finden und mitnehmen
+Locate and obtain a personal item of one of the Bogatyrs	Einen persönlichen Gegenstand eines Bogatyr finden und mitnehmen
+Locate and obtain a keepsake of one of the Bogatyrs	Ein Andenken eines Bogatyr finden und mitnehmen
+Locate and obtain the squad commander's recorder	Das Diktiergerät des Einheitsführers finden und mitnehmen
+Gather all the found items related to the squad	Alle gefundenen Gegenstände der Einheit sammeln
+Learn more about the Bogatyr squad from the traders	Von den Händlern mehr über die Bogatyr-Einheit erfahren
+Locate the Gnezdo outpost	Den Außenposten Gnezdo finden
+Figure out what happened to the Bogatyr squad	Herausfinden, was mit der Bogatyr-Einheit passiert ist
+Figure out where the Bogatyr squad got ambushed	Herausfinden, wo die Bogatyr-Einheit in einen Hinterhalt geriet
+Search the Gnezdo outpost	Den Außenposten Gnezdo durchsuchen
+Learn more about the Bogatyr squad's activities	Mehr über die Aktivitäten der Bogatyr-Einheit erfahren
+Learn more about the Bogatyr squad's members	Mehr über die Mitglieder der Bogatyr-Einheit erfahren
+Locate the ambush spot	Den Ort des Hinterhalts finden
+Inspect Moreman's body	Moremans Leiche untersuchen
+Obtain more information about the Bogatyr squad	Weitere Informationen über die Bogatyr-Einheit beschaffen
+Locate and obtain Moreman's phone	Moremans Handy finden und mitnehmen
+Retrieve more information about the ambush from Moreman’s phone	Aus Moremans Handy mehr über den Hinterhalt erfahren
+Study the data from Moreman's phone	Die Daten aus Moremans Handy auswerten
+Upgrade the Intelligence Center to Level 3 in the Hideout	Das Geheimdienstzentrum im Versteck auf Stufe 3 ausbauen
+Locate the Ryabina outpost	Den Außenposten Ryabina finden
+Find more information about the Bogatyr squad	Mehr Informationen über die Bogatyr-Einheit finden
+Locate the Carousel outpost	Den Außenposten Carousel finden
+Learn more about Voevoda	Mehr über Voevoda erfahren
+Find the Bogatyr squad's personal notes	Die persönlichen Notizen der Bogatyr-Einheit finden
+Learn more about Taran	Mehr über Taran erfahren
+Learn more about Strelets	Mehr über Strelets erfahren
+Find Voevoda's personal belongings	Voevodas persönliche Sachen finden
+Contact the Bogatyr squad	Die Bogatyr-Einheit kontaktieren
+Hand over the Bogatyr squad patch to Lightkeeper	Das Abzeichen der Bogatyr-Einheit an Lightkeeper übergeben
+Hand over Moreman's dogtag to Lightkeeper	Moremans Erkennungsmarke an Lightkeeper übergeben
+Hand over Strelets' amulet to Lightkeeper	Strelets' Amulett an Lightkeeper übergeben
+Hand over Taran's postcard to Lightkeeper	Tarans Postkarte an Lightkeeper übergeben
+Hand over Voevoda's audio recorder to Lightkeeper	Voevodas Diktiergerät an Lightkeeper übergeben
+Bring all the Bogatyr squad's items to Lightkeeper	Alle Gegenstände der Bogatyr-Einheit zu Lightkeeper bringen
+Gain access to Lightkeeper	Zugang zu Lightkeeper erhalten
+Stay on good terms with Lightkeeper	Ein gutes Verhältnis zu Lightkeeper bewahren
+Wait for Voevoda to reach out	Warten, bis sich Voevoda meldet
+Reach the Strength skill level 15	Fertigkeit Stärke auf Stufe 15 bringen
+Reach the Stress Resistance skill level 10	Fertigkeit Stressresistenz auf Stufe 10 bringen
+Reach the Light Machine Guns skill level 5	Fertigkeit Leichte Maschinengewehre auf Stufe 5 bringen
+Reach the Assault Rifles skill level 10	Fertigkeit Sturmgewehre auf Stufe 10 bringen
+Eliminate PMC operatives without dying	PMC-Kämpfer ausschalten, ohne zu sterben
+Eliminate any target without dying	Ein beliebiges Ziel ausschalten, ohne zu sterben
+Contact Voevoda	Voevoda kontaktieren
+Locate the traces of the traitors	Die Spuren der Verräter finden
+Investigate the BEAR camp east of the Ultra mall on Interchange	Das BEAR-Lager östlich des ULTRA-Einkaufszentrums auf Interchange untersuchen
+Investigate the BEAR camp on Lighthouse	Das BEAR-Lager auf Lighthouse untersuchen
+Investigate the command bunker on Reserve	Den Kommandobunker auf Reserve untersuchen
+Interrogate Prapor	Prapor verhören
+Figure out how the cultists are connected to the General	Herausfinden, wie die Kultisten mit dem General zusammenhängen
+Investigate the cultist circle on Shoreline	Den Kultistenkreis auf Shoreline untersuchen
+Investigate the cultist circle on Woods	Den Kultistenkreis in Woods untersuchen
+Investigate the cultist circle on Reserve	Den Kultistenkreis auf Reserve untersuchen
+Investigate the cultist circle on Customs	Den Kultistenkreis auf Customs untersuchen
+Talk to Lightkeeper	Mit Lightkeeper sprechen
+Wait for Lightkeeper to prepare the documents on The Unheard	Warten, bis Lightkeeper die Unterlagen über The Unheard vorbereitet hat
+Read the agent network deployment report	Den Einsatzbericht des Agentennetzes lesen
+Visit one of the marked BEAR trace locations on Customs, Reserve, Shoreline, or Woods.	Besuche einen der markierten BEAR-Spurenorte auf Customs, Reserve, Shoreline oder in Woods.
+Investigate the Bogatyr BEAR squad, recover their trail, and coordinate with Lightkeeper and Voevoda.	Untersuche die BEAR-Einheit Bogatyr, nimm ihre Spur wieder auf und arbeite mit Lightkeeper und Voevoda zusammen.
+Learn more about The Unheard	Mehr über The Unheard erfahren
+Learn more about TerraGroup's activities	Mehr über die Aktivitäten von TerraGroup erfahren
+Learn more about the "fuel" mentioned in the note	Mehr über den in der Notiz erwähnten „Treibstoff“ erfahren
+Find more information about the special catalyst shipment	Mehr Informationen über die besondere Katalysatorlieferung finden
+Locate Rzhevsky's service vehicle	Rzhevskys Dienstwagen finden
+Obtain Rzhevsky's personal belongings	Rzhevskys persönliche Sachen beschaffen
+Retrieve the data from the hard drive in Rzhevsky's car	Die Daten von der Festplatte in Rzhevskys Auto bergen
+Read the transcript of Rzhevsky's conversation	Das Gesprächsprotokoll von Rzhevsky lesen
+Take the hard drive from Rzhevsky's car	Die Festplatte aus Rzhevskys Auto mitnehmen
+Locate and obtain the documents on the Blue Ice fuel catalyst research	Die Unterlagen zur Forschung am Treibstoffkatalysator Blue Ice finden und mitnehmen
+Find as much information as possible about the plans of The Unheard	So viele Informationen wie möglich über die Pläne von The Unheard finden
+Learn more about A.P.'s activities	Mehr über die Aktivitäten von A.P. erfahren
+Learn more about A.P.'s role	Mehr über die Rolle von A.P. erfahren
+Search for any mention of A.P. in The Lab	Im The Lab nach Erwähnungen von A.P. suchen
+Locate A.P.'s room in the Health Resort	A.P.s Zimmer im Sanatorium finden
+Find out which room A.P. was assigned to	Herausfinden, welches Zimmer A.P. zugewiesen war
+Obtain A.P.'s personal belongings	A.P.s persönliche Sachen beschaffen
+Obtain A.P.'s data storage device	A.P.s Datenträger beschaffen
+Decrypt the flash drive from A.P.'s room	Den USB-Stick aus A.P.s Zimmer entschlüsseln
+Take the flash drive from A.P.'s room	Den USB-Stick aus A.P.s Zimmer mitnehmen
+Ask Mechanic for help	Mechanic um Hilfe bitten
+Hand over the A.P. flash drive to Mechanic	Den USB-Stick von A.P. an Mechanic übergeben
+Wait for the news from Elektronik	Auf Neuigkeiten von Elektronik warten
+Integrate the tech files from A.P.'s flash drive into a TerraGroup keycard	Die technischen Dateien von A.P.s USB-Stick in eine TerraGroup-Schlüsselkarte einspielen
+Access A.P.'s corporate apartment	In A.P.s Firmenwohnung gelangen
+Investigate A.P.'s apartment	A.P.s Wohnung untersuchen
+Access the hidden room in A.P.'s apartment	In den versteckten Raum in A.P.s Wohnung gelangen
+Study the TerraGroup documentation in A.P.'s office	Die TerraGroup-Unterlagen in A.P.s Büro auswerten
+Study the role of the Blue Ice catalyst in The Unheard's protocol	Die Rolle des Blue-Ice-Katalysators im Protokoll von The Unheard untersuchen
+Learn more about The Unheard's protocol	Mehr über das Protokoll von The Unheard erfahren
+Figure out how The Unheard are connected to Tarkov	Herausfinden, wie The Unheard mit Tarkov zusammenhängen
+Pick up and read the Purification note in one of the TerraGroup locations on Streets or Ground Zero.	Hebe an einem der TerraGroup-Orte auf Streets of Tarkov oder Ground Zero die Notiz „Läuterung“ auf und lies sie.
+Trace The Unheard's Blue Ice protocol through TerraGroup records, A.P.'s network, and encrypted data.	Verfolge das Blue-Ice-Protokoll von The Unheard über TerraGroup-Unterlagen, A.P.s Netzwerk und verschlüsselte Daten.
+Talk to Mechanic about the EMP blast	Mit Mechanic über die EMP-Explosion sprechen
+Gain access to Mechanic	Zugang zu Mechanic erhalten
+Locate and obtain the device fragment	Das Gerätefragment finden und mitnehmen
+Hand over the device fragment to Mechanic	Das Gerätefragment an Mechanic übergeben
+Plant the hacking device in the server room in The Lab	Das Hacking-Gerät im Serverraum des The Lab platzieren
+Hand over the fragment of Item 1156 to Mechanic	Das Fragment von Objekt 1156 an Mechanic übergeben
+Keep the fragment of Item 1156 for yourself	Das Fragment von Objekt 1156 selbst behalten
+Find a lead on Item 1156	Eine Spur zu Objekt 1156 finden
+Investigate the Rus Post office	Die Filiale der Russischen Post untersuchen
+Locate the Rus Post car	Das Auto der Russischen Post finden
+Obtain the blueprint for Item 1156	Den Bauplan von Objekt 1156 beschaffen
+Pick up and read an EMERCOM leaflet or Item 1156 note from Woods, Interchange, or The Labyrinth.	Hebe in Woods, auf Interchange oder in The Labyrinth ein EMERCOM-Flugblatt oder eine Notiz zu Objekt 1156 auf und lies es.
+Investigate the EMP incident, secure Item 1156 intel, and follow the Rus Post lead chain.	Untersuche den EMP-Vorfall, sichere Informationen zu Objekt 1156 und folge der Spur der Russischen Post.
+Planting the hacking device takes 60 seconds.	Das Platzieren des Hacking-Geräts dauert 60 Sekunden.
+Locate a place connected to the Eye of the World	Einen Ort finden, der mit dem Auge der Welt zusammenhängt
+Learn more about the cultists' victim from the torture room	Mehr über das Kultopfer aus der Folterkammer erfahren
+Locate the cult victim's apartment	Die Wohnung des Kultopfers finden
+Obtain the key to the apartment	Den Schlüssel zur Wohnung beschaffen
+Obtain and read the book that the cultists planted with Igor	Das Buch, das die Kultisten bei Igor hinterlegt haben, beschaffen und lesen
+Investigate the victim's apartment	Die Wohnung des Opfers untersuchen
+Obtain the victim's first audio tape	Die erste Tonbandkassette des Opfers beschaffen
+Ask Mechanic about the Eye of the World	Mechanic nach dem Auge der Welt fragen
+Locate and neutralize Cultist Priest	Den Kultistenpriester finden und ausschalten
+Obtain more information on the Eye of the World	Weitere Informationen über das Auge der Welt beschaffen
+Locate the place marked with the Eye of the World on Shoreline	Den mit dem Auge der Welt markierten Ort auf Shoreline finden
+Investigate the area around the Sordi communications tower	Die Umgebung des Sordi-Funkturms untersuchen
+Repair the Sordi tower	Den Sordi-Turm reparieren
+Locate the place marked with the Eye of the World on Woods	Den mit dem Auge der Welt markierten Ort in Woods finden
+Investigate the cultists' house marked with the Eye of the World	Das mit dem Auge der Welt markierte Haus der Kultisten untersuchen
+Locate the place marked with the Eye of the World on Lighthouse	Den mit dem Auge der Welt markierten Ort auf Lighthouse finden
+Locate the victim's belongings	Die Sachen des Opfers finden
+Learn more about the victim	Mehr über das Opfer erfahren
+Investigate the ransacked cultist room in the chalet	Das durchwühlte Kultistenzimmer im Chalet untersuchen
+Locate and obtain the key mentioned in the victim's note	Den in der Notiz des Opfers erwähnten Schlüssel finden und mitnehmen
+Learn more about Station 14-4 KORD from Mechanic	Von Mechanic mehr über Station 14-4 KORD erfahren
+Restore Arshavin's keycard	Arshavins Schlüsselkarte wiederherstellen
+Locate and obtain K. Arshavin's pass	K. Arshavins Ausweis finden und mitnehmen
+Gain access to NGO Cobalt's secret facility	In die geheime Anlage der NGO Cobalt gelangen
+Restore power at the station	Die Stromversorgung der Station wiederherstellen
+Turn on the cooling system in the server room	Die Kühlung im Serverraum einschalten
+Install a flash drive to download the data	Einen USB-Stick zum Herunterladen der Daten einstecken
+Survive and extract from Interchange	Interchange überleben und verlassen
+Bring a flash drive to install in the facility	Einen USB-Stick zur Installation in der Anlage mitbringen
+Collect the flash drive from the ARRS station	Den USB-Stick von der ARRS-Station holen
+Hand over the flash drive with data to Mechanic	Den USB-Stick mit den Daten an Mechanic übergeben
+Investigate ARRS Station 14-4 KORD thoroughly	Die ARRS-Station 14-4 KORD gründlich untersuchen
+Find a way to disconnect the station from external agents	Einen Weg finden, die Station von externen Agenten zu trennen
+Check that the station power is turned on	Prüfen, ob die Station mit Strom versorgt wird
+Restore the ARRS station to backup settings	Die ARRS-Station auf die Sicherungseinstellungen zurücksetzen
+Read the ARRS station specifications	Die Spezifikationen der ARRS-Station lesen
+Pick up and read the Note about the Eye of the World from Customs, Reserve, Woods, or Shoreline.	Hebe auf Customs, Reserve, Shoreline oder in Woods die Notiz über das Auge der Welt auf und lies sie.
+Follow the Eye of the World trail through cultist sites, Sordi infrastructure, and ARRS Station 14-4 KORD.	Folge der Spur des Auges der Welt über Kultistenorte, Sordi-Anlagen und die ARRS-Station 14-4 KORD.
+Figure out where Kozlov lived	Herausfinden, wo Kozlov wohnte
+Read the note on Kozlov's door	Die Notiz an Kozlovs Tür lesen
+Access Kozlov's room	In Kozlovs Zimmer gelangen
+Figure out where to get Kozlov's key	Herausfinden, wo man Kozlovs Schlüssel bekommt
+Find out what Kozlov was involved in	Herausfinden, worin Kozlov verwickelt war
+Investigate Kozlov's room	Kozlovs Zimmer untersuchen
+Ask the traders about Anastasia	Die Händler nach Anastasia fragen
+Access Skier's accomplice's apartment	In die Wohnung von Skiers Komplizen gelangen
+Find the key to the apartment	Den Schlüssel zur Wohnung finden
+Learn more about Skier's accomplice	Mehr über Skiers Komplizen erfahren
+Read the documents in Skier's accomplice's apartment	Die Unterlagen in der Wohnung von Skiers Komplizen lesen
+Survive and extract from Streets of Tarkov	Streets of Tarkov überleben und verlassen
+Investigate the apartment	Die Wohnung untersuchen
+Report to Skier	Skier Bericht erstatten
+Locate Anastasia's apartment	Anastasias Wohnung finden
+Investigate the entrance to Anastasia's building	Den Eingang zu Anastasias Haus untersuchen
+Learn more about Anastasia	Mehr über Anastasia erfahren
+Locate courier Pasha	Den Kurier Pasha finden
+Search the ambush spot	Den Ort des Hinterhalts durchsuchen
+Locate Reshala's stash	Reshalas Versteck finden
+Obtain the key to Reshala's stash	Den Schlüssel zu Reshalas Versteck beschaffen
+Obtain courier Pasha's belongings	Die Sachen des Kuriers Pasha beschaffen
+Obtain Reshala's work notes	Reshalas Arbeitsnotizen beschaffen
+Locate and neutralize Reshala	Reshala finden und ausschalten
+Investigate Reshala's bunkhouse	Reshalas Unterkunft untersuchen
+Locate Kozlov's hideout	Kozlovs Unterschlupf finden
+Locate and obtain Kozlov's evidence	Kozlovs Beweise finden und mitnehmen
+Locate the scribbled-over car in the Customs dormitory courtyard.	Finde das bekritzelte Auto im Hof der Wohnheime auf Customs.
+Track Kozlov's evidence chain through Dorms, Streets, and Reshala's stash network.	Verfolge Kozlovs Beweiskette über die Wohnheime, Streets und Reshalas Verstecke.
+Ask the traders about the underground facility	Die Händler nach der unterirdischen Anlage fragen
+Ask Therapist how to access the underground facility	Therapist fragen, wie man in die unterirdische Anlage kommt
+Wait for Jaeger to gather the keycards	Warten, bis Jaeger die Schlüsselkarten beschafft hat
+Figure out what happened to the BEAR squad	Herausfinden, was mit der BEAR-Einheit passiert ist
+Locate the entrance to the underground facility beneath the Health Resort	Den Eingang zur unterirdischen Anlage unter dem Sanatorium finden
+Access the facility	In die Anlage gelangen
+Locate the traces of the BEAR squad in The Labyrinth	Die Spuren der BEAR-Einheit in The Labyrinth finden
+Investigate the BEAR squad regroup spot at Item 1156	Den Sammelpunkt der BEAR-Einheit bei Objekt 1156 untersuchen
+Locate the squad leader	Den Einheitsführer finden
+Gather more information about the squad	Weitere Informationen über die Einheit sammeln
+Access the locked office	In das verschlossene Büro gelangen
+Listen to the audio tape from the office	Die Tonbandkassette aus dem Büro anhören
+Investigate the lab staff bodies	Die Leichen des Laborpersonals untersuchen
+Hand over the audio tape to Jaeger	Die Tonbandkassette an Jaeger übergeben
+Locate and obtain the Labyrinth facility research report	Den Forschungsbericht der Anlage The Labyrinth finden und mitnehmen
+Read the Labyrinth facility research report	Den Forschungsbericht der Anlage The Labyrinth lesen
+Locate the Labyrinth transit in the Shoreline resort west wing basement with the Knossos key.	Finde mit dem Knossos-Schlüssel den Transit nach The Labyrinth im Keller des Westflügels des Sanatoriums auf Shoreline.
+Investigate the underground Labyrinth incident, recover scientist data, and trace the missing BEAR squad.	Untersuche den Vorfall im unterirdischen Labyrinth, berge die Daten der Wissenschaftler und verfolge die vermisste BEAR-Einheit.
+Extremely dangerous area with traps, poison hazards, and miniboss encounters.	Äußerst gefährliches Gebiet mit Fallen, Giftgefahr und Minibossen.
+Talk to Mr. Kerman	Mit Mr. Kerman sprechen
+Wait for Mr. Kerman to reach out	Warten, bis sich Mr. Kerman meldet
+Talk to Prapor	Mit Prapor sprechen
+Locate the camp of Prapor's people on Lighthouse	Das Lager von Prapors Leuten auf Lighthouse finden
+Find any clues about Prapor's people's intentions	Hinweise auf die Absichten von Prapors Leuten finden
+Obtain the item: TerraGroup "Blue Folders" materials	Den Gegenstand beschaffen: [TerraGroup-Materialien „Blaue Ordner“]
+Bring the found items to Lightkeeper	Die gefundenen Gegenstände zu Lightkeeper bringen
+Launch a yellow signal flare in front of ULTRA's main entrance on Interchange	Vor dem Haupteingang des ULTRA auf Interchange eine gelbe Signalfackel abfeuern
+Eliminate any target in one raid on Interchange	In einem einzigen Raid auf Interchange ein beliebiges Ziel ausschalten
+Get the armored case from Lightkeeper	Den gepanzerten Koffer von Lightkeeper abholen
+Unlock the armored case	Den gepanzerten Koffer öffnen
+Obtain the "Ticket"	Das „Ticket“ beschaffen
+Read the instruction from the armored case	Die Anleitung aus dem gepanzerten Koffer lesen
+Obtain the experimental signal jammer	Den experimentellen Signalstörer beschaffen
+Obtain the TerraGroup Labs access keycard	Die Zugangsschlüsselkarte für die TerraGroup Labs beschaffen
+Gain access to The Lab	Zugang zum The Lab erhalten
+Use the experimental signal jammer to unlock the case	Den Koffer mit dem experimentellen Signalstörer öffnen
+Contact Mr. Kerman	Mr. Kerman kontaktieren
+Accept Mr. Kerman's offer	Mr. Kermans Angebot annehmen
+Obtain a blank RFID card	Eine leere RFID-Karte beschaffen
+Activate the RFID card from the case	Die RFID-Karte aus dem Koffer aktivieren
+Construct the Solar Power zone in the Hideout	Die Solarenergiezone im Versteck bauen
+Obtain the Laboratory master pass	Den Generalschlüssel des Labors beschaffen
+Use the Laboratory master pass to activate Kruglov's keycard	Kruglovs Schlüsselkarte mit dem Generalschlüssel des Labors aktivieren
+Access Kruglov's office in The Lab	In Kruglovs Büro im The Lab gelangen
+Access Kruglov's apartment on Streets of Tarkov	In Kruglovs Wohnung auf Streets of Tarkov gelangen
+Gain access to Streets of Tarkov	Zugang zu Streets of Tarkov erhalten
+Obtain an RFID card encryption device	Ein RFID-Kartenverschlüsselungsgerät beschaffen
+Wait for a response from Mechanic	Auf eine Antwort von Mechanic warten
+Hand over the Physical Bitcoins to Mechanic	Die [Physischen Bitcoins] an Mechanic übergeben
+Obtain Physical Bitcoins to pay for Elektronik's services	[Physische Bitcoins] beschaffen, um Elektroniks Dienste zu bezahlen
+Construct a Bitcoin Farm in the Hideout	Eine Bitcoin-Farm im Versteck bauen
+Collect the RFID card encryption device	Das RFID-Kartenverschlüsselungsgerät abholen
+Use the RFID card encryption device to activate Kruglov's keycard	Kruglovs Schlüsselkarte mit dem RFID-Kartenverschlüsselungsgerät aktivieren
+Arrive at the entrance pathway to the port Terminal	Die Zufahrt zum Hafen-Terminal erreichen
+Swipe the keycard at the intercom reader	Die Schlüsselkarte am Lesegerät der Gegensprechanlage durchziehen
+Agree to find dirt on TerraGroup for Mr. Kerman	Zustimmen, für Mr. Kerman belastendes Material über TerraGroup zu finden
+Deliver the minor TerraGroup evidence to Mr. Kerman	Mr. Kerman die kleineren Beweise gegen TerraGroup liefern
+Deliver the major TerraGroup evidence to Mr. Kerman	Mr. Kerman die größeren Beweise gegen TerraGroup liefern
+Confirm with Mr. Kerman that all the evidence has been delivered	Mit Mr. Kerman bestätigen, dass alle Beweise geliefert wurden
+Wait for Mr. Kerman's trusted contact to get in touch	Warten, bis sich Mr. Kermans Vertrauensperson meldet
+Talk to Fence	Mit Fence sprechen
+Complete Fence's assignment	Fences Auftrag erledigen
+Keep the reputation with Fence above 4.0	Den Ruf bei Fence über 4.0 halten
+Tell Fence that the assignment is complete	Fence mitteilen, dass der Auftrag erledigt ist
+Eliminate PMC operatives on Interchange (in one raid)	PMC-Kämpfer auf Interchange ausschalten (in einem einzigen Raid)
+Eliminate PMC operatives on Shoreline (in one raid)	PMC-Kämpfer auf Shoreline ausschalten (in einem einzigen Raid)
+Reach 0.4 reputation with BTR Driver	Ruf 0.4 beim BTR-Fahrer erreichen
+Bring the reprogrammed RFID card with Mr. Kerman's hash codes	Die umprogrammierte RFID-Karte mit Mr. Kermans Hash-Codes mitbringen
+Bring the Secure container Alpha-1 with TerraGroup evidence	Den [Sicherer Container Alpha-1] mit den Beweisen gegen TerraGroup mitbringen
+Access the port Terminal	In das Hafen-Terminal gelangen
+Pass the security check	Die Sicherheitskontrolle passieren
+Retrieve the Secure container Alpha-1	Den [Sicherer Container Alpha-1] zurückholen
+Escape from Tarkov	Aus Tarkov entkommen
+Locate the armory with the confiscated equipment	Die Waffenkammer mit der beschlagnahmten Ausrüstung finden
+Locate the exit leading to the Terminal loading zone	Den Ausgang zur Ladezone des Terminals finden
+Obtain the keycard to unlock the service passage	Die Schlüsselkarte für den Wartungsgang beschaffen
+Unlock the service passage inside the seaport building	Den Wartungsgang im Hafengebäude öffnen
+Figure out how to reach the evacuation zone on the pier	Herausfinden, wie man zur Evakuierungszone am Pier kommt
+Obtain the key to the gate blocking the road to the pier	Den Schlüssel zum Tor beschaffen, das die Straße zum Pier versperrt
+Locate the way into the fuel depot	Den Weg in das Treibstofflager finden
+Access the fuel depot	In das Treibstofflager gelangen
+Access the Terminal loading zone	In die Ladezone des Terminals gelangen
+Locate the pumping station inside the fuel depot	Die Pumpstation im Treibstofflager finden
+Drain the water in the pumping station	Das Wasser aus der Pumpstation ablassen
+Locate the exit leading to the pier	Den Ausgang zum Pier finden
+Reach the evacuation area at the pier	Die Evakuierungszone am Pier erreichen
+Figure out how to restore power to the pumping station	Herausfinden, wie die Stromversorgung der Pumpstation wiederhergestellt wird
+Obtain the diagram of the electrical panels	Den Schaltplan der Stromverteiler beschaffen
+Negotiate with Mr. Kerman	Mit Mr. Kerman verhandeln
+Continue from Falling Skies after obtaining the armored case and start the Mr. Kerman terminal chain.	Folgt auf Falling Skies, nachdem der gepanzerte Koffer beschafft wurde, und startet Mr. Kermans Auftragskette zum Terminal.
+Branches into the storyline's four endings, listed in `endings` with the real ids the client serves in ending_list. The wiki describes the decision points as helping or betraying Mr. Kerman, paying Prapor, or seeking the Lightkeeper; each ending is gated by its own sub-quest.	Verzweigt sich in die vier Enden der Geschichte. Das Wiki beschreibt die Entscheidungen als Mr. Kerman helfen oder verraten, Prapor bezahlen oder Lightkeeper aufsuchen; jedes Ende wird durch einen eigenen Unterauftrag geöffnet.
+The reference capture's mutually exclusive sub-quest completions are emitted at chapter level as `mutuallyExclusiveQuestPairs`. Partial objective progress on both sides is allowed. Only pairs of resolved sub-quests within this chapter are included. Objective coverage is partial (see `referenceCoverage`): the client only returns a story sub-quest template once the player has reached it, so only the endings whose `objectiveCount` is above zero have objective-level evidence here. The armored case choice in Falling Skies affects available optional objectives (Lightkeeper access).	(Zu den Daten) Aufgenommen sind nur Paare von Unteraufträgen, die nicht beide abgeschlossen werden können und in den Spielaufzeichnungen bestätigt sind. Das Kapitel ist nur teilweise bestätigt: Das Spiel zeigt nur erreichte Unteraufträge, daher sind nur die Enden mit Zielen Ziel für Ziel bestätigt. Die Wahl beim gepanzerten Koffer in Falling Skies beeinflusst die optionalen Ziele rund um Lightkeeper.
+Find out from traders more about the connection between TerraGroup and Paradigm Shipping	Von den Händlern mehr über die Verbindung zwischen TerraGroup und Paradigm Shipping erfahren
+Locate the equipment under the cellular tower on Woods	Die Ausrüstung unter dem Mobilfunkmast in Woods finden
+Repair the equipment under the cellular tower on Woods	Die Ausrüstung unter dem Mobilfunkmast in Woods reparieren
+Report back to Mechanic	Mechanic Bericht erstatten
+Locate and obtain the Paradigm Shipping documentation	Die Unterlagen von Paradigm Shipping finden und mitnehmen
+Tell Mechanic about "Boreas"	Mechanic von „Boreas“ erzählen
+Arrange a transport to the icebreaker	Einen Transport zum Eisbrecher organisieren
+Tell Mechanic you found transport to the icebreaker	Mechanic sagen, dass du einen Transport zum Eisbrecher gefunden hast
+Find an alternative transport to the icebreaker	Einen anderen Transport zum Eisbrecher finden
+Locate and obtain the AMG-10 fluid on Reserve	Die [AMG-10-Flüssigkeit] auf Reserve finden und mitnehmen
+Hand over the AMG-10 fluid to Prapor	Die [AMG-10-Flüssigkeit] an Prapor übergeben
+Return to the Hideout	Ins Versteck zurückkehren
+Return to the BTR driver	Zum BTR-Fahrer zurückkehren
+Board the smuggler hovercraft on Shoreline	Auf Shoreline das Luftkissenboot der Schmuggler besteigen
+Arrive at the icebreaker	Den Eisbrecher erreichen
+Check if any crew members survived on the ship	Prüfen, ob Besatzungsmitglieder an Bord überlebt haben
+Access the engine room	In den Maschinenraum gelangen
+Locate and obtain the engine room keycard	Die Schlüsselkarte für den Maschinenraum finden und mitnehmen
+Find a way into the icebreaker superstructure	Einen Weg in die Aufbauten des Eisbrechers finden
+Bring Roubles to pay for the insertion onto the icebreaker	Rubel für das Absetzen auf dem Eisbrecher mitbringen
+Bring Euros to pay for the evacuation from the icebreaker	Euro für die Evakuierung vom Eisbrecher mitbringen
+Bring a green RSP signal flare	Eine grüne RSP-Signalfackel mitbringen
+Ask Mechanic about explosives	Mechanic nach Sprengstoff fragen
+Ask Prapor about explosives	Prapor nach Sprengstoff fragen
+Reach the engine room	Den Maschinenraum erreichen
+Reach the damaged door on the roof of the engine room	Die beschädigte Tür auf dem Dach des Maschinenraums erreichen
+Obtain the SZ-1 explosive charge	Die [SZ-1-Sprengladung] beschaffen
+Break the chain on the door on the roof of the engine room using the SZ-1 charge	Die Kette an der Tür auf dem Dach des Maschinenraums mit der Ladung [SZ-1] sprengen
+Enter the icebreaker superstructure from the roof of the engine room	Vom Dach des Maschinenraums in die Aufbauten des Eisbrechers gelangen
+Inspect the crew living quarters in the icebreaker superstructure	Die Mannschaftsquartiere in den Aufbauten des Eisbrechers untersuchen
+Find a way to the upper decks of the icebreaker superstructure	Einen Weg zu den oberen Decks der Aufbauten finden
+Ask the surviving scientist how to open the code-locked door on level 6	Den überlebenden Wissenschaftler fragen, wie man die Codetür auf Ebene 6 öffnet
+Ask Mechanic for help with finding the second part of the code for the locked door on level 6	Mechanic um Hilfe beim zweiten Teil des Codes für die Tür auf Ebene 6 bitten
+Return to Mechanic	Zu Mechanic zurückkehren
+Use the correct access code	Den richtigen Zugangscode eingeben
+Reach the code-locked door	Die Codetür erreichen
+Access the upper levels of the icebreaker	In die oberen Ebenen des Eisbrechers gelangen
+Locate compartment C-1	Abteil C-1 finden
+Access compartment C-1	In Abteil C-1 gelangen
+Locate and obtain the keycard with access to compartment C-1	Die Schlüsselkarte für Abteil C-1 finden und mitnehmen
+Locate the entrance to the bridge	Den Eingang zur Brücke finden
+Locate an alternative path to the bridge	Einen anderen Weg zur Brücke finden
+Find something to thaw the hatch on the roof of the bridge	Etwas finden, um die Luke auf dem Brückendach aufzutauen
+Thaw the hatch on the roof of the bridge	Die Luke auf dem Brückendach auftauen
+Search the servers in compartment C-1	Die Server in Abteil C-1 durchsuchen
+Search the area near the workstation in compartment C-1	Den Bereich am Arbeitsplatz in Abteil C-1 durchsuchen
+Search the shelves in compartment C-1	Die Regale in Abteil C-1 durchsuchen
+Ask Mechanic for help decoding the hard drives from the icebreaker	Mechanic bitten, die Festplatten vom Eisbrecher zu entschlüsseln
+Inspect the upper decks of the icebreaker superstructure	Die oberen Decks der Aufbauten untersuchen
+Find the item in raid: Ultralink satellite communication module	Im Raid den Gegenstand finden: [Ultralink-Satellitenkommunikationsmodul]
+Hand over the Ultralink satellite modules to Mechanic	Die [Ultralink-Satellitenmodule] an Mechanic übergeben
+Reach the upper decks	Die oberen Decks erreichen
+Rescue the icebreaker captain	Den Kapitän des Eisbrechers retten
+Inform the scientist about the captain’s death	Den Wissenschaftler über den Tod des Kapitäns informieren
+Ask the BTR driver if he can help evacuate the scientist from the icebreaker	Den BTR-Fahrer fragen, ob er den Wissenschaftler vom Eisbrecher evakuieren kann
+Assist the smugglers with their conflict against the Rogues	Den Schmugglern im Konflikt mit den Rogues helfen
+Obtain respirators for the BTR driver	Atemschutzmasken für den BTR-Fahrer beschaffen
+Eliminate any target on the icebreaker	Ein beliebiges Ziel auf dem Eisbrecher ausschalten
+Obtain the Kirasa-N body armor	Die [Kirasa-N-Schutzweste] beschaffen
+Hand over the Kirasa-N body armor to the BTR driver	Die [Kirasa-N-Schutzweste] an den BTR-Fahrer übergeben
+Obtain class 5+ ballistic plates	Ballistische Platten der Klasse 5 oder höher beschaffen
+Hand over class 5 or higher ballistic plates to the BTR driver	Ballistische Platten der Klasse 5 oder höher an den BTR-Fahrer übergeben
+Hand over the respirators to the BTR driver	Die Atemschutzmasken an den BTR-Fahrer übergeben
+Ask the BTR driver what to do next	Den BTR-Fahrer fragen, wie es weitergeht
+Continue exploring the icebreaker	Den Eisbrecher weiter erkunden
+Ask Mechanic about the connection between TerraGroup and Paradigm Shipping, then follow the lead to the nuclear icebreaker "Boreas".	Frage Mechanic nach der Verbindung zwischen TerraGroup und Paradigm Shipping und folge der Spur zum Atomeisbrecher „Boreas“.
+Investigate Paradigm Shipping's icebreaker "Boreas", board it, and recover the hard drives from compartment C-1 for Mechanic.	Untersuche den Eisbrecher „Boreas“ von Paradigm Shipping, gehe an Bord und hole für Mechanic die Festplatten aus Abteil C-1.

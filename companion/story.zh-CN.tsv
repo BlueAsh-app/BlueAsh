@@ -1,0 +1,408 @@
+﻿# English story text (tarkov-data-overlay) <TAB> zh-CN, translated for BlueAsh
+Escape Ground Zero	从零号地区撤离
+Hand over the cash to Therapist	将现金交给医生
+Talk to Therapist	与医生交谈
+Collect the required amount in RUB	凑齐所需金额（卢布）
+Talk to Ragman	与服装商交谈
+Survive and extract from Interchange or visit Interchange 3 times	在立交桥存活撤离，或访问立交桥 3 次
+Tell Ragman what you found during the recon	将侦察中的发现告诉服装商
+Visit Interchange	访问立交桥
+Hand over any Building materials items to Skier	将任意[建筑材料]类物品交给滑头
+Survive and extract from Customs or visit Customs 3 times	在海关存活撤离，或访问海关 3 次
+Find any item in raid from the Building materials category	在战局中找到任意[建筑材料]类物品
+Visit Customs	访问海关
+Talk to Skier	与滑头交谈
+Hand over any weapon to Mechanic	将任意武器交给机械师
+Talk to Mechanic	与机械师交谈
+Find any weapon in raid	在战局中找到任意武器
+Survive and extract from Factory or visit Factory 3 times	在工厂存活撤离，或访问工厂 3 次
+Visit Factory	访问工厂
+Eliminate any target on Woods	在森林消灭任意目标
+Visit Woods	访问森林
+Survive and extract from Woods or visit Woods 3 times	在森林存活撤离，或访问森林 3 次
+Locate the entrance to the port Terminal	找到港口码头区的入口
+Find a way to contact the soldiers at the Terminal	设法联系码头区的士兵
+Use the intercom to contact the port garrison	使用对讲机联系港口驻军
+Learn how to escape Tarkov	了解如何逃离塔科夫
+Hand over the cash to Mechanic	将现金交给机械师
+Collect the required amount in USD	凑齐所需金额（美元）
+Hand over the item to Prapor: PMC dogtag	将物品交给俄商：[PMC 狗牌]
+Find the item in raid: PMC dogtag	在战局中找到物品：[PMC 狗牌]
+Survive and extract from Shoreline or visit Shoreline 3 times	在海岸线存活撤离，或访问海岸线 3 次
+Visit Shoreline	访问海岸线
+Locate the escape path through the drainage system in The Lab	在实验室找到经排水系统的逃生路线
+Search the server room in The Lab	搜查实验室的服务器机房
+Search the top management offices in The Lab	搜查实验室的高层管理办公室
+Obtain a keycard or access codes to enter the facility	获取进入设施的门禁卡或访问代码
+Access the secret TerraGroup facility	进入泰拉集团秘密设施
+Locate the entrance to the facility on Streets of Tarkov	在塔科夫街区找到设施入口
+Locate the entrance to the facility on Factory	在工厂找到设施入口
+Ensure access to Streets of Tarkov	确保能进入塔科夫街区
+Ensure access to Lighthouse	确保能进入灯塔
+Ensure access to Reserve	确保能进入储备站
+Ensure access to The Lab	确保能进入实验室
+Starting quest - automatically unlocked at the beginning of the storyline	起始任务——剧情开始时自动解锁
+Unlocks achievement Pathfinder, traders (Skier, Mechanic, Prapor, Peacekeeper), and direct access to all locations	解锁成就 Pathfinder、商人（滑头、机械师、俄商、维和）以及直接进入所有地图
+Learn details about the SUV from Therapist	向医生了解那辆 SUV 的详情
+Ask the traders about the fallen plane	向商人打听坠毁的飞机
+Retrieve the flash drive from one of the G-Wagon SUVs	从其中一辆 G-Wagon SUV 中取回 U 盘
+Locate the right G-Wagon SUV	找到正确的那辆 G-Wagon SUV
+Hand over the flash drive to Prapor	将 U 盘交给俄商
+Reach Loyalty Level 2 with Prapor	俄商忠诚度达到 2 级
+Ask Prapor about the fallen plane	向俄商打听坠毁的飞机
+Wait for information from Prapor	等待俄商的消息
+Retrieve the plane's flight recorder	取回飞机的飞行记录仪
+Leave the flight recorder in the specified spot	把飞行记录仪放到指定地点
+Visit Prapor	拜访俄商
+Find the item in raid: Toolset	在战局中找到物品：[工具套装]
+Hand over the item to Prapor: Toolset	将物品交给俄商：[工具套装]
+Find the item in raid: Printed circuit board	在战局中找到物品：[印刷电路板]
+Hand over the item to Prapor: Printed circuit board	将物品交给俄商：[印刷电路板]
+Find the item in raid: Rechargeable battery	在战局中找到物品：[充电电池]
+Hand over the item to Prapor: Rechargeable battery	将物品交给俄商：[充电电池]
+Wait for the information from Prapor	等待俄商的消息
+Find the pilots' transcript	找到飞行员的通话记录
+Find Elektronik's secure flash drive	找到 Elektronik 的加密 U 盘
+Hand over Elektronik's secure flash drive to Prapor	将 Elektronik 的加密 U 盘交给俄商
+Hand over the flight crew's transcript to Prapor	将机组通话记录交给俄商
+Retrieve the armored case	取回装甲箱
+Hand over the armored case to Prapor	将装甲箱交给俄商
+Find any additional clues	寻找更多线索
+Keep the armored case for yourself	自己留下装甲箱
+Ask Mechanic about the downed plane while progressing through Tour.	在进行 Tour 时向机械师打听坠毁的飞机。
+Investigate the crashed aircraft operation and decide what to do with the armored case.	调查坠机行动，并决定如何处理装甲箱。
+Keeping the armored case results in -0.3 Prapor reputation and changes The Ticket routes.	留下装甲箱会使俄商声望 -0.3，并改变 The Ticket 的路线。
+Locate the traces of the BEAR special squad	找到 BEAR 特种小队的踪迹
+Locate and obtain the Bogatyr squad patch	找到并获取 Bogatyr 小队臂章
+Locate and obtain a dogtag of one of the Bogatyrs	找到并获取一名 Bogatyr 队员的狗牌
+Locate and obtain a personal item of one of the Bogatyrs	找到并获取一名 Bogatyr 队员的私人物品
+Locate and obtain a keepsake of one of the Bogatyrs	找到并获取一名 Bogatyr 队员的纪念品
+Locate and obtain the squad commander's recorder	找到并获取小队指挥官的录音机
+Gather all the found items related to the squad	收集所有与小队相关的物品
+Learn more about the Bogatyr squad from the traders	向商人进一步了解 Bogatyr 小队
+Locate the Gnezdo outpost	找到 Gnezdo 前哨
+Figure out what happened to the Bogatyr squad	弄清 Bogatyr 小队发生了什么
+Figure out where the Bogatyr squad got ambushed	弄清 Bogatyr 小队在哪里遭到伏击
+Search the Gnezdo outpost	搜查 Gnezdo 前哨
+Learn more about the Bogatyr squad's activities	进一步了解 Bogatyr 小队的行动
+Learn more about the Bogatyr squad's members	进一步了解 Bogatyr 小队的成员
+Locate the ambush spot	找到伏击地点
+Inspect Moreman's body	检查 Moreman 的尸体
+Obtain more information about the Bogatyr squad	获取更多关于 Bogatyr 小队的信息
+Locate and obtain Moreman's phone	找到并获取 Moreman 的手机
+Retrieve more information about the ambush from Moreman’s phone	从 Moreman 的手机中获取更多伏击信息
+Study the data from Moreman's phone	研究 Moreman 手机中的数据
+Upgrade the Intelligence Center to Level 3 in the Hideout	将藏身处的情报中心升到 3 级
+Locate the Ryabina outpost	找到 Ryabina 前哨
+Find more information about the Bogatyr squad	找到更多关于 Bogatyr 小队的信息
+Locate the Carousel outpost	找到 Carousel 前哨
+Learn more about Voevoda	进一步了解 Voevoda
+Find the Bogatyr squad's personal notes	找到 Bogatyr 小队的私人笔记
+Learn more about Taran	进一步了解 Taran
+Learn more about Strelets	进一步了解 Strelets
+Find Voevoda's personal belongings	找到 Voevoda 的私人物品
+Contact the Bogatyr squad	联系 Bogatyr 小队
+Hand over the Bogatyr squad patch to Lightkeeper	将 Bogatyr 小队臂章交给灯塔守护者
+Hand over Moreman's dogtag to Lightkeeper	将 Moreman 的狗牌交给灯塔守护者
+Hand over Strelets' amulet to Lightkeeper	将 Strelets 的护身符交给灯塔守护者
+Hand over Taran's postcard to Lightkeeper	将 Taran 的明信片交给灯塔守护者
+Hand over Voevoda's audio recorder to Lightkeeper	将 Voevoda 的录音机交给灯塔守护者
+Bring all the Bogatyr squad's items to Lightkeeper	把 Bogatyr 小队的所有物品带给灯塔守护者
+Gain access to Lightkeeper	获得面见灯塔守护者的资格
+Stay on good terms with Lightkeeper	与灯塔守护者保持良好关系
+Wait for Voevoda to reach out	等待 Voevoda 联系
+Reach the Strength skill level 15	力量技能达到 15 级
+Reach the Stress Resistance skill level 10	抗压技能达到 10 级
+Reach the Light Machine Guns skill level 5	轻机枪技能达到 5 级
+Reach the Assault Rifles skill level 10	突击步枪技能达到 10 级
+Eliminate PMC operatives without dying	在不阵亡的情况下消灭 PMC
+Eliminate any target without dying	在不阵亡的情况下消灭任意目标
+Contact Voevoda	联系 Voevoda
+Locate the traces of the traitors	找到叛徒的踪迹
+Investigate the BEAR camp east of the Ultra mall on Interchange	调查立交桥 ULTRA 商场东侧的 BEAR 营地
+Investigate the BEAR camp on Lighthouse	调查灯塔的 BEAR 营地
+Investigate the command bunker on Reserve	调查储备站的指挥地堡
+Interrogate Prapor	审问俄商
+Figure out how the cultists are connected to the General	弄清邪教徒与将军之间的联系
+Investigate the cultist circle on Shoreline	调查海岸线的邪教法阵
+Investigate the cultist circle on Woods	调查森林的邪教法阵
+Investigate the cultist circle on Reserve	调查储备站的邪教法阵
+Investigate the cultist circle on Customs	调查海关的邪教法阵
+Talk to Lightkeeper	与灯塔守护者交谈
+Wait for Lightkeeper to prepare the documents on The Unheard	等待灯塔守护者准备好 The Unheard 的资料
+Read the agent network deployment report	阅读特工网络部署报告
+Visit one of the marked BEAR trace locations on Customs, Reserve, Shoreline, or Woods.	前往海关、储备站、海岸线或森林中标记的 BEAR 踪迹地点之一。
+Investigate the Bogatyr BEAR squad, recover their trail, and coordinate with Lightkeeper and Voevoda.	调查 BEAR 的 Bogatyr 小队，追回他们的踪迹，并与灯塔守护者和 Voevoda 协作。
+Learn more about The Unheard	进一步了解 The Unheard
+Learn more about TerraGroup's activities	进一步了解泰拉集团的活动
+Learn more about the "fuel" mentioned in the note	进一步了解笔记中提到的"燃料"
+Find more information about the special catalyst shipment	找到更多关于特殊催化剂运输的信息
+Locate Rzhevsky's service vehicle	找到 Rzhevsky 的公务车
+Obtain Rzhevsky's personal belongings	获取 Rzhevsky 的私人物品
+Retrieve the data from the hard drive in Rzhevsky's car	从 Rzhevsky 车上的硬盘中取回数据
+Read the transcript of Rzhevsky's conversation	阅读 Rzhevsky 的谈话记录
+Take the hard drive from Rzhevsky's car	从 Rzhevsky 的车上拿走硬盘
+Locate and obtain the documents on the Blue Ice fuel catalyst research	找到并获取蓝冰燃料催化剂研究文件
+Find as much information as possible about the plans of The Unheard	尽可能多地查明 The Unheard 的计划
+Learn more about A.P.'s activities	进一步了解 A.P. 的活动
+Learn more about A.P.'s role	进一步了解 A.P. 的角色
+Search for any mention of A.P. in The Lab	在实验室寻找关于 A.P. 的记载
+Locate A.P.'s room in the Health Resort	在疗养院找到 A.P. 的房间
+Find out which room A.P. was assigned to	查明 A.P. 被分配到哪个房间
+Obtain A.P.'s personal belongings	获取 A.P. 的私人物品
+Obtain A.P.'s data storage device	获取 A.P. 的数据存储设备
+Decrypt the flash drive from A.P.'s room	解密 A.P. 房间里的 U 盘
+Take the flash drive from A.P.'s room	从 A.P. 的房间拿走 U 盘
+Ask Mechanic for help	向机械师求助
+Hand over the A.P. flash drive to Mechanic	将 A.P. 的 U 盘交给机械师
+Wait for the news from Elektronik	等待 Elektronik 的消息
+Integrate the tech files from A.P.'s flash drive into a TerraGroup keycard	把 A.P. U 盘中的技术文件写入泰拉集团门禁卡
+Access A.P.'s corporate apartment	进入 A.P. 的公司公寓
+Investigate A.P.'s apartment	调查 A.P. 的公寓
+Access the hidden room in A.P.'s apartment	进入 A.P. 公寓的密室
+Study the TerraGroup documentation in A.P.'s office	研究 A.P. 办公室里的泰拉集团文件
+Study the role of the Blue Ice catalyst in The Unheard's protocol	研究蓝冰催化剂在 The Unheard 协议中的作用
+Learn more about The Unheard's protocol	进一步了解 The Unheard 的协议
+Figure out how The Unheard are connected to Tarkov	弄清 The Unheard 与塔科夫的联系
+Pick up and read the Purification note in one of the TerraGroup locations on Streets or Ground Zero.	在塔科夫街区或零号地区的泰拉集团地点之一捡起并阅读"净化"笔记。
+Trace The Unheard's Blue Ice protocol through TerraGroup records, A.P.'s network, and encrypted data.	沿着泰拉集团记录、A.P. 的关系网和加密数据追查 The Unheard 的蓝冰协议。
+Talk to Mechanic about the EMP blast	与机械师谈谈 EMP 爆炸
+Gain access to Mechanic	获得面见机械师的资格
+Locate and obtain the device fragment	找到并获取装置碎片
+Hand over the device fragment to Mechanic	将装置碎片交给机械师
+Plant the hacking device in the server room in The Lab	在实验室服务器机房安装黑客装置
+Hand over the fragment of Item 1156 to Mechanic	将物品 1156 的碎片交给机械师
+Keep the fragment of Item 1156 for yourself	自己留下物品 1156 的碎片
+Find a lead on Item 1156	寻找物品 1156 的线索
+Investigate the Rus Post office	调查俄罗斯邮政营业所
+Locate the Rus Post car	找到俄罗斯邮政车辆
+Obtain the blueprint for Item 1156	获取物品 1156 的设计图
+Pick up and read an EMERCOM leaflet or Item 1156 note from Woods, Interchange, or The Labyrinth.	在森林、立交桥或迷宫捡起并阅读 EMERCOM 传单或物品 1156 笔记。
+Investigate the EMP incident, secure Item 1156 intel, and follow the Rus Post lead chain.	调查 EMP 事件，取得物品 1156 情报，并沿俄罗斯邮政的线索追查。
+Planting the hacking device takes 60 seconds.	安装黑客装置需要 60 秒。
+Locate a place connected to the Eye of the World	找到与"世界之眼"相关的地点
+Learn more about the cultists' victim from the torture room	进一步了解刑讯室里的邪教受害者
+Locate the cult victim's apartment	找到邪教受害者的公寓
+Obtain the key to the apartment	获取公寓钥匙
+Obtain and read the book that the cultists planted with Igor	获取并阅读邪教徒留给 Igor 的书
+Investigate the victim's apartment	调查受害者的公寓
+Obtain the victim's first audio tape	获取受害者的第一盘录音带
+Ask Mechanic about the Eye of the World	向机械师打听"世界之眼"
+Locate and neutralize Cultist Priest	找到并消灭邪教祭司
+Obtain more information on the Eye of the World	获取更多关于"世界之眼"的信息
+Locate the place marked with the Eye of the World on Shoreline	找到海岸线上标有"世界之眼"的地点
+Investigate the area around the Sordi communications tower	调查 Sordi 通信塔周边
+Repair the Sordi tower	修复 Sordi 通信塔
+Locate the place marked with the Eye of the World on Woods	找到森林中标有"世界之眼"的地点
+Investigate the cultists' house marked with the Eye of the World	调查标有"世界之眼"的邪教徒房屋
+Locate the place marked with the Eye of the World on Lighthouse	找到灯塔上标有"世界之眼"的地点
+Locate the victim's belongings	找到受害者的遗物
+Learn more about the victim	进一步了解受害者
+Investigate the ransacked cultist room in the chalet	调查木屋中被翻乱的邪教徒房间
+Locate and obtain the key mentioned in the victim's note	找到并获取受害者笔记中提到的钥匙
+Learn more about Station 14-4 KORD from Mechanic	向机械师进一步了解 14-4 KORD 站
+Restore Arshavin's keycard	修复 Arshavin 的门禁卡
+Locate and obtain K. Arshavin's pass	找到并获取 K. Arshavin 的通行证
+Gain access to NGO Cobalt's secret facility	进入 NGO Cobalt 的秘密设施
+Restore power at the station	恢复站点供电
+Turn on the cooling system in the server room	打开服务器机房的冷却系统
+Install a flash drive to download the data	插入 U 盘下载数据
+Survive and extract from Interchange	在立交桥存活撤离
+Bring a flash drive to install in the facility	带一个 U 盘到设施中安装
+Collect the flash drive from the ARRS station	从 ARRS 站取回 U 盘
+Hand over the flash drive with data to Mechanic	将存有数据的 U 盘交给机械师
+Investigate ARRS Station 14-4 KORD thoroughly	彻底调查 ARRS 14-4 KORD 站
+Find a way to disconnect the station from external agents	设法切断站点与外部特工的连接
+Check that the station power is turned on	确认站点电源已开启
+Restore the ARRS station to backup settings	将 ARRS 站恢复为备份设置
+Read the ARRS station specifications	阅读 ARRS 站规格说明
+Pick up and read the Note about the Eye of the World from Customs, Reserve, Woods, or Shoreline.	在海关、储备站、森林或海岸线捡起并阅读关于"世界之眼"的笔记。
+Follow the Eye of the World trail through cultist sites, Sordi infrastructure, and ARRS Station 14-4 KORD.	经由邪教据点、Sordi 设施和 ARRS 14-4 KORD 站追寻"世界之眼"的踪迹。
+Figure out where Kozlov lived	弄清 Kozlov 住在哪里
+Read the note on Kozlov's door	阅读 Kozlov 门上的纸条
+Access Kozlov's room	进入 Kozlov 的房间
+Figure out where to get Kozlov's key	弄清在哪里拿到 Kozlov 的钥匙
+Find out what Kozlov was involved in	查明 Kozlov 卷入了什么事
+Investigate Kozlov's room	调查 Kozlov 的房间
+Ask the traders about Anastasia	向商人打听 Anastasia
+Access Skier's accomplice's apartment	进入滑头同伙的公寓
+Find the key to the apartment	找到公寓钥匙
+Learn more about Skier's accomplice	进一步了解滑头的同伙
+Read the documents in Skier's accomplice's apartment	阅读滑头同伙公寓里的文件
+Survive and extract from Streets of Tarkov	在塔科夫街区存活撤离
+Investigate the apartment	调查公寓
+Report to Skier	向滑头汇报
+Locate Anastasia's apartment	找到 Anastasia 的公寓
+Investigate the entrance to Anastasia's building	调查 Anastasia 所住楼房的入口
+Learn more about Anastasia	进一步了解 Anastasia
+Locate courier Pasha	找到快递员 Pasha
+Search the ambush spot	搜查伏击地点
+Locate Reshala's stash	找到 Reshala 的藏匿点
+Obtain the key to Reshala's stash	获取 Reshala 藏匿点的钥匙
+Obtain courier Pasha's belongings	获取快递员 Pasha 的物品
+Obtain Reshala's work notes	获取 Reshala 的工作笔记
+Locate and neutralize Reshala	找到并消灭 Reshala
+Investigate Reshala's bunkhouse	调查 Reshala 的宿舍
+Locate Kozlov's hideout	找到 Kozlov 的藏身处
+Locate and obtain Kozlov's evidence	找到并获取 Kozlov 的证据
+Locate the scribbled-over car in the Customs dormitory courtyard.	在海关宿舍院子里找到被涂鸦覆盖的汽车。
+Track Kozlov's evidence chain through Dorms, Streets, and Reshala's stash network.	经由宿舍、街区和 Reshala 的藏匿点追查 Kozlov 的证据。
+Ask the traders about the underground facility	向商人打听地下设施
+Ask Therapist how to access the underground facility	向医生询问如何进入地下设施
+Wait for Jaeger to gather the keycards	等待猎人收集门禁卡
+Figure out what happened to the BEAR squad	弄清 BEAR 小队发生了什么
+Locate the entrance to the underground facility beneath the Health Resort	找到疗养院下方地下设施的入口
+Access the facility	进入设施
+Locate the traces of the BEAR squad in The Labyrinth	在迷宫中找到 BEAR 小队的踪迹
+Investigate the BEAR squad regroup spot at Item 1156	调查物品 1156 附近 BEAR 小队的集合点
+Locate the squad leader	找到小队队长
+Gather more information about the squad	收集更多关于小队的信息
+Access the locked office	进入上锁的办公室
+Listen to the audio tape from the office	收听办公室里的录音带
+Investigate the lab staff bodies	检查实验室人员的尸体
+Hand over the audio tape to Jaeger	将录音带交给猎人
+Locate and obtain the Labyrinth facility research report	找到并获取迷宫设施研究报告
+Read the Labyrinth facility research report	阅读迷宫设施研究报告
+Locate the Labyrinth transit in the Shoreline resort west wing basement with the Knossos key.	用 Knossos 钥匙在海岸线疗养院西翼地下室找到通往迷宫的转移点。
+Investigate the underground Labyrinth incident, recover scientist data, and trace the missing BEAR squad.	调查地下迷宫事件，取回科研人员数据，追查失踪的 BEAR 小队。
+Extremely dangerous area with traps, poison hazards, and miniboss encounters.	极其危险的区域，有陷阱、毒气危险和小头目。
+Talk to Mr. Kerman	与 Kerman 先生交谈
+Wait for Mr. Kerman to reach out	等待 Kerman 先生联系
+Talk to Prapor	与俄商交谈
+Locate the camp of Prapor's people on Lighthouse	在灯塔找到俄商手下的营地
+Find any clues about Prapor's people's intentions	寻找关于俄商手下意图的线索
+Obtain the item: TerraGroup "Blue Folders" materials	获取物品：[泰拉集团"蓝色文件夹"资料]
+Bring the found items to Lightkeeper	把找到的物品带给灯塔守护者
+Launch a yellow signal flare in front of ULTRA's main entrance on Interchange	在立交桥 ULTRA 正门前发射黄色信号弹
+Eliminate any target in one raid on Interchange	在立交桥的一局战局中消灭任意目标
+Get the armored case from Lightkeeper	从灯塔守护者处拿到装甲箱
+Unlock the armored case	打开装甲箱
+Obtain the "Ticket"	获得"车票"
+Read the instruction from the armored case	阅读装甲箱中的说明
+Obtain the experimental signal jammer	获取实验型信号干扰器
+Obtain the TerraGroup Labs access keycard	获取泰拉集团实验室门禁卡
+Gain access to The Lab	获得进入实验室的权限
+Use the experimental signal jammer to unlock the case	用实验型信号干扰器打开箱子
+Contact Mr. Kerman	联系 Kerman 先生
+Accept Mr. Kerman's offer	接受 Kerman 先生的提议
+Obtain a blank RFID card	获取空白 RFID 卡
+Activate the RFID card from the case	激活箱中的 RFID 卡
+Construct the Solar Power zone in the Hideout	在藏身处建造太阳能发电区
+Obtain the Laboratory master pass	获取实验室万能通行证
+Use the Laboratory master pass to activate Kruglov's keycard	用实验室万能通行证激活 Kruglov 的门禁卡
+Access Kruglov's office in The Lab	进入实验室中 Kruglov 的办公室
+Access Kruglov's apartment on Streets of Tarkov	进入塔科夫街区中 Kruglov 的公寓
+Gain access to Streets of Tarkov	获得进入塔科夫街区的权限
+Obtain an RFID card encryption device	获取 RFID 卡加密装置
+Wait for a response from Mechanic	等待机械师的答复
+Hand over the Physical Bitcoins to Mechanic	将[实体比特币]交给机械师
+Obtain Physical Bitcoins to pay for Elektronik's services	获取用来支付 Elektronik 服务费的[实体比特币]
+Construct a Bitcoin Farm in the Hideout	在藏身处建造比特币矿场
+Collect the RFID card encryption device	领取 RFID 卡加密装置
+Use the RFID card encryption device to activate Kruglov's keycard	用 RFID 卡加密装置激活 Kruglov 的门禁卡
+Arrive at the entrance pathway to the port Terminal	抵达港口码头区的入口通道
+Swipe the keycard at the intercom reader	在对讲机读卡器上刷门禁卡
+Agree to find dirt on TerraGroup for Mr. Kerman	答应为 Kerman 先生搜集泰拉集团的黑料
+Deliver the minor TerraGroup evidence to Mr. Kerman	向 Kerman 先生递交泰拉集团的次要证据
+Deliver the major TerraGroup evidence to Mr. Kerman	向 Kerman 先生递交泰拉集团的重要证据
+Confirm with Mr. Kerman that all the evidence has been delivered	与 Kerman 先生确认所有证据已递交
+Wait for Mr. Kerman's trusted contact to get in touch	等待 Kerman 先生信任的联络人联系
+Talk to Fence	与黑商交谈
+Complete Fence's assignment	完成黑商的委托
+Keep the reputation with Fence above 4.0	将黑商声望保持在 4.0 以上
+Tell Fence that the assignment is complete	告诉黑商委托已完成
+Eliminate PMC operatives on Interchange (in one raid)	在立交桥消灭 PMC（单局内）
+Eliminate PMC operatives on Shoreline (in one raid)	在海岸线消灭 PMC（单局内）
+Reach 0.4 reputation with BTR Driver	BTR 司机声望达到 0.4
+Bring the reprogrammed RFID card with Mr. Kerman's hash codes	带上写入 Kerman 先生哈希码的重编程 RFID 卡
+Bring the Secure container Alpha-1 with TerraGroup evidence	带上装有泰拉集团证据的[Alpha-1 安全箱]
+Access the port Terminal	进入港口码头区
+Pass the security check	通过安检
+Retrieve the Secure container Alpha-1	取回[Alpha-1 安全箱]
+Escape from Tarkov	逃离塔科夫
+Locate the armory with the confiscated equipment	找到存放没收装备的军械库
+Locate the exit leading to the Terminal loading zone	找到通往码头区装卸区的出口
+Obtain the keycard to unlock the service passage	获取打开服务通道的门禁卡
+Unlock the service passage inside the seaport building	打开港口大楼内的服务通道
+Figure out how to reach the evacuation zone on the pier	弄清如何到达码头上的撤离区
+Obtain the key to the gate blocking the road to the pier	获取挡住码头道路的大门钥匙
+Locate the way into the fuel depot	找到进入燃料库的路
+Access the fuel depot	进入燃料库
+Access the Terminal loading zone	进入码头区装卸区
+Locate the pumping station inside the fuel depot	找到燃料库内的泵站
+Drain the water in the pumping station	排干泵站里的水
+Locate the exit leading to the pier	找到通往码头的出口
+Reach the evacuation area at the pier	抵达码头的撤离区
+Figure out how to restore power to the pumping station	弄清如何恢复泵站供电
+Obtain the diagram of the electrical panels	获取配电盘线路图
+Negotiate with Mr. Kerman	与 Kerman 先生谈判
+Continue from Falling Skies after obtaining the armored case and start the Mr. Kerman terminal chain.	在 Falling Skies 中拿到装甲箱后继续，开始 Kerman 先生的码头任务线。
+Branches into the storyline's four endings, listed in `endings` with the real ids the client serves in ending_list. The wiki describes the decision points as helping or betraying Mr. Kerman, paying Prapor, or seeking the Lightkeeper; each ending is gated by its own sub-quest.	剧情在此分为四种结局。维基将分歧点描述为帮助或背叛 Kerman 先生、向俄商付钱，或去找灯塔守护者；每种结局都由各自的子任务开启。
+The reference capture's mutually exclusive sub-quest completions are emitted at chapter level as `mutuallyExclusiveQuestPairs`. Partial objective progress on both sides is allowed. Only pairs of resolved sub-quests within this chapter are included. Objective coverage is partial (see `referenceCoverage`): the client only returns a story sub-quest template once the player has reached it, so only the endings whose `objectiveCount` is above zero have objective-level evidence here. The armored case choice in Falling Skies affects available optional objectives (Lightkeeper access).	（数据说明）只收录游戏记录中确认的、无法同时完成的子任务对。本章节仅部分确认：游戏只显示玩家已推进到的子任务，因此只有带目标的结局得到了逐项确认。Falling Skies 中装甲箱的选择会影响与灯塔守护者相关的可选目标。
+Find out from traders more about the connection between TerraGroup and Paradigm Shipping	向商人进一步了解泰拉集团与 Paradigm 航运的关系
+Locate the equipment under the cellular tower on Woods	找到森林信号塔下的设备
+Repair the equipment under the cellular tower on Woods	修复森林信号塔下的设备
+Report back to Mechanic	向机械师汇报
+Locate and obtain the Paradigm Shipping documentation	找到并获取 Paradigm 航运的文件
+Tell Mechanic about "Boreas"	告诉机械师关于"Boreas"的事
+Arrange a transport to the icebreaker	安排前往破冰船的交通工具
+Tell Mechanic you found transport to the icebreaker	告诉机械师你找到了去破冰船的交通工具
+Find an alternative transport to the icebreaker	寻找前往破冰船的其他交通工具
+Locate and obtain the AMG-10 fluid on Reserve	在储备站找到并获取[AMG-10 液压油]
+Hand over the AMG-10 fluid to Prapor	将[AMG-10 液压油]交给俄商
+Return to the Hideout	返回藏身处
+Return to the BTR driver	回到 BTR 司机那里
+Board the smuggler hovercraft on Shoreline	在海岸线登上走私者的气垫船
+Arrive at the icebreaker	抵达破冰船
+Check if any crew members survived on the ship	确认船上是否有幸存的船员
+Access the engine room	进入轮机舱
+Locate and obtain the engine room keycard	找到并获取轮机舱门禁卡
+Find a way into the icebreaker superstructure	设法进入破冰船上层建筑
+Bring Roubles to pay for the insertion onto the icebreaker	带上卢布支付登上破冰船的费用
+Bring Euros to pay for the evacuation from the icebreaker	带上欧元支付从破冰船撤离的费用
+Bring a green RSP signal flare	带上一枚绿色 RSP 信号弹
+Ask Mechanic about explosives	向机械师打听炸药
+Ask Prapor about explosives	向俄商打听炸药
+Reach the engine room	抵达轮机舱
+Reach the damaged door on the roof of the engine room	抵达轮机舱顶部损坏的门
+Obtain the SZ-1 explosive charge	获取[SZ-1 炸药]
+Break the chain on the door on the roof of the engine room using the SZ-1 charge	用[SZ-1 炸药]炸断轮机舱顶部门上的铁链
+Enter the icebreaker superstructure from the roof of the engine room	从轮机舱顶部进入破冰船上层建筑
+Inspect the crew living quarters in the icebreaker superstructure	检查破冰船上层建筑中的船员舱
+Find a way to the upper decks of the icebreaker superstructure	找到通往破冰船上层甲板的路
+Ask the surviving scientist how to open the code-locked door on level 6	询问幸存的科学家如何打开 6 层的密码门
+Ask Mechanic for help with finding the second part of the code for the locked door on level 6	请机械师帮忙找到 6 层锁门密码的第二部分
+Return to Mechanic	回到机械师那里
+Use the correct access code	输入正确的访问代码
+Reach the code-locked door	抵达密码门
+Access the upper levels of the icebreaker	进入破冰船上层
+Locate compartment C-1	找到 C-1 舱室
+Access compartment C-1	进入 C-1 舱室
+Locate and obtain the keycard with access to compartment C-1	找到并获取 C-1 舱室门禁卡
+Locate the entrance to the bridge	找到舰桥入口
+Locate an alternative path to the bridge	找到通往舰桥的其他路线
+Find something to thaw the hatch on the roof of the bridge	找到能融化舰桥顶部舱口的东西
+Thaw the hatch on the roof of the bridge	融化舰桥顶部的舱口
+Search the servers in compartment C-1	搜查 C-1 舱室的服务器
+Search the area near the workstation in compartment C-1	搜查 C-1 舱室工作台附近
+Search the shelves in compartment C-1	搜查 C-1 舱室的货架
+Ask Mechanic for help decoding the hard drives from the icebreaker	请机械师帮忙解码破冰船的硬盘
+Inspect the upper decks of the icebreaker superstructure	检查破冰船上层建筑的上层甲板
+Find the item in raid: Ultralink satellite communication module	在战局中找到物品：[Ultralink 卫星通信模块]
+Hand over the Ultralink satellite modules to Mechanic	将[Ultralink 卫星模块]交给机械师
+Reach the upper decks	抵达上层甲板
+Rescue the icebreaker captain	营救破冰船船长
+Inform the scientist about the captain’s death	告知科学家船长的死讯
+Ask the BTR driver if he can help evacuate the scientist from the icebreaker	询问 BTR 司机能否帮忙把科学家从破冰船上撤离
+Assist the smugglers with their conflict against the Rogues	帮助走私者对抗 Rogue
+Obtain respirators for the BTR driver	为 BTR 司机获取防毒面具
+Eliminate any target on the icebreaker	在破冰船上消灭任意目标
+Obtain the Kirasa-N body armor	获取[Kirasa-N 防弹衣]
+Hand over the Kirasa-N body armor to the BTR driver	将[Kirasa-N 防弹衣]交给 BTR 司机
+Obtain class 5+ ballistic plates	获取 5 级及以上防弹插板
+Hand over class 5 or higher ballistic plates to the BTR driver	将 5 级或更高等级的防弹插板交给 BTR 司机
+Hand over the respirators to the BTR driver	将防毒面具交给 BTR 司机
+Ask the BTR driver what to do next	询问 BTR 司机下一步该做什么
+Continue exploring the icebreaker	继续探索破冰船
+Ask Mechanic about the connection between TerraGroup and Paradigm Shipping, then follow the lead to the nuclear icebreaker "Boreas".	向机械师询问泰拉集团与 Paradigm 航运的关系，然后追查核动力破冰船"Boreas"的线索。
+Investigate Paradigm Shipping's icebreaker "Boreas", board it, and recover the hard drives from compartment C-1 for Mechanic.	调查 Paradigm 航运的破冰船"Boreas"，登船并从 C-1 舱室为机械师取回硬盘。

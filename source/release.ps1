@@ -5,7 +5,7 @@
 # there, check the build, then -Promote copies beta.json to manifest.json. -Direct skips beta (emergency fixes only).
 # Before anything is uploaded the exe checks itself (BlueAsh.exe --selftest: unpacks its bundle into a scratch folder,
 # parses every script, loads both DLLs) and the version must be newer than what is already published.
-# Makes ModePulse-<version>.zip (the layout updater/UpdateCore.ps1 accepts), splits it into 8 MiB parts under
+# Makes BlueAsh-<version>.zip (the layout updater/UpdateCore.ps1 accepts), splits it into 8 MiB parts under
 # relay/public/update/<version>/ (static assets are limited to 25 MiB a file), writes the channel file and deploys
 # the relay. Older version folders are left in place.
 # -Promote and -Direct also put the release on GitHub (publish-github.ps1: public copy, commit, tag v<version>, GitHub Release with the setup .exe) unless
@@ -25,7 +25,15 @@ function Deploy{CheckFiles;if($NoDeploy){return}
 # The app's regular update check reads these static files (served without running the worker, so free and unlimited):
 # check.txt = manifest.json, check-beta.txt = beta.json (or manifest.json without one), in /update/check's key=value text.
 function CheckText($path){$m=Get-Content -LiteralPath $path -Raw -Encoding UTF8|ConvertFrom-Json;$l=@("version=$($m.version)","date=$($m.date)","size=$($m.size)")+@(if(Test-Path -LiteralPath (Join-Path $root "relay\public\download\BlueAsh-Setup-$($m.version).exe")){"setup=/download/BlueAsh-Setup-$($m.version).exe"})+@(@($m.notes)|Where-Object {$_}|ForEach-Object {'note='+($_ -replace "[`r`n]+",' ')});return ($l -join "`n")+"`n"}
-function CheckFiles{$u=New-Object Text.UTF8Encoding($false);if(Test-Path -LiteralPath $stablePath){[IO.File]::WriteAllText((Join-Path $updates 'check.txt'),(CheckText $stablePath),$u)}
+# Patch history (shown on the app's 업데이트 page and the site's /changelog): history.json is the record, kept in git and
+# grown by one entry for each stable release; history.txt is the same in key=value blocks for the app (no JSON parser there).
+$historyPath=Join-Path $updates 'history.json'
+function AddHistory($m){$h=@();if(Test-Path -LiteralPath $historyPath){$h=@(Get-Content -LiteralPath $historyPath -Raw -Encoding UTF8|ConvertFrom-Json|ForEach-Object {$_})}
+ $h=@([pscustomobject][ordered]@{version=$m.version;date=$m.date;notes=@(@($m.notes)|Where-Object {$_})})+@($h|Where-Object {$_.version -ne $m.version})
+ [IO.File]::WriteAllText($historyPath,(ConvertTo-Json -InputObject $h -Depth 4),(New-Object Text.UTF8Encoding($false)))}
+function HistoryText{if(!(Test-Path -LiteralPath $historyPath)){return}$b=@(Get-Content -LiteralPath $historyPath -Raw -Encoding UTF8|ConvertFrom-Json|ForEach-Object {$_}|ForEach-Object {(@("version=$($_.version)","date=$($_.date)")+@(@($_.notes)|Where-Object {$_}|ForEach-Object {'note='+($_ -replace "[`r`n]+",' ')})) -join "`n"})
+ [IO.File]::WriteAllText((Join-Path $updates 'history.txt'),($b -join "`n`n")+"`n",(New-Object Text.UTF8Encoding($false)))}
+function CheckFiles{HistoryText;$u=New-Object Text.UTF8Encoding($false);if(Test-Path -LiteralPath $stablePath){[IO.File]::WriteAllText((Join-Path $updates 'check.txt'),(CheckText $stablePath),$u)}
  $b=$(if(Test-Path -LiteralPath $betaPath){$betaPath}else{$stablePath});if(Test-Path -LiteralPath $b){[IO.File]::WriteAllText((Join-Path $updates 'check-beta.txt'),(CheckText $b),$u)}}
 function Published($path){if(Test-Path -LiteralPath $path){return [version](Get-Content -LiteralPath $path -Raw -Encoding UTF8|ConvertFrom-Json).version};return [version]'0.0.0'}
 
@@ -36,7 +44,7 @@ if($Promote){
  $beta=Get-Content -LiteralPath $betaPath -Raw -Encoding UTF8|ConvertFrom-Json
  foreach($p in @($beta.parts)){if(!(Test-Path -LiteralPath (Join-Path $updates $p))){throw "베타 조각 파일이 없습니다: $p"}}
  if([version]$beta.version -le (Published $stablePath)){throw "베타($($beta.version))가 지금 배포된 버전보다 새롭지 않습니다."}
- Copy-Item -LiteralPath $betaPath -Destination $stablePath -Force;Remove-Item -LiteralPath $betaPath
+ Copy-Item -LiteralPath $betaPath -Destination $stablePath -Force;Remove-Item -LiteralPath $betaPath;AddHistory $beta
  "BlueAsh $($beta.version) → 모두에게 배포"
  Deploy;GitHub $beta.version;return
 }
@@ -61,14 +69,13 @@ if($p.ExitCode -ne 0){throw "자체 점검 실패(코드 $($p.ExitCode)): $detai
 "자체 점검 통과: $detail"
 
 $out=Join-Path $updates $version;[void][IO.Directory]::CreateDirectory($out)
-$zipPath=Join-Path ([IO.Path]::GetTempPath()) "ModePulse-$version-$([Guid]::NewGuid().ToString('N')).zip"
-# Entries are written by hand: ModePulse/<path> with forward slashes. The online ZIP keeps the pre-rename layout
-# (ModePulse/ModePulse.exe) because 2.8.x updaters accept nothing else; BlueAsh's updater installs it as BlueAsh.exe and
-# an exe that starts as ModePulse.exe renames itself. price/PriceWorker.ps1 and PriceHelper.dll are what 2.8.1's
-# updater insists on; the exe carries everything else.
-$files='BlueAsh.exe','README.txt','NOTICE.txt','LICENSE.txt','price/PriceWorker.ps1','price/PriceHelper.dll'
+$zipPath=Join-Path ([IO.Path]::GetTempPath()) "BlueAsh-$version-$([Guid]::NewGuid().ToString('N')).zip"
+# Entries are written by hand: BlueAsh/<path> with forward slashes (2.24.2+; every updater since 2.9.0 takes it and
+# needs only BlueAsh.exe). Until 2.24.1 the ZIP kept the pre-rename ModePulse/ModePulse.exe layout plus price/ files for
+# 2.8.x updaters; those installs now have to download BlueAsh again. The exe carries everything else.
+$files='BlueAsh.exe','README.txt','NOTICE.txt','LICENSE.txt'
 $zip=[IO.Compression.ZipFile]::Open($zipPath,'Create')
-try{foreach($f in $files){$src=$(if($f -eq 'BlueAsh.exe'){$exe}else{Join-Path $root $f});if(!(Test-Path -LiteralPath $src)){throw "$f 없음"};[void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,$src,'ModePulse/'+$(if($f -eq 'BlueAsh.exe'){'ModePulse.exe'}else{$f}),'Optimal')}}finally{$zip.Dispose()}
+try{foreach($f in $files){$src=$(if($f -eq 'BlueAsh.exe'){$exe}else{Join-Path $root $f});if(!(Test-Path -LiteralPath $src)){throw "$f 없음"};[void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,$src,'BlueAsh/'+$f,'Optimal')}}finally{$zip.Dispose()}
 $bytes=[IO.File]::ReadAllBytes($zipPath);Remove-Item -LiteralPath $zipPath
 $sha=[BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash($bytes)).Replace('-','')
 $partSize=8MB;$parts=@()
@@ -77,9 +84,10 @@ $manifest=[ordered]@{version=$version;date=(Get-Date -Format 'yyyy-MM-dd');notes
 $target=$(if($Direct){$stablePath}else{$betaPath})
 [IO.File]::WriteAllText($target,($manifest|ConvertTo-Json -Depth 4),(New-Object Text.UTF8Encoding($false)))
 if($Direct-and(Test-Path -LiteralPath $betaPath)){Remove-Item -LiteralPath $betaPath}
+if($Direct){AddHistory ([pscustomobject]$manifest)}
 "BlueAsh $version · $([Math]::Round($bytes.Length/1MB,1)) MB · $($parts.Count) parts · sha256 $sha · "+$(if($Direct){'모두에게 바로 배포'}else{'베타로 배포 (확인 뒤 release.ps1 -Promote)'})
 # GPL-3.0: the source of this exact build goes out with it (relay/public/source, linked from NOTICE.txt and README.txt).
-# The download site offers the setup program (an .exe), not the update ZIP (which keeps the old ModePulse layout for 2.8.x updaters).
+# The download site offers the setup program (an .exe), not the update ZIP.
 & (Join-Path $PSScriptRoot 'build-installer.ps1') -Out (Join-Path $root 'relay\public\download') -Exe $exe
 & (Join-Path $PSScriptRoot 'source-zip.ps1') -Version $version -Out (Join-Path $root 'relay\public\source')
 Deploy

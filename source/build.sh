@@ -19,5 +19,5 @@ rm -rf .bundle;mkdir .bundle
 "$WINDRES" .bundle/bundle.rc -O coff -o "$tmp/bundle.o"
 "$CXX" -B"$tmp/" -std=c++17 -O2 -Wall -Wextra -Werror -municode -mwindows \
   -static -static-libgcc -static-libstdc++ ModeSwitch.cpp "$tmp/resources.o" "$tmp/bundle.o" \
-  -lole32 -luuid -luser32 -lgdi32 -ladvapi32 -lshell32 -ldwmapi -lwinhttp -lcomdlg32 -lwinmm -ld3d11 -ldxgi -lruntimeobject -lgdiplus -lcomctl32 -lbcrypt -lcrypt32 -o "${BLUEASH_OUT:-../BlueAsh.exe}"
+  -lole32 -luuid -luser32 -lgdi32 -ladvapi32 -lshell32 -ldwmapi -lwinhttp -lcomdlg32 -lwinmm -ld3d11 -ldxgi -lruntimeobject -lgdiplus -lcomctl32 -lbcrypt -lcrypt32 -lversion -lwintrust -lwbemuuid -lpowrprof -lpdh -loleaut32 -o "${BLUEASH_OUT:-../BlueAsh.exe}"
 echo "bundle $id: $(echo "$files" | wc -l) files"

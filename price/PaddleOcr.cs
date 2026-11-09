@@ -30,23 +30,30 @@ namespace ModeSwitchPrice {
   public static string Status{get;private set;}
   static string Sha(string f){using(var s=SHA256.Create())using(var r=File.OpenRead(f)){var h=s.ComputeHash(r);var b=new StringBuilder();foreach(var x in h)b.Append(x.ToString("x2"));return b.ToString();}}
   static bool Good(string f,IDictionary<string,object> want){if(!File.Exists(f))return false;return new FileInfo(f).Length==Convert.ToInt64(want["size"])&&Sha(f)==Convert.ToString(want["sha256"]);}
-  static void Fetch(string url,string file,IDictionary<string,object> want){
+  // copy: the same file in the user's folder (an elevated BlueAsh copies it instead of downloading again); the copy is
+  // checked against the manifest like a download.
+  static void Fetch(string url,string file,IDictionary<string,object> want,string copy=null){
    if(Good(file,want))return;Directory.CreateDirectory(Path.GetDirectoryName(file));var tmp=file+".part";
-   using(var r=Catalog.Http.GetAsync(url,System.Net.Http.HttpCompletionOption.ResponseHeadersRead).Result){r.EnsureSuccessStatusCode();using(var s=r.Content.ReadAsStreamAsync().Result)using(var o=File.Create(tmp))s.CopyTo(o);}
+   if(copy!=null&&File.Exists(copy)){File.Copy(copy,tmp,true);if(!Good(tmp,want))File.Delete(tmp);}
+   if(!File.Exists(tmp))using(var r=Catalog.Http.GetAsync(url,System.Net.Http.HttpCompletionOption.ResponseHeadersRead).Result){r.EnsureSuccessStatusCode();using(var s=r.Content.ReadAsStreamAsync().Result)using(var o=File.Create(tmp))s.CopyTo(o);}
    if(!Good(tmp,want)){File.Delete(tmp);throw new Exception("checksum "+Path.GetFileName(file));}
    if(File.Exists(file))File.Delete(file);File.Move(tmp,file);}
   // Folder with runtime\ and <model>\ once everything is present and verified; null while downloading (started once,
   // retried after 10 minutes on failure). Never blocks.
+  // Elevated BlueAsh (BLUEASH_ADMIN_DIR, its protected folder, bundle.h): onnxruntime.dll and the C++ runtime load into
+  // an administrator process, so they never load from the user's folder: they are copied into the protected folder and
+  // checked there against a freshly fetched manifest.
   public static string Ready(string store,string model){
-   if(model==null)return null;var root=Path.Combine(store,"ocr");var ok=Path.Combine(root,model,".ok");
+   if(model==null)return null;var user=Path.Combine(store,"ocr");var admin=Environment.GetEnvironmentVariable("BLUEASH_ADMIN_DIR");
+   var root=string.IsNullOrEmpty(admin)?user:Path.Combine(admin,"ocr");var copy=root==user?null:user;var ok=Path.Combine(root,model,".ok");
    if(File.Exists(ok)&&File.Exists(Path.Combine(root,"runtime","onnxruntime.dll")))return root;
    lock(gate){if((job==null||job.IsCompleted)&&DateTime.UtcNow>=retryAt)job=Task.Run(()=>{
     var t=Thread.CurrentThread;t.Priority=ThreadPriority.BelowNormal;
     try{Status="downloading";var js=new JavaScriptSerializer{MaxJsonLength=int.MaxValue};
      var m=js.DeserializeObject(Catalog.Http.GetStringAsync(BaseUrl+"manifest.json").Result) as IDictionary<string,object>;
-     foreach(var e in (IDictionary<string,object>)m["runtime"])Fetch(BaseUrl+"runtime/"+e.Key,Path.Combine(root,"runtime",e.Key),(IDictionary<string,object>)e.Value);
+     foreach(var e in (IDictionary<string,object>)m["runtime"])Fetch(BaseUrl+"runtime/"+e.Key,Path.Combine(root,"runtime",e.Key),(IDictionary<string,object>)e.Value,copy==null?null:Path.Combine(copy,"runtime",e.Key));
      var files=(IDictionary<string,object>)((IDictionary<string,object>)((IDictionary<string,object>)m["models"])[model])["files"];
-     foreach(var e in files)Fetch(BaseUrl+model+"/"+e.Key,Path.Combine(root,model,e.Key),(IDictionary<string,object>)e.Value);
+     foreach(var e in files)Fetch(BaseUrl+model+"/"+e.Key,Path.Combine(root,model,e.Key),(IDictionary<string,object>)e.Value,copy==null?null:Path.Combine(copy,model,e.Key));
      File.WriteAllText(ok,DateTime.UtcNow.ToString("o"));Status="ready";}
     catch(Exception e){Status="failed: "+(e.GetBaseException().Message);retryAt=DateTime.UtcNow.AddMinutes(10);}});}
    return null;}

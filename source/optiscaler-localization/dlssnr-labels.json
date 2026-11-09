@@ -1,0 +1,22 @@
+{
+  "Enable Neural Rendering": {"ko":"뉴럴 렌더링 사용", "en":"Enable Neural Rendering", "zh-CN":"启用神经渲染", "ja":"ニューラルレンダリングを有効化", "ru":"Включить нейронный рендеринг"},
+  "Apply the model": {"ko":"모델 적용", "en":"Apply the model", "zh-CN":"应用模型", "ja":"モデルを適用", "ru":"Применить модель"},
+  "Model resolution": {"ko":"모델 해상도", "en":"Model resolution", "zh-CN":"模型分辨率", "ja":"モデルの解像度", "ru":"Разрешение модели"},
+  "Downscaler (NR)": {"ko":"축소 방식 (NR)", "en":"Downscaler (NR)", "zh-CN":"缩小算法 (NR)", "ja":"縮小方式 (NR)", "ru":"Алгоритм уменьшения (NR)"},
+  "Enlargement": {"ko":"확대 방식", "en":"Enlargement", "zh-CN":"放大方式", "ja":"拡大方式", "ru":"Метод увеличения"},
+  "Detail strength": {"ko":"디테일 강도", "en":"Detail strength", "zh-CN":"细节强度", "ja":"ディテールの強さ", "ru":"Сила детализации"},
+  "Colour strength": {"ko":"색상 강도", "en":"Colour strength", "zh-CN":"色彩强度", "ja":"色の強さ", "ru":"Интенсивность цвета"},
+  "Model preset": {"ko":"모델 프리셋", "en":"Model preset", "zh-CN":"模型预设", "ja":"モデルのプリセット", "ru":"Пресет модели"},
+  "Style": {"ko":"스타일", "en":"Style", "zh-CN":"风格", "ja":"スタイル", "ru":"Стиль"},
+  "Auto skin mask": {"ko":"피부 자동 마스킹", "en":"Auto skin mask", "zh-CN":"自动皮肤遮罩", "ja":"肌の自動マスク", "ru":"Автоматическая маска кожи"},
+  "White point from": {"ko":"화이트 포인트 기준", "en":"White point from", "zh-CN":"白点来源", "ja":"白色点の参照元", "ru":"Источник точки белого"},
+  "Paper white": {"ko":"기준 밝기", "en":"Paper white", "zh-CN":"纸白亮度", "ja":"基準白色輝度", "ru":"Опорная яркость белого"},
+  "Highlight guard": {"ko":"밝은 영역 보호", "en":"Highlight guard", "zh-CN":"高光保护", "ja":"ハイライト保護", "ru":"Защита светлых областей"},
+  "Hold frame": {"ko":"화면 고정", "en":"Hold frame", "zh-CN":"冻结画面", "ja":"フレームを固定", "ru":"Зафиксировать кадр"},
+  "Compare": {"ko":"비교", "en":"Compare", "zh-CN":"对比", "ja":"比較", "ru":"Сравнение"},
+  "Swap sides": {"ko":"좌우 바꾸기", "en":"Swap sides", "zh-CN":"交换左右", "ja":"左右を入れ替え", "ru":"Поменять стороны"},
+  "Label the sides": {"ko":"좌우 이름 표시", "en":"Label the sides", "zh-CN":"显示左右标签", "ja":"左右のラベルを表示", "ru":"Показывать подписи сторон"},
+  "Label size": {"ko":"이름 크기", "en":"Label size", "zh-CN":"标签大小", "ja":"ラベルのサイズ", "ru":"Размер подписей"},
+  "Zoom": {"ko":"확대", "en":"Zoom", "zh-CN":"缩放", "ja":"ズーム", "ru":"Масштаб"},
+  "Split": {"ko":"분할 위치", "en":"Split", "zh-CN":"分割位置", "ja":"分割位置", "ru":"Положение разделения"}
+}

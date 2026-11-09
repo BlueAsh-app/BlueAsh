@@ -33,7 +33,7 @@ void showHelp(int id){
     static bool registered=false;if(!registered){WNDCLASSW wc={};wc.style=CS_DROPSHADOW;wc.lpfnWndProc=helpProc;wc.hInstance=GetModuleHandleW(nullptr);wc.lpszClassName=L"BlueAshHelp";wc.hCursor=LoadCursor(nullptr,IDC_ARROW);RegisterClassW(&wc);registered=true;}
     helpBody=helpText(id,helpTitle);helpFor=id;
     // Height from the wrapped text; the card's right edge lines up with the button, just below it.
-    const int width=380;HDC dc=GetDC(win);RECT calc={0,0,width-40,0};auto old=SelectObject(dc,smallFont);DrawTextW(dc,helpBody.c_str(),-1,&calc,DT_CALCRECT|DT_WORDBREAK|DT_NOPREFIX);SelectObject(dc,old);ReleaseDC(win,dc);
+    const int width=380;HDC dc=dpi::getDC(win);RECT calc={0,0,width-40,0};auto old=SelectObject(dc,smallFont);DrawTextW(dc,helpBody.c_str(),-1,&calc,DT_CALCRECT|DT_WORDBREAK|DT_NOPREFIX);SelectObject(dc,old);ReleaseDC(win,dc);
     RECT b;GetWindowRect(GetDlgItem(win,id),&b);int height=calc.bottom+66;int x=b.right-width,y=b.bottom+8;
     helpCard=CreateWindowExW(WS_EX_TOOLWINDOW,L"BlueAshHelp",L"",WS_POPUP,x,y,width,height,win,nullptr,GetModuleHandleW(nullptr),nullptr);if(!helpCard)return;
     int round=2;DwmSetWindowAttribute(helpCard,33,&round,sizeof(round));COLORREF edge=line;DwmSetWindowAttribute(helpCard,34,&edge,sizeof(edge));

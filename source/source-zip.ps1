@@ -7,7 +7,7 @@ param([Parameter(Mandatory=$true)][string]$Version,[Parameter(Mandatory=$true)][
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.IO.Compression,System.IO.Compression.FileSystem
 $root=Split-Path $PSScriptRoot -Parent
-$files=@(& git -C $root -c core.quotepath=off ls-files)|Where-Object{$_ -notmatch '^(AGENTS\.md|CLAUDE\.md|\.claude/|\.codex/|docs/|relay/|brand/|BlueAsh\.exe$|t\.exe$)'}
+$files=@(& git -C $root -c core.quotepath=off ls-files)|Where-Object{$_ -notmatch '^(AGENTS\.md|CLAUDE\.md|RULES\.md|\.claude/|\.codex/|docs/|relay/|brand/|BlueAsh\.exe$|t\.exe$)'}
 if($LASTEXITCODE -or $files.Count -lt 50){throw 'git ls-files를 읽지 못했습니다.'}
 [void][IO.Directory]::CreateDirectory($Out);$target=Join-Path $Out "BlueAsh-$Version-source.zip";if(Test-Path -LiteralPath $target){Remove-Item -LiteralPath $target}
 $zip=[IO.Compression.ZipFile]::Open($target,'Create')

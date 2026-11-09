@@ -17,7 +17,7 @@ HFONT trayFont(int kind){
 const int trayLeft=30,trayFlush=14,trayRight=30; // text starts at trayLeft in submenus (room for a check), else at trayFlush
 void trayMeasure(MEASUREITEMSTRUCT* m){auto* it=(TrayItem*)m->itemData;if(!it){return;}
     if(it->kind==2){m->itemHeight=9;m->itemWidth=0;return;}
-    HDC dc=GetDC(win);SIZE a={};auto old=SelectObject(dc,trayFont(it->kind));GetTextExtentPoint32W(dc,it->text.c_str(),(int)it->text.size(),&a);SelectObject(dc,old);ReleaseDC(win,dc);
+    HDC dc=dpi::getDC(win);SIZE a={};auto old=SelectObject(dc,trayFont(it->kind));GetTextExtentPoint32W(dc,it->text.c_str(),(int)it->text.size(),&a);SelectObject(dc,old);ReleaseDC(win,dc);
     int w=(it->kind==0?40:it->indent?trayLeft:trayFlush)+a.cx+(it->kind==5?60:trayRight);
     // Windows adds its check-mark column to an owner-drawn item's width; take it back so the menu is as wide as drawn.
     m->itemWidth=std::max(180,w)-(GetSystemMetrics(SM_CXMENUCHECK)-1);m->itemHeight=it->kind==0?38:28;
@@ -41,7 +41,7 @@ void trayDrawTo(DRAWITEMSTRUCT* ds){auto* it=(TrayItem*)ds->itemData;HDC dc=ds->
         int k=(int)std::lround(track.left+2+(track.right-16-(track.left+2))*p);if(!painting::circle(dc,{k,cy-7,k+14,cy+7},RGB(255,255,255),CLR_NONE)){HBRUSH kb=CreateSolidBrush(RGB(255,255,255));auto ob=SelectObject(dc,kb);auto op=SelectObject(dc,GetStockObject(NULL_PEN));Ellipse(dc,k,cy-7,k+15,cy+8);SelectObject(dc,ob);SelectObject(dc,op);DeleteObject(kb);}}
     else if(it->checked){glyph(dc,0xE73E,{r.left+6,r.top,r.left+trayLeft-2,r.bottom},trayFont(9),blue);}
     if(it->kind==3){glyph(dc,0xE76C,{r.right-trayRight,r.top,r.right-6,r.bottom},trayFont(9),on?trayBright:trayDim);}
-    textAt(dc,it->text,{r.left+(it->indent?trayLeft:trayFlush),r.top,r.right-(it->kind==5?56:trayRight),r.bottom},trayFont(1),on?trayBright:trayText,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_NOPREFIX|DT_END_ELLIPSIS);
+    textAt(dc,it->text,{r.left+(it->indent?trayLeft:trayFlush),r.top,r.right-(it->kind==5?56:trayRight),r.bottom},trayFont(1),it->kind==6?RGB(235,110,120):on?trayBright:trayText,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_NOPREFIX|DT_END_ELLIPSIS);
 }
 // Each row is drawn into a memory bitmap and copied in one go (as drawButton does), so no half-drawn row shows.
 void trayDraw(DRAWITEMSTRUCT* ds){auto* it=(TrayItem*)ds->itemData;RECT r=ds->rcItem;int w=r.right-r.left,hh=r.bottom-r.top;if(!it||w<=0||hh<=0){return;}
@@ -61,7 +61,7 @@ void trayMenuWindow(HWND m){if(!m||!trayStyled.insert(m).second){return;}if(!tra
 std::wstring trimmed(std::wstring s){while(!s.empty()&&s.back()==L' ')s.pop_back();return s;}
 HMENU trayRoot=nullptr; // the top menu of the open tray menu
 void trayAdd(HMENU m,int kind,UINT_PTR id,const std::wstring& text,bool checked=false){
-    trayItems.push_back({kind,text,checked,m!=trayRoot});UINT f=MF_OWNERDRAW|(kind==0||kind==5?MF_DISABLED:kind==2?MF_SEPARATOR:kind==3?MF_POPUP:0);
+    trayItems.push_back({kind,text,checked,m!=trayRoot});UINT f=MF_OWNERDRAW|(kind==0||kind==5||kind==6?MF_DISABLED:kind==2?MF_SEPARATOR:kind==3?MF_POPUP:0);
     AppendMenuW(m,f,id,(LPCWSTR)&trayItems.back());
 }
 // The switch row flips the mode without closing the menu: it is a disabled item (a click on it does not end the menu), and a
@@ -70,7 +70,7 @@ void trayAdd(HMENU m,int kind,UINT_PTR id,const std::wstring& text,bool checked=
 void trayApply(){if(!trayPending||!traySwitch){return;}trayPending=false;if(traySwitch->checked!=fps&&!changeMode(traySwitch->checked)){showWindow();}traySwitch->checked=fps;}
 // Menu windows ignore InvalidateRect for owner-drawn rows, so the switch row is drawn straight onto the menu window.
 void trayRedrawSwitch(){if(!trayMenuHwnd||!traySwitch){return;}RECT row;if(!GetMenuItemRect(trayMenuHwnd,trayRoot,trayRow,&row)){return;}
-    MapWindowPoints(nullptr,trayMenuHwnd,(POINT*)&row,2);HDC dc=GetDC(trayMenuHwnd);if(!dc){return;}
+    MapWindowPoints(nullptr,trayMenuHwnd,(POINT*)&row,2);HDC dc=dpi::getDC(trayMenuHwnd);if(!dc){return;}
     DRAWITEMSTRUCT ds={};ds.CtlType=ODT_MENU;ds.itemAction=ODA_DRAWENTIRE;ds.itemState=ODS_DISABLED|((GetMenuState(trayRoot,trayRow,MF_BYPOSITION)&MF_HILITE)?ODS_SELECTED:0);
     ds.hwndItem=(HWND)trayRoot;ds.hDC=dc;ds.rcItem=row;ds.itemData=(ULONG_PTR)traySwitch;trayDraw(&ds);ReleaseDC(trayMenuHwnd,dc);}
 void CALLBACK trayTick(HWND,UINT,UINT_PTR,DWORD){double t=std::min(1.0,(GetTickCount64()-trayAnimAt)/(double)traySlideMs),e=1-(1-t)*(1-t)*(1-t);
@@ -80,7 +80,7 @@ void trayFlip(HWND menuWindow){if(!traySwitch){return;}trayKnobFrom=trayAnimatin
     trayAnimating=true;trayAnimAt=GetTickCount64();trayMenuHwnd=menuWindow;if(!trayTimer){trayTimer=SetTimer(win,0xB1B,10,trayTick);} /* on the main window: the menu loop does not run window-less timers */}
 LRESULT CALLBACK trayFilter(int code,WPARAM w,LPARAM l){
     if(code==MSGF_MENU&&traySwitch){MSG* m=(MSG*)l;
-        RECT row={};bool click=m->message==WM_LBUTTONUP&&GetMenuItemRect(trayRootWindow,trayRoot,trayRow,&row)&&PtInRect(&row,m->pt);
+        RECT row={};bool click=m->message==WM_LBUTTONUP&&GetMenuItemRect(trayRootWindow,trayRoot,trayRow,&row)&&[&]{POINT p=m->pt;dpi::down(p);return PtInRect(&row,p)!=FALSE;}();
         bool key=m->message==WM_KEYDOWN&&(m->wParam==VK_RETURN||m->wParam==VK_SPACE)&&(GetMenuState(trayRoot,trayRow,MF_BYPOSITION)&MF_HILITE);
         if((click||key)&&trayRootWindow){trayFlip(trayRootWindow);return 1;}} // m->hwnd is not the menu window (mouse messages name the owner)
     return CallNextHookEx(nullptr,code,w,l);}
@@ -88,6 +88,7 @@ void trayMenu(){
     if(editor){showWindow();return;}
     if(!trayBrush){trayBrush=CreateSolidBrush(trayBack);}trayItems.clear();trayStyled.clear();trayRootWindow=nullptr;
     HMENU menu=CreatePopupMenu(),games=CreatePopupMenu(),tarkov=CreatePopupMenu(),pubg=CreatePopupMenu();trayRoot=menu;
+    if(maintenance.current==1)trayAdd(menu,6,0,std::wstring(L"!  ")+i18n::text(L"타르코프 점검 시작"));
     trayAdd(menu,0,0,L"BlueAsh");trayAdd(menu,2,0,L"");
     // One switch row: on = game mode (trayFilter flips it).
     trayRow=GetMenuItemCount(menu);trayAdd(menu,5,0,trimmed(i18n::text(L"게임 모드      ")),fps);traySwitch=&trayItems.back();trayAnimating=trayPending=false;

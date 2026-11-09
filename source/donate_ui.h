@@ -44,23 +44,34 @@ Gdiplus::Bitmap* donateDecode(const std::string& gif){
 // One page for any amount (Ko-fi): one QR, no amount buttons (registry DonateSingle: bit 0 won side, bit 1 dollar side).
 bool donateSingle(){auto v=regString(configPath,L"DonateSingle");if(v.empty()){return true;} // before the first answer: the relay's one Ko-fi page
     int b=_wtoi(v.c_str());return (b>>(donateKind()[0]==L'k'?0:1))&1;}
-RECT donatePlate={36,134,316,414};
+RECT donatePlate={36,134,316,414};bool donateLoading=false; // the plate shimmers (timer 9) while the QR loads
 void donateStatus(HWND h,const wchar_t* text){SetWindowTextW(GetDlgItem(h,254),text);InvalidateRect(GetDlgItem(h,254),nullptr,TRUE);}
 void donateLoad(HWND h){
     for(int i=0;i<4;i++){HWND b=GetDlgItem(h,250+i);SetWindowLongPtrW(b,GWLP_USERDATA,i==donatePick?1:0);InvalidateRect(b,nullptr,TRUE);}
     std::wstring path=std::wstring(L"/donate/qr.gif?kind=")+donateKind()+L"&amount="+std::to_wstring(donateAmounts[donateKind()[0]==L'k'?0:1][donatePick]);
     delete donateQr;donateQr=nullptr;++donateSeq;
     if(path==donateCachedPath&&(donateQr=donateDecode(donateCachedGif))){InvalidateRect(h,&donatePlate,TRUE);donateStatus(h,L"");return;}
-    InvalidateRect(h,&donatePlate,TRUE);donateStatus(h,i18n::text(L"QR을 불러오는 중…"));
+    donateLoading=true;SetTimer(h,9,30,nullptr);InvalidateRect(h,&donatePlate,TRUE);donateStatus(h,L"");
     struct Job{HWND page;unsigned seq;std::wstring path;std::string body;DWORD status=0;};
     auto* j=new Job{h,donateSeq,path,{},0};
     HANDLE t=CreateThread(nullptr,0,[](LPVOID p)->DWORD{auto* j=(Job*)p;j->status=relayGet(j->path,j->body);if(!PostMessageW(j->page,WM_APP+181,0,(LPARAM)j))delete j;return 0;},j,0,nullptr);
-    if(t)CloseHandle(t);else{delete j;donateStatus(h,i18n::text(L"QR을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요."));}
+    if(t)CloseHandle(t);else{delete j;donateLoading=false;donateStatus(h,i18n::text(L"QR을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요."));}
 }
 LRESULT CALLBACK donateProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
     switch(msg){
     case WM_CREATE:{
         bool one=donateSingle();int y=one?-58:0;donatePlate={36,134+y,316,414+y};
+        if(one){ // One page for any amount (Ko-fi): QR card on the left, a short pitch with three reasons on the right.
+            donatePlate={36,40,316,320};
+            HWND head=pageLabel(h,i18n::text(L"BlueAsh를 응원해 주세요"),436,48,380,34,0);SendMessageW(head,WM_SETFONT,(WPARAM)cardFont,TRUE);
+            pageLabel(h,i18n::text(L"찍으면 Ko-fi 후원 페이지가 열립니다. 금액은 원하는 만큼 정하고 응원 메시지도 남길 수 있습니다. 카드나 페이팔로 결제합니다."),364,116,452,72,0);
+            const wchar_t* reasons[]={L"서버 비용에 씁니다 · 지도 데이터와 휴대폰 알림 서버",L"새 기능과 지원 게임을 늘리는 데 씁니다",L"남겨 주신 응원 메시지는 모두 읽습니다"};
+            for(int i=0;i<3;i++)pageLabel(h,i18n::text(reasons[i]),404,208+i*44,412,28,0);
+            for(HWND c:{pageLabel(h,i18n::text(L"휴대폰 카메라로 QR을 찍으세요."),36,334,280,24,1),pageLabel(h,L"",36,362,280,44,1,254)})SetWindowLongPtrW(c,GWL_STYLE,GetWindowLongPtrW(c,GWL_STYLE)|SS_CENTER);
+            pageLabel(h,i18n::text(L"후원은 선택입니다. 후원하지 않아도 모든 기능을 그대로 쓸 수 있습니다. 보내 주신 마음은 서버 비용과 새 기능에 씁니다."),364,356,452,60,1);
+            pageButton(h,i18n::text(L"닫기"),464,556,120,256);
+            pageButton(h,i18n::text(L"이 PC 브라우저로 열기"),596,556,220,255,true);
+            donateLoad(h);return 0;}
         if(one){pageLabel(h,i18n::text(L"휴대폰 카메라로 QR을 찍으세요."),36,34,780,26,2);}
         else{pageLabel(h,i18n::text(L"금액을 고르고 휴대폰 카메라로 QR을 찍으세요."),36,34,780,26,2);for(int i=0;i<4;i++)pageButton(h,donateLabel(i).c_str(),36+i*164,76,150,250+i);}
         bool kr=donateKind()[0]==L'k';
@@ -74,15 +85,20 @@ LRESULT CALLBACK donateProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
     case WM_PAINT:{PAINTSTRUCT ps;HDC dc=BeginPaint(h,&ps);
         // A white plate around the QR (phone cameras read dark-on-light), the code drawn with hard pixels. The plate is
         // finished off-screen over the page background and copied in one go.
-        RECT pr=donatePlate;int pw=pr.right-pr.left,ph=pr.bottom-pr.top;HDC mem=CreateCompatibleDC(dc);HBITMAP bmp=CreateCompatibleBitmap(dc,pw,ph);auto old=SelectObject(mem,bmp);
+        RECT pr=painting::stretch.on?painting::stretch.keep(donatePlate):donatePlate;int pw=pr.right-pr.left,ph=pr.bottom-pr.top;HDC mem=CreateCompatibleDC(dc);HBITMAP bmp=CreateCompatibleBitmap(dc,pw,ph);auto old=SelectObject(mem,bmp);
         BitBlt(mem,0,0,pw,ph,dc,pr.left,pr.top,SRCCOPY);
         if(painting::token){Gdiplus::Graphics g(mem);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);Gdiplus::GraphicsPath p;painting::path(p,{0,0,pw,ph},22);Gdiplus::SolidBrush white(Gdiplus::Color(255,255,255,255));g.FillPath(&white,&p);
+            if(!donateQr&&donateLoading){g.Flush(Gdiplus::FlushIntentionSync);painting::skeleton(mem,{14,14,pw-14,ph-14},14,0,pw,RGB(226,231,240),RGB(255,255,255));}
             if(donateQr){g.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHalf);int side=pw-28;g.DrawImage(donateQr,14,14,side,side);}}
         BitBlt(dc,pr.left,pr.top,pw,ph,mem,0,0,SRCCOPY);SelectObject(mem,old);DeleteObject(bmp);DeleteDC(mem);
+        // One-page layout: the coffee cup in a soft cobalt disc beside the heading, a cobalt check before each reason.
+        if(donateSingle()){painting::glow(dc,{352,32,432,112},blue,70);painting::circle(dc,{364,44,420,100},tint,line);painting::coffee(dc,{378,58,406,86},ink);
+            for(int i=0;i<3;i++){int cy=222+i*44;painting::circle(dc,{364,cy-13,390,cy+13},tint,CLR_NONE);glyph(dc,0xE73E,{364,cy-13,390,cy+13},iconFont,RGB(120,160,255));}}
         EndPaint(h,&ps);return 0;}
+    case WM_TIMER:if(wp==9){if(!donateLoading){KillTimer(h,9);}else{InvalidateRect(h,&donatePlate,FALSE);}return 0;}break;
     case WM_APP+181:{struct Job{HWND page;unsigned seq;std::wstring path;std::string body;DWORD status=0;};std::unique_ptr<Job> j((Job*)lp);if(j->seq!=donateSeq){return 0;}
         Gdiplus::Bitmap* copy=j->status==200?donateDecode(j->body):nullptr;if(copy){donateCachedPath=j->path;donateCachedGif=j->body;}
-        delete donateQr;donateQr=copy;InvalidateRect(h,&donatePlate,TRUE);
+        delete donateQr;donateQr=copy;donateLoading=false;KillTimer(h,9);InvalidateRect(h,&donatePlate,TRUE);
         donateStatus(h,copy?L"":j->status==404?i18n::text(L"송금 링크가 아직 등록되지 않았습니다. (미리보기)"):i18n::text(L"QR을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요."));return 0;}
     case WM_COMMAND:if(HIWORD(wp)==BN_CLICKED){int id=LOWORD(wp);
         if(id>=250&&id<=253){donatePick=id-250;donateLoad(h);}

@@ -21,7 +21,7 @@ int main(){try{
  expect(i18n::text(std::wstring(L"감마 1.55 / 볼륨 35%"))==L"Gamma 1.55 / Volume 35%","composed numbers preserved");
  expect(i18n::text(std::wstring(L"새 버전 2.10.1이 나왔습니다"))==L"New version 2.10.1 is available","version and suffix preserved");
  expect(i18n::text(std::wstring(L"내장 파일을 풀지 못했습니다: C:\\사용자\\타르코프\\test.ps1")).find(L"C:\\사용자\\타르코프\\test.ps1")!=std::wstring::npos,"error path preserved");
- expect(i18n::text(std::wstring(L"BlueAsh · 에란겔 · L: 표시 끄기"))==L"BlueAsh · Erangel · L: hide markers","map title and key hint");
+ expect(i18n::text(std::wstring(L"BlueAsh · 에란겔"))+std::wstring(i18n::text(L" · %ls: 표시 끄기"))==L"BlueAsh · Erangel · %ls: hide markers","map title and key hint");
  const wchar_t* saved=i18n::text(L"저장");const wchar_t* dynamic=i18n::text(L"새 버전 2.10.1이 나왔습니다");
  for(int i=0;i<2000;i++)i18n::text((L"Unknown "+std::to_wstring(i)).c_str());
  i18n::setLanguage(L"ja");expect(std::wstring(saved)==L"Save"&&std::wstring(dynamic)==L"New version 2.10.1 is available","stable returned pointers");
