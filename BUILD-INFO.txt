@@ -1,2 +1,2 @@
-﻿BlueAsh 2.27.0 — 윈도우 최적화 탭(점검·백그라운드·시작 프로그램·정리·변경 기록), 창 크기 변경 번쩍임 해결·DPI 직접 처리, 퀘스트 공략 12개 언어 번역 묶음·PC 번역, 패치 내역, 외부 DLSS 5 조절 (2026-11-09)
+﻿BlueAsh 2.27.1 — 업데이트·모드 번역 화면의 새로고침을 누르면 화면 크기가 틀어지던 문제 수정 (2026-11-09)
 Built to a scratch path (the repository BlueAsh.exe is the running copy and was not replaced).

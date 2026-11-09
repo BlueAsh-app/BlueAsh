@@ -100,8 +100,8 @@ void paint(HDC dc){UINT one=DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS;int
     textAt(dc,i18n::text(L"게임"),{36,24,400,52},sectionFont,ink);
     if(!rows.empty())textAt(dc,fmt(L"모드가 있는 게임 %d개",(int)rows.size()),{400,24,774,52},smallFont,muted,DT_RIGHT|DT_VCENTER|DT_SINGLELINE);
     {RECT b=refreshRect;bool live=spinAt||scanning;if(refreshHover&&!busy)roundBox(dc,b,tint,tint,10);COLORREF ic=busy?RGB(70,86,120):live?blue:refreshHover?ink:muted;double deg=spinAngle();
-        if(deg!=0){RECT s=painting::stretch.on?painting::stretch.box(b):b;double a=deg*3.14159265358979/180,c=std::cos(a),n=std::sin(a),cx=(s.left+s.right)/2.0,cy=(s.top+s.bottom)/2.0;int mode=SetGraphicsMode(dc,GM_ADVANCED);
-            XFORM x={(FLOAT)c,(FLOAT)n,(FLOAT)-n,(FLOAT)c,(FLOAT)(cx-cx*c+cy*n),(FLOAT)(cy-cx*n-cy*c)};SetWorldTransform(dc,&x);glyph(dc,0xE72C,b,iconFont,ic);ModifyWorldTransform(dc,nullptr,MWT_IDENTITY);SetGraphicsMode(dc,mode);}
+        if(deg!=0){RECT s=painting::stretch.on?painting::stretch.box(b):b;double a=deg*3.14159265358979/180,c=std::cos(a),n=std::sin(a),cx=(s.left+s.right)/2.0,cy=(s.top+s.bottom)/2.0;int mode=SetGraphicsMode(dc,GM_ADVANCED);XFORM keep={};GetWorldTransform(dc,&keep); /* keep the display scale (dpi.h): rotate inside it */
+            XFORM x={(FLOAT)c,(FLOAT)n,(FLOAT)-n,(FLOAT)c,(FLOAT)(cx-cx*c+cy*n),(FLOAT)(cy-cx*n-cy*c)};ModifyWorldTransform(dc,&x,MWT_LEFTMULTIPLY);glyph(dc,0xE72C,b,iconFont,ic);SetWorldTransform(dc,&keep);SetGraphicsMode(dc,mode);}
         else glyph(dc,0xE72C,b,iconFont,ic);}
     if(rows.empty()){if(scanning){for(int i=0;i<3;i++)painting::skeleton(dc,{36+i*(cardW+cardGap),strip.top,36+i*(cardW+cardGap)+cardW,strip.bottom},18,36,816,rowFill,RGB(36,54,96));}
         else{roundBox(dc,strip,rowFill,line,18);textAt(dc,i18n::text(L"모드가 설치된 게임을 찾지 못했습니다."),strip,font,muted,DT_CENTER|DT_VCENTER|DT_SINGLELINE);}}

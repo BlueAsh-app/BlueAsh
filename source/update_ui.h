@@ -5,7 +5,7 @@
 // Updates come from the BlueAsh relay (relay/worker.js): /update/check answers in plain text (version, date, size,
 // one "note=" line per change) and counts installs by a random id; the updater (updater/Update.ps1) downloads
 // /update/manifest.json's ZIP, checks its SHA-256 and swaps the files.
-const wchar_t* appVersion=L"2.27.0";
+const wchar_t* appVersion=L"2.27.1";
 const wchar_t* updateHost=L"modepulse-relay.modepulse.workers.dev";
 HANDLE updaterProcess=nullptr;
 struct UpdateInfo{std::wstring version,date,error;std::vector<std::wstring> notes;long long size=0;};
@@ -258,8 +258,8 @@ void paintUpdate(HDC dc){historyLink={};
  textAt(dc,when,{58,128,804,152},smallFont,muted);
  // Check now: a refresh icon in the card's bottom-right corner (blue while a check runs).
  if(!w.running()){RECT b=refreshButton();if(refreshHover&&!w.checking)roundBox(dc,b,tint,tint,10);double deg=refreshAngle();
-  if(deg!=0){double a=deg*3.14159265358979/180,c=std::cos(a),n=std::sin(a),cx=(b.left+b.right)/2.0,cy=(b.top+b.bottom)/2.0;int mode=SetGraphicsMode(dc,GM_ADVANCED);XFORM x={(FLOAT)c,(FLOAT)n,(FLOAT)-n,(FLOAT)c,(FLOAT)(cx-cx*c+cy*n),(FLOAT)(cy-cx*n-cy*c)};SetWorldTransform(dc,&x);
-   glyph(dc,0xE72C,b,iconFont,w.checking?blue:refreshHover?ink:muted);ModifyWorldTransform(dc,nullptr,MWT_IDENTITY);SetGraphicsMode(dc,mode);}
+  if(deg!=0){double a=deg*3.14159265358979/180,c=std::cos(a),n=std::sin(a),cx=(b.left+b.right)/2.0,cy=(b.top+b.bottom)/2.0;int mode=SetGraphicsMode(dc,GM_ADVANCED);XFORM keep={};GetWorldTransform(dc,&keep); /* keep the display scale (dpi.h): rotate inside it */XFORM x={(FLOAT)c,(FLOAT)n,(FLOAT)-n,(FLOAT)c,(FLOAT)(cx-cx*c+cy*n),(FLOAT)(cy-cx*n-cy*c)};ModifyWorldTransform(dc,&x,MWT_LEFTMULTIPLY);
+   glyph(dc,0xE72C,b,iconFont,w.checking?blue:refreshHover?ink:muted);SetWorldTransform(dc,&keep);SetGraphicsMode(dc,mode);}
   else glyph(dc,0xE72C,b,iconFont,w.checking?blue:refreshHover?ink:muted);}
  if(r){
   bool bad=w.run.state==L"error"||w.run.state==L"cancel";
