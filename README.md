@@ -30,6 +30,28 @@
 
 Features, automatic detection and compatibility differ by game and configuration. Some tools use game logs, screen capture or OCR. For online games, check the game's current rules before using third-party tools. BlueAsh is not affiliated with or endorsed by game publishers or NVIDIA.
 
+## See BlueAsh in action
+
+### Game tools
+
+Choose the tools you need for Escape from Tarkov or PUBG. For Tarkov, open the in-game map to check extracts and quest locations, look up item prices, and track hideout materials using the facility levels you enter.
+
+<img src="https://blueash.app/kofi/game-tools.png" alt="BlueAsh game tools showing Tarkov alerts, item prices, map and hideout settings" width="850">
+
+### Graphics settings
+
+Browse detected games and configure graphics options for compatible games and hardware. Availability and results depend on the game; a preview does not guarantee an in-game result.
+
+<img src="https://blueash.app/kofi/graphics.png" alt="BlueAsh graphics settings showing the game selection screen" width="850">
+
+### Mod translation
+
+Find supported mods and translate available text locally into your selected language. Supported games and mod formats vary.
+
+<img src="https://blueash.app/kofi/mods.png" alt="BlueAsh mod translation screen with detected games and mods" width="850">
+
+<sub>Screenshots from BlueAsh 2.28.0; screens and available features may change.</sub>
+
 ## Get started
 
 1. Visit **[blueash.app](https://blueash.app/)** or [GitHub Releases](https://github.com/BlueAsh-app/BlueAsh/releases/latest).
