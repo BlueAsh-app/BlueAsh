@@ -11,7 +11,7 @@
 namespace gameswitch {
 inline bool same(const settings::Profile& a,const settings::Profile& b){settings::Profiles x={a,a,a,a},y={b,b,b,b};return settings::encodeV2(x,false)==settings::encodeV2(y,false);}
 inline bool touched(int i){return !same(profiles[i],settings::defaults()[i]);}
-struct Row {std::wstring dir,name;};
+struct Row {std::wstring dir,name;std::string platform,id;};
 std::vector<Row> rows;bool scanned=false,scanning=false;HWND notify=nullptr; // the list, scanned once per run on a thread
 std::mutex lock;std::vector<std::wstring> dirs;  // saved games the watcher looks for
 std::wstring autoFor;                            // the game that switched BlueAsh into 게임 모드
@@ -20,7 +20,7 @@ inline void setDirs(){std::lock_guard<std::mutex> g(lock);dirs.clear();for(auto&
 // PC games for the profile list, PUBG and Tarkov left out (they have their fixed profiles 2 and 3). WM_APP+185 to notify.
 inline void scan(HWND to){notify=to;if(scanned||scanning)return;scanning=true;std::wstring* folders=new std::wstring(regString(configPath,L"DlssFolders"));
     HANDLE t=CreateThread(nullptr,0,[](LPVOID p)->DWORD{SetThreadPriority(GetCurrentThread(),THREAD_PRIORITY_BELOW_NORMAL);std::unique_ptr<std::wstring> f((std::wstring*)p);
-        auto* out=new std::vector<Row>;for(auto& g:dlsslib::scan(*f,false)){if(g.v.reason==dlss::blocked()[0].reason||g.v.reason==dlss::blocked()[1].reason)continue;out->push_back({g.e.dir,g.e.name.empty()?leaf(g.e.dir):g.e.name});}
+        auto* out=new std::vector<Row>;for(auto& g:dlsslib::scan(*f,false)){if(g.v.reason==dlss::blocked()[0].reason||g.v.reason==dlss::blocked()[1].reason)continue;out->push_back({g.e.dir,g.e.name.empty()?leaf(g.e.dir):g.e.name,g.e.platform,g.e.id});}
         std::sort(out->begin(),out->end(),[](const Row& a,const Row& b){return _wcsicmp(a.name.c_str(),b.name.c_str())<0;});
         if(!PostMessageW(win,WM_APP+185,0,(LPARAM)out)){delete out;}return 0;},folders,0,nullptr);
     if(t)CloseHandle(t);else{delete folders;scanning=false;}}

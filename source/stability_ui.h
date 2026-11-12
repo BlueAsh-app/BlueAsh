@@ -92,7 +92,7 @@ const wchar_t* docUrl(const Incident& c){bool gpu=first(c,Kind::GpuTimeout)!=nul
     case Kind::GameCrash:case Kind::GameHang:case Kind::BlueAshCrash:return L"https://learn.microsoft.com/en-us/windows/win32/wer/windows-error-reporting";
     default:return nullptr;}}
 
-// ---- Layout: laid out on the page's real size (cw x ch, design pixels; not stretched by pageProc). The list keeps its
+// ---- Layout: laid out on the page's real size (cw x ch, design pixels). The list keeps its
 // width; the detail, the technical box and the button rows follow the page.
 int cw=852,ch=622;const int listL=36,listR=284,rowH=78,detL=304;int listT=80; /* under the month chips (one or two rows) */int listB(){return ch-82;}int detR(){return cw-36;}
 int visibleRows(){return (listB()-listT)/rowH;}

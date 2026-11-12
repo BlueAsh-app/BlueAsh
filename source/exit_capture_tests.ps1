@@ -5,7 +5,7 @@ $loading=@('12','woods','PMC','raid','loading','1','10000','0')
 Assert (!(New-RaidExitSchedule $loading 10000 '')) 'No OCR during loading/countdown'
 $started=@('12','woods','PMC','raid','started','1','10000','10000')
 $a=New-RaidExitSchedule $started 10500 ''
-Assert ($a -and $a.until-10500 -eq 3800 -and $a.next -eq 10650) 'Bounded 3.8-second capture window'
+Assert ($a -and $a.until-10500 -eq 4500 -and $a.next -eq 10560) 'Bounded 4.5-second capture window'
 Assert (!(New-RaidExitSchedule $started 10600 $a.key)) 'No rearming on duplicate start / role refresh'
 Assert (!(New-RaidExitSchedule $started 13000 '')) 'Ignore stale started state when helper attaches mid-raid'
 Assert (!(New-RaidExitSchedule $started 9000 '')) 'Reject future start time'

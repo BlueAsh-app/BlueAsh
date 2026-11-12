@@ -42,7 +42,8 @@ std::wstring hrtext(HRESULT h) { wchar_t b[32]; swprintf(b,32,L"0x%08lX",(unsign
 void check(HRESULT h) { if(FAILED(h)) throw std::wstring(i18n::text(L"Windows 오디오 오류: "))+hrtext(h); }
 
 struct AudioResult { int count=0; int failed=0; };
-AudioResult volume(const std::wstring& process, float level) {
+using AudioSnapshot=std::map<std::wstring,float>;
+AudioResult volume(const std::wstring& process, float level, AudioSnapshot* capture=nullptr, const AudioSnapshot* restore=nullptr) {
     Com<IMMDeviceEnumerator> e;
     check(CoCreateInstance(__uuidof(MMDeviceEnumerator),nullptr,CLSCTX_ALL,__uuidof(IMMDeviceEnumerator),(void**)e.out()));
     Com<IMMDeviceCollection> devices;
@@ -50,6 +51,8 @@ AudioResult volume(const std::wstring& process, float level) {
     UINT n=0; check(devices->GetCount(&n)); AudioResult result;
     for(UINT i=0;i<n;i++) {
         Com<IMMDevice> d; if(FAILED(devices->Item(i,d.out()))) { result.failed++; continue; }
+        LPWSTR deviceId=nullptr;if(FAILED(d->GetId(&deviceId))){result.failed++;continue;}
+        std::wstring deviceName=deviceId;CoTaskMemFree(deviceId);
         Com<IAudioSessionManager2> manager;
         if(FAILED(d->Activate(__uuidof(IAudioSessionManager2),CLSCTX_ALL,nullptr,(void**)manager.out()))) { result.failed++; continue; }
         Com<IAudioSessionEnumerator> sessions;
@@ -70,11 +73,15 @@ AudioResult volume(const std::wstring& process, float level) {
             if(_wcsicmp(name,process.c_str())!=0) continue;
             Com<ISimpleAudioVolume> v;
             if(FAILED(control->QueryInterface(__uuidof(ISimpleAudioVolume),(void**)v.out()))) { result.failed++; continue; }
+            LPWSTR sid=nullptr;if((capture||restore)&&FAILED(detail->GetSessionInstanceIdentifier(&sid))){result.failed++;continue;}
+            std::wstring key=deviceName+L"|"+(sid?sid:L"");if(sid)CoTaskMemFree(sid);
             GUID context={0x45cdb2e8,0xf215,0x4220,{0x90,0x1b,0x4a,0x72,0x81,0x77,0x91,0x10}};
             float old=0; HRESULT h=v->GetMasterVolume(&old);
-            if(SUCCEEDED(h) && fabs(old-level)>0.0001f) h=v->SetMasterVolume(level,&context);
+            if(SUCCEEDED(h)&&capture)capture->emplace(key,old);
+            float target=level;if(restore){auto found=restore->find(key);if(found==restore->end())continue;target=found->second;}
+            if(SUCCEEDED(h) && fabs(old-target)>0.0001f) h=v->SetMasterVolume(target,&context);
             float actual=0;
-            if(FAILED(h) || FAILED(v->GetMasterVolume(&actual)) || fabs(actual-level)>0.001f) result.failed++;
+            if(FAILED(h) || FAILED(v->GetMasterVolume(&actual)) || fabs(actual-target)>0.001f) result.failed++;
             else result.count++;
         }
     }
@@ -129,6 +136,7 @@ class Nvidia {
         return r;
     }
 public:
+    struct Snapshot {settings::Profile profile;DvcInfo dvc;unsigned hue=0;};
     void initialize() {
         wchar_t system[MAX_PATH]; GetSystemDirectoryW(system,MAX_PATH);
         module=LoadLibraryW((std::wstring(system)+L"\\nvapi64.dll").c_str());
@@ -144,7 +152,22 @@ public:
         handle=(DisplayHandle)q(0x35C29134);getDvc=(DvcCall)q(0x0E45002D);setDvc=(DvcCall)q(0x4A82C2B1);
         getHue=(GetHue)q(0x95B64341);setHue=(SetHue)q(0xF5A0F22C);
     }
-    void apply(const std::wstring& display, const settings::Profile& profile) {
+    Snapshot capture(const std::wstring& display){
+        if(!set||!handle||!getDvc||!setDvc||!getHue||!setHue)throw std::wstring(i18n::text(L"현재 디스플레이 컬러 설정을 확인할 수 없습니다."));
+        std::string ascii(display.begin(),display.end());unsigned target=0;status(id(ascii.c_str(),&target));GUID guid={};status(luid(target,1,&guid));
+        unsigned parts[4];memcpy(parts,&guid,16);unsigned keyId=parts[1]^0xf0000000;
+        if(!keyId)throw std::wstring(i18n::text(L"NVIDIA 디스플레이 설정을 찾지 못했습니다."));
+        std::wstring path=L"Software\\NVIDIA Corporation\\Global\\NVTweak\\Devices\\"+std::to_wstring(keyId)+L"-0\\Color";Registry reg;
+        if(RegOpenKeyExW(HKEY_CURRENT_USER,path.c_str(),0,KEY_QUERY_VALUE,&reg.key)!=ERROR_SUCCESS)throw std::wstring(i18n::text(L"현재 NVIDIA 컬러 설정을 읽지 못했습니다."));
+        Snapshot s;for(int i=0;i<9;i++){auto value=read(reg.key,std::to_wstring(3538946+i)).number;
+            if((i<6&&value>199)||(i>=6&&(value<10||value>1000)))throw std::wstring(i18n::text(L"NVIDIA 컬러 값이 예상 범위를 벗어났습니다."));
+            if(i<3)s.profile.brightness[i]=value;else if(i<6)s.profile.contrast[i-3]=value;else settings::setGamma(s.profile,i-6,value);}
+        void* h=nullptr;HueInfo hue;status(handle(ascii.c_str(),&h));status(getDvc(h,0,&s.dvc));status(getHue(h,0,&hue));s.hue=hue.current;
+        if(s.dvc.minimum>=s.dvc.maximum||s.dvc.neutral<=s.dvc.minimum||s.dvc.neutral>=s.dvc.maximum||s.dvc.current<s.dvc.minimum||s.dvc.current>s.dvc.maximum||s.hue>360)throw std::wstring(i18n::text(L"드라이버의 컬러 범위를 확인하지 못했습니다."));
+        s.profile.vibrance=(unsigned)std::lround(s.dvc.current<=s.dvc.neutral?50.0*(s.dvc.current-s.dvc.minimum)/(s.dvc.neutral-s.dvc.minimum):50.0+50.0*(s.dvc.current-s.dvc.neutral)/(s.dvc.maximum-s.dvc.neutral));
+        s.profile.extended=true;s.profile.hue=s.hue%360;return s;
+    }
+    void apply(const std::wstring& display, const settings::Profile& profile,const Snapshot* snapshot=nullptr) {
         if(!set) throw std::wstring(i18n::text(L"NVIDIA 초기화에 실패했습니다."));
         std::string ascii(display.begin(),display.end()); unsigned target=0; status(id(ascii.c_str(),&target));
         GUID guid={}; status(luid(target,1,&guid));
@@ -175,6 +198,7 @@ public:
             newDvc.current=(int)std::lround(profile.vibrance<=50?
                 oldDvc.minimum+(oldDvc.neutral-oldDvc.minimum)*fraction:
                 oldDvc.neutral+(oldDvc.maximum-oldDvc.neutral)*(fraction-1.0));
+            if(snapshot)newDvc.current=snapshot->dvc.current;
         }
         for(int k=0;k<3;k++){
             colors[2][k]=(float)(profile.extended?settings::channelGamma(profile,k):profile.gamma);
@@ -217,6 +241,7 @@ public:
 };
 
 Nvidia nv;
+Nvidia::Snapshot normalSnapshot;AudioSnapshot normalAudio;bool normalSnapshotValid=false,normalRestored=false;
 settings::Profiles profiles=settings::defaults();
 settings::Profile appliedProfile{100,100};
 int appliedProfileIndex=0;
@@ -326,22 +351,12 @@ void trayUpdate(bool add=false) {
     SendMessageW(win,WM_SETICON,ICON_SMALL,(LPARAM)(appSmallIcon?appSmallIcon:icons[0]));
     SendMessageW(win,WM_SETICON,ICON_BIG,(LPARAM)(appLargeIcon?appLargeIcon:icons[0]));
 }
-// The window can grow past its 1160 x 780 design (placeContent): the content right of the sidebar stretches with it
-// (painting::Stretch). frameW/H is the size the sidebar footer and window buttons were last placed for; mainHome keeps
-// each content control's design rectangle.
-painting::Stretch mainStretch;int frameW=1160,frameH=780;std::map<HWND,RECT> mainHome;
-void invalidateContent(RECT r){RECT m=mainStretch.box(r);InvalidateRect(win,&m,FALSE);}
+void invalidateContent(RECT r){InvalidateRect(win,&r,FALSE);}
 // Moves a control to t (in its parent's coordinates); a drop-down keeps its open-list height.
-// While the window is being resized every child is moved without drawing; one redraw follows (placeContent).
-bool quietMoves=false;
 void moveChild(HWND k,RECT t,HWND parent){RECT r;GetWindowRect(k,&r);RECT screen=r;MapWindowPoints(nullptr,parent,(POINT*)&r,2);bool sized=t.right-t.left==r.right-r.left&&t.bottom-t.top==r.bottom-r.top;
     if(sized&&t.left==r.left&&t.top==r.top){return;}int h=t.bottom-t.top;wchar_t cls[16]={};GetClassNameW(k,cls,16);
     if(!_wcsicmp(cls,L"ComboBox")){RECT d={};SendMessageW(k,CB_GETDROPPEDCONTROLRECT,0,(LPARAM)&d);h=std::max<int>(h,d.bottom-screen.top);}
-    // A resized combo box (and a page that lays itself out) paints straight away despite SWP_NOREDRAW, and under the
-    // composited frame each such paint redrew the whole window (~35 ms each). Held off by clearing WS_VISIBLE for the move
-    // (what WM_SETREDRAW does, but a combo box handles that message itself and still painted); the one redraw follows.
-    LONG_PTR st=GetWindowLongPtrW(k,GWL_STYLE);bool hold=quietMoves&&!sized&&(st&WS_VISIBLE);if(hold)SetWindowLongPtrW(k,GWL_STYLE,st&~WS_VISIBLE);
-    SetWindowPos(k,nullptr,t.left,t.top,t.right-t.left,h,SWP_NOZORDER|SWP_NOACTIVATE|(sized?SWP_NOSIZE:0)|(quietMoves?SWP_NOREDRAW|SWP_NOCOPYBITS:0));if(hold)SetWindowLongPtrW(k,GWL_STYLE,GetWindowLongPtrW(k,GWL_STYLE)|WS_VISIBLE);}
+    SetWindowPos(k,nullptr,t.left,t.top,t.right-t.left,h,SWP_NOZORDER|SWP_NOACTIVATE|(sized?SWP_NOSIZE:0));}
 void problem(const std::wstring& text){lastProblem=text;setText(gammaLabel,text);trayUpdate();if(win){invalidateContent({252,636,1120,684});}}
 void refreshStatus(); // after featureOn below
 bool saveSettings(){
@@ -355,8 +370,10 @@ bool saveSettings(){
 }
 void audioUpdate() {
     if(!active)return;
+    if(!fps&&normalRestored)return;
     try {
-        auto r=volume(activeBrowser,appliedProfile.volume/100.f);
+        auto r=volume(activeBrowser,appliedProfile.volume/100.f,fps&&normalSnapshotValid?&normalAudio:nullptr);
+        if(fps&&normalSnapshotValid&&!normalAudio.empty())normalSnapshot.profile.volume=(unsigned)std::lround(normalAudio.begin()->second*100.f);
         std::wstring s=i18n::text(L"브라우저 볼륨 ")+std::to_wstring(appliedProfile.volume)+L"%  ·  ";
         s+=r.count?i18n::text(L"재생 중인 탭 ")+std::to_wstring(r.count)+i18n::text(L"개에 적용"):i18n::text(L"재생이 시작되면 적용");
         if(r.failed)s+=i18n::text(L" (일부 실패)");
@@ -366,22 +383,29 @@ void audioUpdate() {
 std::wstring footerHint(); // below registerShortcut
 bool changeMode(bool targetFps,int pinnedProfile=-1) {
     if(!ready){problem(i18n::text(L"NVIDIA 드라이버 준비 실패. 프로그램을 다시 실행해 주세요."));return false;}
+    if(!targetFps&&!fps&&(!active||normalRestored)&&pinnedProfile<0)return true; // Normal selection preserves current/restored values.
     int d=(int)SendMessageW(monitorBox,CB_GETCURSEL,0,0),b=(int)SendMessageW(browserBox,CB_GETCURSEL,0,0);
     if(d<0||d>=(int)displays.size()||b<0||b>=4){problem(i18n::text(L"디스플레이와 브라우저를 선택해 주세요."));return false;}
     // Never change the mode until the native gamma operation commits successfully.
     const std::wstring display=displays[d].name;
+    const bool restoring=!targetFps&&fps&&normalSnapshotValid;
+    Nvidia::Snapshot candidate;
+    if(targetFps&&!fps){try{candidate=nv.capture(display);}catch(const std::wstring& e){problem(e);return false;}}
     int profileIndex=targetFps?(pinnedProfile>=1&&pinnedProfile<=4?pinnedProfile:(autoGame?detectedGame():1)):0;
     if(targetFps&&pinnedProfile<0&&gameProfiles.count(runningGame)){gameProfileId=runningGame;profileIndex=4;} /* the running game's own profile */
     if(profileIndex==4&&!gameProfiles.count(gameProfileId))profileIndex=1;
-    auto effective=profileIndex==4?gameProfiles[gameProfileId]:profiles[profileIndex];
-    if(!effective.extended&&active&&appliedProfile.extended){
+    auto effective=restoring?normalSnapshot.profile:(profileIndex==4?gameProfiles[gameProfileId]:profiles[profileIndex]);
+    if(!restoring&&!effective.extended&&active&&appliedProfile.extended){
         // A gamma-only target must not leave the previous game's vibrance/hue behind.
         auto gamma=effective.gamma;auto vol=effective.volume;
-        effective=profiles[0];effective.extended=true;settings::allGamma(effective,gamma);effective.volume=vol;
+        effective=normalSnapshotValid?normalSnapshot.profile:profiles[0];effective.extended=true;settings::allGamma(effective,gamma);effective.volume=vol;
     }
-    for(auto& v:effective.brightness)v=std::clamp(v,30u,150u); /* also profiles saved before the limit */
-    try{nv.apply(display,effective);}catch(const std::wstring& e){problem(e);return false;}
+    if(!restoring)for(auto& v:effective.brightness)v=std::clamp(v,30u,150u); /* also profiles saved before the limit */
+    try{nv.apply(display,effective,restoring?&normalSnapshot:nullptr);}catch(const std::wstring& e){problem(e);return false;}
+    if(targetFps&&!fps){normalSnapshot=candidate;normalAudio.clear();normalSnapshotValid=true;normalRestored=false;}
+    if(restoring){try{auto a=volume(activeBrowser,0,nullptr,&normalAudio);if(a.failed){problem(i18n::text(L"브라우저 볼륨 복원에 실패했습니다."));return false;}}catch(const std::wstring& e){problem(e);return false;}}
     appliedProfile=effective;appliedProfileIndex=profileIndex;
+    if(restoring){normalSnapshotValid=false;normalRestored=true;}else if(!targetFps)normalRestored=false;
     active=true;fps=targetFps;gammaTouched=true;activeDisplay=display;activeBrowser=browsers[b];lastProblem.clear();statusNotice.clear();
     EnableWindow(monitorBox,!fps);EnableWindow(browserBox,!fps);
     setText(modeLabel,std::wstring(i18n::text(L"지금: "))+(fps?i18n::text(L"게임 모드"):i18n::text(L"일반 모드"))+(fps&&profileIndex!=1?std::wstring(L" · ")+(profileIndex==4?gameProfileId.substr(gameProfileId.find_last_of(L'\\')+1):std::wstring(i18n::text(settings::profileName(profileIndex))))+i18n::text(L" 프로필"):L""));
@@ -419,11 +443,7 @@ void hideToTray(){
 }
 void quit(){
     // Only a deliberate Quit exits; ordinary close/minimize never restores gamma.
-    if(active&&gammaTouched&&!changeMode(false)){showWindow();return;}
-    if(active){
-        try{auto a=volume(activeBrowser,profiles[0].volume/100.f);if(a.failed){problem(i18n::text(L"볼륨 복귀에 일부 실패했습니다. 일반 모드를 다시 눌러 확인하세요."));showWindow();return;}}
-        catch(const std::wstring& e){problem(e);showWindow();return;}
-    }
+    if(fps&&gammaTouched&&!changeMode(false)){showWindow();return;}
     DestroyWindow(win);
 }
 bool featureOn(int id);
@@ -454,7 +474,7 @@ LRESULT staticBackground(HDC dc,HWND child,HBRUSH brush=nullptr){
     POINT origin={};MapWindowPoints(child,GetParent(child),&origin,1);SetBrushOrgEx(dc,-origin.x,-origin.y,nullptr);
     HBRUSH fill=brush?brush:panelBrush;SetBkMode(dc,fill==panelBrush?OPAQUE:TRANSPARENT);if(fill==panelBrush)SetBkColor(dc,panel);return (LRESULT)fill;
 }
-void roundBox(HDC dc,RECT r,COLORREF fill,COLORREF edge,int radius,HBRUSH texture=nullptr){if(painting::stretch.on){r=painting::stretch.box(r);}painting::StretchOff off_;
+void roundBox(HDC dc,RECT r,COLORREF fill,COLORREF edge,int radius,HBRUSH texture=nullptr){
     if(!texture&&painting::box(dc,r,fill,edge,radius)){return;}
     HBRUSH b=texture?texture:CreateSolidBrush(fill);HPEN p=CreatePen(PS_SOLID,1,edge);
     auto oldb=SelectObject(dc,b);auto oldp=SelectObject(dc,p);RoundRect(dc,r.left,r.top,r.right,r.bottom,radius,radius);
@@ -490,7 +510,7 @@ bool copyBackdrop(HDC dc,RECT r,POINT origin){
         if(!backdropBitmap){DeleteDC(m);return false;}auto o=SelectObject(m,backdropBitmap);paintBackdrop(m,c.right,c.bottom);SelectObject(m,o);DeleteDC(m);backdropW=c.right;backdropH=c.bottom;}
     HDC m=CreateCompatibleDC(dc);auto o=SelectObject(m,backdropBitmap);BOOL ok=BitBlt(dc,r.left,r.top,r.right-r.left,r.bottom-r.top,m,origin.x+r.left,origin.y+r.top,SRCCOPY);SelectObject(m,o);DeleteDC(m);return ok!=FALSE;
 }
-LRESULT eraseCarbon(HWND h,HDC target){painting::StretchOff off_; // the backdrop and panel fill the real client
+LRESULT eraseCarbon(HWND h,HDC target){
     // Painted off-screen and copied once (the fill, then the rounded panel on top, used to show in two steps).
     RECT r={};if(!GetClientRect(h,&r))return 0;HDC dc=CreateCompatibleDC(target);HBITMAP bmp=CreateCompatibleBitmap(target,std::max(1L,r.right),std::max(1L,r.bottom));auto oldBmp=SelectObject(dc,bmp);
     if((GetWindowLongW(h,GWL_STYLE)&WS_CHILD)&&GetParent(h)==win){POINT o={};MapWindowPoints(h,win,&o,1);if(!copyBackdrop(dc,r,o)){SetBrushOrgEx(dc,-o.x,-o.y,nullptr);FillRect(dc,&r,carbonFor(win));}}
@@ -511,7 +531,7 @@ std::wstring wrapWords(HDC dc,const std::wstring& t,int width){if(t.find(L' ')==
         std::wstring next=line.empty()?word:line+L" "+word;if(!line.empty()&&w(next)>width-1){out+=line+L"\n";line=word;}else line=next;
         if(j<t.size()&&t[j]==L'\n'){out+=line+L"\n";line.clear();}i=j+1;}
     return out+line;}
-void textAt(HDC dc,const std::wstring& text,RECT r,HFONT f,COLORREF color,UINT flags=DT_LEFT|DT_VCENTER|DT_SINGLELINE){if(painting::stretch.on){r=(flags&DT_WORDBREAK)?painting::stretch.box(r):painting::stretch.wide(r);}painting::StretchOff off_;
+void textAt(HDC dc,const std::wstring& text,RECT r,HFONT f,COLORREF color,UINT flags=DT_LEFT|DT_VCENTER|DT_SINGLELINE){
     const std::wstring shown=i18n::text(text);HFONT use=f;
     if(!shown.empty()&&r.right>r.left&&r.bottom>r.top&&!(flags&DT_CALCRECT))for(int step=0;step<=5;step++){HFONT c=step?smallerFont(f,step):f;auto o=SelectObject(dc,c);RECT m=r;
         bool fits;if(flags&DT_WORDBREAK){std::wstring wrapped=wrapWords(dc,shown,r.right-r.left);DrawTextW(dc,wrapped.c_str(),-1,&m,DT_CALCRECT|DT_WORDBREAK|DT_NOPREFIX|(flags&DT_EDITCONTROL));fits=m.bottom-m.top<=r.bottom-r.top&&m.right-m.left<=r.right-r.left;}
@@ -932,11 +952,7 @@ const wchar_t* pageNote(){
     case 7:return i18n::text(L"타르코프 · 아이템을 조사하면 시세·필요한 퀘스트·은신처 재료를 띄웁니다.");case 8:return i18n::text(L"타르코프 · 지도 키로 지도를 열어 탈출구와 퀘스트 위치를 봅니다.");case 9:return i18n::text(L"언어와 프로그램 실행 방식을 설정합니다.");case 15:return i18n::text(L"게임하기 전에 PC 상태를 점검하고, 병목과 업그레이드할 곳을 확인합니다.");case 10:return i18n::text(L"버그나 바라는 점을 개발자에게 바로 보냅니다.");case 11:return i18n::text(L"배그 · 탑승 카운트다운이 끝나면 소리로 알려 줍니다.");case 12:return i18n::text(L"BlueAsh가 도움이 됐다면 커피 한 잔으로 응원해 주세요.");case 13:return i18n::text(L"배그 · M 지도에 띄울 표시와 표시를 켜고 끄는 키를 정합니다.");case 14:return i18n::text(L"화질 향상(DLSS 5), 프레임 설정, 성능 분석을 게임별로 합니다.");case 16:return i18n::text(L"설치한 게임의 모드에서 영어 글을 찾아 지금 언어로 번역합니다.");case 17:return i18n::text(L"갑자기 꺼짐·블루스크린·그래픽 오류·게임 충돌 기록을 찾아 원인과 해결 방법을 알려 줍니다.");}return L"";
 }
 HWND pageWindow=nullptr;bool embedSeen=false;extern HWND embedHost;void placeEmbedHost();
-// Resized or maximized: the sidebar runs the full height with its footer icons at the bottom, the window buttons stay top
-// right, and the content stretches into the rest (mainStretch): its panels and wide controls widen and spread down, small
-// ones keep their size. A page opened there fills the stretched page box and stretches inside (pageProc); the helper's
-// own pages (5, 8) keep their size in the middle of it.
-RECT pageBox(){return mainStretch.box({260,118,1112,740});}
+RECT pageBox(){return {260,118,1112,740};}
 // While the helper's page (알림 5, 지도 설정 8) is starting: a skeleton of a title and two cards shimmers where it will
 // appear (timer 80 repaints this area until the page shows).
 RECT skeletonArea(){return {270,126,1104,560};}
@@ -945,56 +961,10 @@ void paintSkeleton(HDC dc){const COLORREF base=rowFill,light=RGB(96,128,200);con
     for(int i=0;i<2;i++){int y=214+i*168;painting::skeleton(dc,{L,y,R,y+148},18,L,R,base,light);roundBox(dc,{L+24,y+28,L+80,y+84},RGB(24,40,78),RGB(24,40,78),28);
         roundBox(dc,{L+100,y+34,L+360,y+52},RGB(24,40,78),RGB(24,40,78),8);roundBox(dc,{L+100,y+64,L+560,y+78},RGB(24,40,78),RGB(24,40,78),8);roundBox(dc,{R-84,y+38,R-34,y+62},RGB(24,40,78),RGB(24,40,78),24);}}
 RECT embedBox(int page){RECT b=pageBox();int h=page==8?600:622,x=(b.left+b.right)/2-426,y=b.top+std::max(0,(int)(b.bottom-b.top-h)/2);return {x,y,x+852,y+h};}
-void placeContent(bool paint=true){RECT c;if(!win||!GetClientRect(win,&c)||c.right<1)return;int W=std::max(1160L,c.right),H=std::max(780L,c.bottom);
-    // Splits per screen, in gaps: the dashboard's four status tiles and two columns share the width; its panels grow down
-    // with the status strip at the bottom; settings widen at its right; a page's box grows both ways.
-    {int ex=W-1160,ey=H-780;if(mainPage==0)mainStretch.set({368,580,792,1004},{615},ex,ey);else if(mainPage==1)mainStretch.set({410,686,962},{},ex,ey); /* through the three site buttons */
-        else if(mainPage==9)mainStretch.set({580},{},ex,ey);else mainStretch.set({368,580,792,1004},{600},ex,ey);}
-    int dw=W-frameW,dh=H-frameH;
-    // Not WM_SETREDRAW: on a top-level window it hides the window from the compositor for a moment, and the resize flashed
-    // the plain background. Children move without drawing instead, then everything is drawn once.
-    bool redraw=paint&&(dw||dh)&&IsWindowVisible(win)!=FALSE;quietMoves=redraw;
-    for(HWND k=GetWindow(win,GW_CHILD);k;k=GetWindow(k,GW_HWNDNEXT)){RECT r;GetWindowRect(k,&r);MapWindowPoints(nullptr,win,(POINT*)&r,2);int id=GetDlgCtrlID(k);
-        if((id>=82&&id<=85)||id==87){if(dw){SetWindowPos(k,nullptr,r.left+dw,r.top,0,0,SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE|(redraw?SWP_NOREDRAW|SWP_NOCOPYBITS:0));}continue;}
-        if(id==81||id==50||id==74||id==31){if(dh){SetWindowPos(k,nullptr,r.left,r.top+dh,0,0,SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE|(redraw?SWP_NOREDRAW|SWP_NOCOPYBITS:0));}continue;}
-        if(k==pageWindow){moveChild(k,pageBox(),win);continue;}
-        if(k==embedHost){placeEmbedHost();continue;}
-        if(GetPropW(k,L"BlueAsh.Page.Map")||GetPropW(k,L"BlueAsh.Page.Discord")){moveChild(k,embedBox(GetPropW(k,L"BlueAsh.Page.Map")?8:5),win);continue;}
-        if(r.left<220){continue;} // the sidebar
-        auto it=mainHome.find(k);if(it==mainHome.end()){it=mainHome.emplace(k,r).first;} // made at the design size (WM_CREATE)
-        if(it->second.top<112){RECT d=it->second;int right=mainStretch.x(d.right);moveChild(k,{right-(d.right-d.left),d.top,right,d.bottom},win);continue;} // header buttons keep their size at the right
-        // The two game cards (게임 도우미) grow only to 560 wide and stay a centred pair: stretched across a wide window they
-        // were long thin strips with an empty middle.
-        int id2=GetDlgCtrlID(k);if(id2==42||id2==43||id2==45){auto a=mainHome.find(GetDlgItem(win,42)),b=mainHome.find(GetDlgItem(win,45));
-            if(a!=mainHome.end()&&b!=mainHome.end()){RECT t=mainStretch.child(it->second);int gap=b->second.left-a->second.right,w=std::min<int>(t.right-t.left,560),mid=(mainStretch.x(a->second.left)+mainStretch.x(b->second.right))/2;
-                int gap2=mainHome.count(GetDlgItem(win,43))?mainHome[GetDlgItem(win,43)].left-a->second.right:12;int x0=mid-(3*w+2*gap2)/2+(id2==43?w+gap2:id2==45?2*(w+gap2):0);(void)gap;moveChild(k,{x0,t.top,x0+w,t.bottom},win);continue;}}
-        moveChild(k,mainStretch.child(it->second),win);}
-    frameW=W;frameH=H;
-    // The window and every child are painted into one buffer (WS_EX_COMPOSITED) so no page or control erases and draws
-    // on screen on its own; only for this redraw: while it was on, each child move cost ~35 ms instead of ~1.
-    quietMoves=false;if(redraw){LONG_PTR ex=GetWindowLongPtrW(win,GWL_EXSTYLE);SetWindowLongPtrW(win,GWL_EXSTYLE,ex|WS_EX_COMPOSITED);
-        RedrawWindow(win,nullptr,nullptr,RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN|RDW_UPDATENOW);SetWindowLongPtrW(win,GWL_EXSTYLE,ex&~WS_EX_COMPOSITED);}}
-// Pages (openPage) run through pageProc: it keeps each page's own procedure (by class), stretches the page's painting
-// and controls to its size and turns mouse points back into design coordinates. The graphics page is not wrapped.
-std::map<std::wstring,WNDPROC> pageProcs;struct PageMap {std::map<HWND,RECT> home,placed;};std::map<HWND,PageMap> pageMaps;
-painting::Stretch pageStretch(HWND h){RECT c;GetClientRect(h,&c);wchar_t cls[64]={};GetClassNameW(h,cls,64);int ex=(int)c.right-852,ey=(int)c.bottom-622;painting::Stretch s;
-    // Feedback: its buttons left, picture slots (x 410+) right. Donate: the QR column stays, the text column widens.
-    if(!wcscmp(cls,L"BlueAshFeedback")){s.set({400},{540},ex,ey);}else if(!wcscmp(cls,L"BlueAshDonate")){s.set({500},{540},ex,ey);}else{s.set({217,500},{540},ex,ey);}return s;} // the halves of a page widen; its bottom row stays at the bottom
-void placePageChildren(HWND h){auto s=pageStretch(h);auto& m=pageMaps[h];for(HWND k=GetWindow(h,GW_CHILD);k;k=GetWindow(k,GW_HWNDNEXT)){RECT r;GetWindowRect(k,&r);MapWindowPoints(nullptr,h,(POINT*)&r,2);
-        auto p=m.placed.find(k);if(p==m.placed.end()||!EqualRect(&p->second,&r)){m.home[k]=r;} // new, or moved by the page itself (in design coordinates)
-        wchar_t kc[16]={};GetClassNameW(k,kc,16);moveChild(k,s.child(m.home[k],_wcsicmp(kc,L"Button")?100:241,true),h); /* a page's buttons keep their size */GetWindowRect(k,&r);MapWindowPoints(nullptr,h,(POINT*)&r,2);m.placed[k]=r;}}
-LRESULT CALLBACK pageProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
-    wchar_t cls[64]={};GetClassNameW(h,cls,64);auto it=pageProcs.find(cls);if(it==pageProcs.end())return DefWindowProcW(h,msg,wp,lp);WNDPROC real=it->second;
-    if(msg==WM_NCDESTROY){pageMaps.erase(h);return real(h,msg,wp,lp);}
-    if(msg==WM_SIZE){LRESULT r=real(h,msg,wp,lp);placePageChildren(h);InvalidateRect(h,nullptr,TRUE);return r;}
-    auto s=pageStretch(h);if(s.idle())return real(h,msg,wp,lp);
-    switch(msg){
-    case WM_MOUSEMOVE:case WM_LBUTTONDOWN:case WM_LBUTTONUP:case WM_LBUTTONDBLCLK:case WM_RBUTTONDOWN:case WM_RBUTTONUP:case WM_MBUTTONDOWN:case WM_MBUTTONUP:
-        lp=MAKELPARAM(s.unx((short)LOWORD(lp)),s.uny((short)HIWORD(lp)));break;
-    case WM_PAINT:placePageChildren(h);InvalidateRect(h,nullptr,TRUE);[[fallthrough]]; // all of it: the page's own partial redraws are in design coordinates
-    case WM_ERASEBKGND:{auto was=painting::stretch;painting::stretch=s;painting::stretch.on=true;LRESULT r=real(h,msg,wp,lp);painting::stretch=was;return r;}
-    }
-    return real(h,msg,wp,lp);}
+// The opened page and the helper's embedded pages to their boxes (the window itself is a fixed 1160 x 780).
+void placeContent(){if(!win)return;for(HWND k=GetWindow(win,GW_CHILD);k;k=GetWindow(k,GW_HWNDNEXT)){
+    if(k==pageWindow){moveChild(k,pageBox(),win);}else if(k==embedHost){placeEmbedHost();}
+    else if(GetPropW(k,L"BlueAsh.Page.Map")||GetPropW(k,L"BlueAsh.Page.Discord")){moveChild(k,embedBox(GetPropW(k,L"BlueAsh.Page.Map")?8:5),win);}}}
 void selectMainPage(int page,int game=-1){
     if(page<2||page==9){closePage();}mainPage=page;if(game>=0)selectedGame=game;
     bool redraw=IsWindowVisible(win)!=FALSE;if(redraw)SendMessageW(win,WM_SETREDRAW,FALSE,0);
@@ -1012,7 +982,7 @@ void selectMainPage(int page,int game=-1){
     ShowWindow(GetDlgItem(win,49),(page>=6&&page<=8)||page==11||page==13?SW_SHOW:SW_HIDE);
     // The embedded pages (5, 8) close inside the helper (it only hides its form): watch for that every 100 ms so 닫기 feels instant.
     if(page==5||page==8){SetTimer(win,78,100,nullptr);SetTimer(win,80,30,nullptr);}else{KillTimer(win,78);KillTimer(win,80);}
-    placeContent(false);
+    placeContent();
     if(redraw){SendMessageW(win,WM_SETREDRAW,TRUE,0);RedrawWindow(win,nullptr,nullptr,RDW_INVALIDATE|RDW_ALLCHILDREN|RDW_UPDATENOW);}else InvalidateRect(win,nullptr,FALSE);
 }
 // Settings pages open inside the main window under the shared header: the settings procs run as a child filling
@@ -1051,7 +1021,7 @@ void openPage(WNDPROC callback,const wchar_t* className,int page){
     // The same page is already open (its icon clicked again): keep it as it is (typed text, a loaded QR) instead of rebuilding it.
     if(pageWindow&&mainPage==page){wchar_t open[64]={};GetClassNameW(pageWindow,open,64);if(!wcscmp(open,className)){showWindow();return;}}
     closePage();
-    pageProcs[className]=callback;WNDCLASSW wc={};wc.lpfnWndProc=page==14||page==15||page==17?callback:pageProc;wc.hInstance=GetModuleHandleW(nullptr);wc.lpszClassName=className;wc.hCursor=LoadCursor(nullptr,IDC_ARROW);wc.hbrBackground=backgroundBrush;RegisterClassW(&wc);
+    WNDCLASSW wc={};wc.lpfnWndProc=callback;wc.hInstance=GetModuleHandleW(nullptr);wc.lpszClassName=className;wc.hCursor=LoadCursor(nullptr,IDC_ARROW);wc.hbrBackground=backgroundBrush;RegisterClassW(&wc);
     selectMainPage(page);showWindow();
     pageWindow=CreateWindowExW(WS_EX_CONTROLPARENT,className,L"",WS_CHILD|WS_CLIPCHILDREN,260,118,852,622,win,nullptr,wc.hInstance,nullptr);
     if(!pageWindow){selectMainPage(0);problem(i18n::text(L"설정 화면을 열지 못했습니다."));return;}
@@ -1210,7 +1180,6 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         {auto o=SelectObject(mem,titleFont);SIZE z{};GetTextExtentPoint32W(mem,L"BlueAsh",7,&z);SelectObject(mem,o);
         textAt(mem,L"BlueAsh",{90,30,214,66},titleFont,ink,DT_LEFT|DT_VCENTER|DT_SINGLELINE);
         textAt(mem,std::wstring(L"v")+appVersion,{90,64,std::min(214,(int)(90+z.cx+6)),82},captionFont,RGB(118,130,156),DT_RIGHT|DT_VCENTER|DT_SINGLELINE);}
-        painting::stretch=mainStretch;painting::stretch.on=!mainStretch.idle(); // the content right of the sidebar (placeContent)
         if(mainPage==0)headline(mem,pageTitle(),{252,30,904,78},headFont);else textAt(mem,pageTitle(),{252,30,904,78},headFont,ink,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);
         textAt(mem,pageNote(),{253,84,1120,112},font,muted,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);
         // The helper's pages (5, 8) are filled with the panel colour; this rounded panel frames them on the backdrop.
@@ -1219,7 +1188,7 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
             // Two panels (화면과 소리 · 게임 알림) over the 현재 상태 strip; the game rows sit on their own cards.
             COLORREF accentIcon=RGB(84,140,255);
             roundBox(mem,{252,280,674,620},panel,line,20);roundBox(mem,{698,280,1120,620},panel,line,20);roundBox(mem,{252,636,1120,756},panel,line,20);
-            glyph(mem,0xE7F4,{270,296,302,330},footFont,accentIcon);{RECT q={476,0,0,0};if(HWND help=GetDlgItem(h,75)){GetWindowRect(help,&q);MapWindowPoints(nullptr,h,(POINT*)&q,2);q.left=mainStretch.unx(q.left);} // the title stops where the "?" starts
+            glyph(mem,0xE7F4,{270,296,302,330},footFont,accentIcon);{RECT q={476,0,0,0};if(HWND help=GetDlgItem(h,75)){GetWindowRect(help,&q);MapWindowPoints(nullptr,h,(POINT*)&q,2);} // the title stops where the "?" starts
                 textAt(mem,i18n::text(L"화면과 소리"),{310,296,std::max(330L,q.left+4),330},sectionFont,ink,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);}
             glyph(mem,0xEA8F,{716,296,748,330},footFont,accentIcon);textAt(mem,i18n::text(L"게임 알림"),{756,296,1060,330},sectionFont,ink,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);
             HBRUSH separator=CreateSolidBrush(line);for(RECT divide:std::initializer_list<RECT>{{272,344,654,345},{272,474,654,475}})painting::hairline(mem,divide,separator);DeleteObject(separator);
@@ -1247,7 +1216,7 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
             textAt(mem,i18n::text(L"문제 해결"),{278,548,1094,578},sectionFont,ink);
             bool admin=adminMismatch();textAt(mem,admin?i18n::text(L"타르코프가 관리자 권한으로 실행 중이라 지도 키와 시세 클릭을 못 읽습니다. 관리자 권한으로 다시 실행하세요."):i18n::text(L"지도나 시세가 동작하지 않으면 왼쪽 아래 벌레 아이콘으로 알려 주세요."),{278,584,1094,626},smallFont,admin?danger:muted,DT_LEFT|DT_WORDBREAK);
         }
-        painting::stretch.on=false;BitBlt(dc,0,0,r.right,r.bottom,mem,0,0,SRCCOPY);
+        BitBlt(dc,0,0,r.right,r.bottom,mem,0,0,SRCCOPY);
         SelectObject(mem,old);DeleteObject(bitmap);DeleteDC(mem);EndPaint(h,&ps);return 0;
     }
     case WM_ERASEBKGND:return 1;
@@ -1328,7 +1297,7 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
     case WM_APP+185:{std::unique_ptr<std::vector<gameswitch::Row>> r((std::vector<gameswitch::Row>*)lp);gameswitch::rows=*r;gameswitch::scanned=true;gameswitch::scanning=false;
         if(IsWindow(gameswitch::notify)&&GetDlgItem(gameswitch::notify,60)){addGameRows(gameswitch::notify);}return 0;}
     case WM_APP+186:{std::unique_ptr<std::wstring> id((std::wstring*)lp);gameswitch::changed(*id);return 0;}
-    case WM_TIMER:if(wp==77){pubgMap.fast();return 0;}if(wp==0xB1C){switchTick();return 0;}if(wp==0xB1D){motionTick();return 0;}if(wp==80){if(embedSeen||(mainPage!=5&&mainPage!=8)){KillTimer(h,80);}else{RECT sk=mainStretch.box(skeletonArea());InvalidateRect(h,&sk,FALSE);}return 0;}if(wp==79){updateWatch.tick();return 0;}if(wp==78){if(mainPage==5||mainPage==8){HWND d=embeddedWindow(mainPage);if(d&&IsWindowVisible(d)){embedSeen=true;if(GetParent(d)==embedHost){RECT hc;(GetClientRect)(embedHost,&hc);(SetWindowPos)(d,nullptr,0,0,hc.right,hc.bottom,SWP_NOZORDER|SWP_NOACTIVATE);}else{moveChild(d,embedBox(mainPage),win);}}else if(embedSeen)selectMainPage(mainPage==8?1:0);}return 0;}pollCompanion();updateWatch.poll();maintenancePoll();tarkovScreen.poll();tarkovKeys.poll();priceWatch.poll();pollAdmin();pubgJoin.poll();boardWatch.poll();phoneGame.poll();donateWatch.poll();pubgMap.poll();raidWatch.poll();serverBadge.poll(raidWatch.context);refreshStatus();{static unsigned tick=0;if(++tick%3==0)audioUpdate();}if(!trayPresent)trayUpdate(true);return 0;
+    case WM_TIMER:if(wp==77){pubgMap.fast();return 0;}if(wp==76){if(raidWatch.context.phase=="loading")raidWatch.poll();else KillTimer(h,76);return 0;}if(wp==0xB1C){switchTick();return 0;}if(wp==0xB1D){motionTick();return 0;}if(wp==80){if(embedSeen||(mainPage!=5&&mainPage!=8)){KillTimer(h,80);}else{RECT sk=skeletonArea();InvalidateRect(h,&sk,FALSE);}return 0;}if(wp==79){updateWatch.tick();return 0;}if(wp==78){if(mainPage==5||mainPage==8){HWND d=embeddedWindow(mainPage);if(d&&IsWindowVisible(d)){embedSeen=true;if(GetParent(d)==embedHost){RECT hc;(GetClientRect)(embedHost,&hc);(SetWindowPos)(d,nullptr,0,0,hc.right,hc.bottom,SWP_NOZORDER|SWP_NOACTIVATE);}else{moveChild(d,embedBox(mainPage),win);}}else if(embedSeen)selectMainPage(mainPage==8?1:0);}return 0;}pollCompanion();updateWatch.poll();maintenancePoll();tarkovScreen.poll();tarkovKeys.poll();priceWatch.poll();pollAdmin();pubgJoin.poll();boardWatch.poll();phoneGame.poll();donateWatch.poll();pubgMap.poll();raidWatch.poll();if(raidWatch.context.phase=="loading")SetTimer(h,76,150,nullptr); /* raid loading: read the log every 0.15 s so GameStarted (and the exit-list read it starts) is not up to 1 s late */serverBadge.poll(raidWatch.context);refreshStatus();{static unsigned tick=0;if(++tick%3==0)audioUpdate();}if(!trayPresent)trayUpdate(true);return 0;
     case WM_CLOSE:if(closeToTray)hideToTray();else quit();return 0;
     // Minimize goes to the taskbar like any window; only X (WM_CLOSE) hides to the tray.
     case WM_SIZE:if(wp!=SIZE_MINIMIZED){placeContent();if(HWND m=GetDlgItem(h,85))InvalidateRect(m,nullptr,FALSE);}return 0;
@@ -1377,7 +1346,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,LPWSTR command,int show){dpi::i
         HWND existing=FindWindowW(L"ModeSwitch",nullptr);
         if(existing&&!startHidden){
             wchar_t title[128]={};GetWindowTextW(existing,title,128);
-            if(std::wstring(title)!=L"BlueAsh 2.28.0")MessageBoxW(nullptr,i18n::text(L"이전 버전이 트레이에서 실행 중입니다. 이전 프로그램을 완전 종료한 뒤 BlueAsh.exe를 다시 실행하세요."),i18n::text(L"BlueAsh · 이전 버전 실행 중"),MB_OK|MB_ICONINFORMATION);
+            if(std::wstring(title)!=L"BlueAsh 2.29.0")MessageBoxW(nullptr,i18n::text(L"이전 버전이 트레이에서 실행 중입니다. 이전 프로그램을 완전 종료한 뒤 BlueAsh.exe를 다시 실행하세요."),i18n::text(L"BlueAsh · 이전 버전 실행 중"),MB_OK|MB_ICONINFORMATION);
             else{ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);}
         }
         CloseHandle(mutex);return 0;
@@ -1392,7 +1361,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,LPWSTR command,int show){dpi::i
     RegisterClassW(&wc);
     DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_THICKFRAME|WS_CLIPCHILDREN;
     RECT bounds={0,0,1160,780}; // the client is the whole window (WM_NCCALCSIZE)
-    HWND h=CreateWindowW(wc.lpszClassName,L"BlueAsh 2.28.0",style,CW_USEDEFAULT,CW_USEDEFAULT,bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,instance,nullptr);
+    HWND h=CreateWindowW(wc.lpszClassName,L"BlueAsh 2.29.0",style,CW_USEDEFAULT,CW_USEDEFAULT,bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,instance,nullptr);
     if(!h){painting::shutdown();CoUninitialize();CloseHandle(mutex);return 1;}
     ChangeWindowMessageFilterEx(h,WM_APP+177,MSGFLT_ALLOW,nullptr); // the updater runs as the normal user even when BlueAsh is elevated: let its "please close" through
     {MARGINS shadow={0,0,0,1};DwmExtendFrameIntoClientArea(h,&shadow);SetWindowPos(h,nullptr,0,0,0,0,SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);} // keep the shadow without a frame

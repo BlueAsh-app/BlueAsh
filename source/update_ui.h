@@ -5,7 +5,7 @@
 // Updates come from the BlueAsh relay (relay/worker.js): /update/check answers in plain text (version, date, size,
 // one "note=" line per change) and counts installs by a random id; the updater (updater/Update.ps1) downloads
 // /update/manifest.json's ZIP, checks its SHA-256 and swaps the files.
-const wchar_t* appVersion=L"2.28.0";
+const wchar_t* appVersion=L"2.29.0";
 const wchar_t* updateHost=L"modepulse-relay.modepulse.workers.dev";
 HANDLE updaterProcess=nullptr;
 struct UpdateInfo{std::wstring version,date,error;std::vector<std::wstring> notes;long long size=0;};
@@ -190,9 +190,9 @@ double refreshAngle(){if(!refreshSpinAt){return 0;}double t=(GetTickCount64()-re
 // version than this one (not yet installed) leads with a 새 버전 tag, this install's own version carries 지금 버전.
 // The wheel moves a target and timer 8 eases the list toward it; rows are laid out once per width and data, and only
 // the visible ones are drawn.
-RECT historyBox(){return {36,216,816,542};} // reaches past the page stretch line (540): a taller window gives the list the room
+RECT historyBox(){return {36,216,816,542};}
 struct HistoryRow{int y,h,kind;std::wstring text,date,tag;}; // kind 0 version line, 1 change, 2 divider
-std::vector<HistoryRow> historyRows;int historyKey=-1,historyHeight=0,historyView=300; // historyView: the card height last drawn (the page stretch only applies while painting)
+std::vector<HistoryRow> historyRows;int historyKey=-1,historyHeight=0,historyView=300; // historyView: the card height last drawn
 double historyY=0;int historyGoal=0;
 // 패치 내역 opens from the link at the right of the card's title (패치 내역 ›) and goes back the same way; the update guide
 // (or a newer version's changes) is the default. Hit areas are kept in client pixels from the last paint.
@@ -201,7 +201,7 @@ POINT cursorIn(HWND h){POINT p;GetCursorPos(&p);ScreenToClient(h,&p);return p;}
 // The card's title with the switch link on its right.
 void titleRow(HDC dc,const std::wstring& title,const std::wstring& link){textAt(dc,title,{36,182,600,208},boldFont,ink);
  auto of=SelectObject(dc,boldFont);SIZE ts={};GetTextExtentPoint32W(dc,link.c_str(),(int)link.size(),&ts);SelectObject(dc,of);RECT lr={816-ts.cx-24,180,816,210};
- historyLink=painting::stretch.on?painting::stretch.box(lr):lr;if(linkHover)roundBox(dc,lr,tint,tint,10);textAt(dc,link,{lr.left+12,lr.top,lr.right-12,lr.bottom},boldFont,linkHover?ink:RGB(140,176,255),DT_CENTER|DT_VCENTER|DT_SINGLELINE);}
+ historyLink=lr;if(linkHover)roundBox(dc,lr,tint,tint,10);textAt(dc,link,{lr.left+12,lr.top,lr.right-12,lr.bottom},boldFont,linkHover?ink:RGB(140,176,255),DT_CENTER|DT_VCENTER|DT_SINGLELINE);}
 void historyKeyReset(){historyKey=-1;}
 void layoutHistory(HDC dc,int width){
  auto& w=updateWatch;std::vector<const PatchEntry*> list;PatchEntry fresh;
@@ -219,7 +219,7 @@ void layoutHistory(HDC dc,int width){
 int historyMax(){return std::max(0,historyHeight-historyView);}
 void paintHistory(HDC dc){
  auto& w=updateWatch;titleRow(dc,i18n::text(L"패치 내역"),i18n::text(L"‹ 돌아가기"));roundBox(dc,historyBox(),well,line,16);
- RECT b=historyBox();if(painting::stretch.on)b=painting::stretch.box(b);painting::StretchOff off_;historyView=b.bottom-b.top;
+ RECT b=historyBox();historyView=b.bottom-b.top;
  historyThumb={};if(w.history.empty()){for(int i=0;i<4;i++){int y=b.top+18+i*48;painting::skeleton(dc,{b.left+22,y,b.left+22+(i%2?170:120),y+16},8,b.left,b.right,RGB(24,38,72),RGB(40,60,104));painting::skeleton(dc,{b.left+40,y+24,b.right-(i%2?200:120),y+36},6,b.left,b.right,RGB(24,38,72),RGB(40,60,104));}return;}
  layoutHistory(dc,b.right-b.left);historyGoal=std::clamp(historyGoal,0,historyMax());historyY=std::clamp(historyY,0.0,(double)historyMax());
  int saved=SaveDC(dc);IntersectClipRect(dc,b.left+1,b.top+1,b.right-1,b.bottom-1);int top=b.top-(int)std::lround(historyY);
@@ -306,7 +306,7 @@ LRESULT CALLBACK updateProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
   if(id==212)launchUpdater();else if(id==219)cancelUpdater();else if(id==214)DestroyWindow(h);
   else if(id==217){saveString(configPath,L"UsageStats",featureOn(id)?L"0":L"1");InvalidateRect(GetDlgItem(h,id),nullptr,TRUE);}
  }return 0;
- case WM_MOUSEMOVE:{POINT c=cursorIn(h);RECT box=painting::stretch.box(historyBox());
+ case WM_MOUSEMOVE:{POINT c=cursorIn(h);RECT box=historyBox();
   if(barDrag){historyY=historyGoal=(int)std::lround(std::clamp((c.y-barGrab-trackTop)/(double)std::max(1,trackLen-barLen),0.0,1.0)*historyMax());InvalidateRect(h,&box,FALSE);return 0;}
   bool lh=PtInRect(&historyLink,c)!=FALSE,bh=showHistory&&PtInRect(&historyThumb,c)!=FALSE;if(lh!=linkHover){linkHover=lh;InvalidateRect(h,&historyLink,FALSE);}if(bh!=barHover){barHover=bh;InvalidateRect(h,&box,FALSE);}
   if(lh||bh){TRACKMOUSEEVENT t={sizeof(t),TME_LEAVE,h,0};TrackMouseEvent(&t);}
@@ -320,11 +320,11 @@ LRESULT CALLBACK updateProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
   if(showHistory&&barLen&&p.x>=historyThumb.left&&p.x<historyThumb.right&&p.y>=trackTop&&p.y<trackTop+trackLen){
    // On the bar: drag it. Beside it on the track: the bar's middle jumps there (eased), and the drag continues from there.
    if(p.y<historyThumb.top||p.y>=historyThumb.bottom){double k=std::clamp((p.y-barLen/2.0-trackTop)/std::max(1,trackLen-barLen),0.0,1.0);historyY=historyGoal=(int)std::lround(k*historyMax());}
-   barDrag=true;barGrab=p.y-(trackTop+(int)((trackLen-barLen)*historyY/std::max(1,historyMax())));SetCapture(h);RECT b=painting::stretch.box(historyBox());InvalidateRect(h,&b,FALSE);}return 0;}
- case WM_CAPTURECHANGED:if(barDrag){barDrag=false;RECT b=painting::stretch.box(historyBox());InvalidateRect(h,&b,FALSE);}return 0;
+   barDrag=true;barGrab=p.y-(trackTop+(int)((trackLen-barLen)*historyY/std::max(1,historyMax())));SetCapture(h);RECT b=historyBox();InvalidateRect(h,&b,FALSE);}return 0;}
+ case WM_CAPTURECHANGED:if(barDrag){barDrag=false;RECT b=historyBox();InvalidateRect(h,&b,FALSE);}return 0;
  case WM_MOUSEWHEEL:if(showHistory&&!updateWatch.showingRun()&&!updateWatch.history.empty()){historyGoal=std::clamp(historyGoal-GET_WHEEL_DELTA_WPARAM(wp)*96/WHEEL_DELTA,0,historyMax());SetTimer(h,8,15,nullptr);}return 0;
  case WM_TIMER:if(wp==8){ // eased by elapsed time (about 90% of the way in 160 ms), so a slow frame does not slow the scroll
-   static ULONGLONG last=0;ULONGLONG now=GetTickCount64();double dt=last&&now-last<100?(double)(now-last):15.0;last=now;double d=historyGoal-historyY;historyY=std::abs(d)<0.6?historyGoal:historyY+d*(1-std::exp(-dt/70.0));RECT b=painting::stretch.box(historyBox());InvalidateRect(h,&b,FALSE);if(historyY==historyGoal)KillTimer(h,8);return 0;}
+   static ULONGLONG last=0;ULONGLONG now=GetTickCount64();double dt=last&&now-last<100?(double)(now-last):15.0;last=now;double d=historyGoal-historyY;historyY=std::abs(d)<0.6?historyGoal:historyY+d*(1-std::exp(-dt/70.0));RECT b=historyBox();InvalidateRect(h,&b,FALSE);if(historyY==historyGoal)KillTimer(h,8);return 0;}
   if(wp==7){RECT b=refreshButton();if(GetTickCount64()-refreshSpinAt>=700&&!updateWatch.checking){refreshSpinAt=0;KillTimer(h,7);}InvalidateRect(h,&b,FALSE);}return 0;
  case WM_ERASEBKGND:return 1; // the background is part of WM_PAINT's off-screen frame
  case WM_CTLCOLORSTATIC:return pageStatic(wp,lp);

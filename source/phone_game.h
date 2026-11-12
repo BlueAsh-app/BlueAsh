@@ -17,6 +17,15 @@ inline std::string unprotect(const std::string& hex){
     for(wchar_t c:w){if((c>='0'&&c<='9')||(c>='a'&&c<='f'))a+=(char)c;else return "";}return a.size()==32?a:""; // the relay's code: 32 hex
 }
 inline unsigned long long fileTimeMs(const FILETIME& f){return ((((unsigned long long)f.dwHighDateTime<<32)|f.dwLowDateTime)/10000ULL)-11644473600000ULL;}
+inline std::string jsonText(const std::wstring& w){if(w.empty())return "";int n=WideCharToMultiByte(CP_UTF8,0,w.data(),(int)w.size(),nullptr,0,nullptr,nullptr);std::string s(n,'\0'),o;WideCharToMultiByte(CP_UTF8,0,w.data(),(int)w.size(),&s[0],n,nullptr,nullptr);for(unsigned char c:s){if(c=='"'||c=='\\'){o+='\\';o+=(char)c;}else if(c>=32)o+=(char)c;}return o;}
+struct OtherGame {std::wstring name;std::string steam;unsigned long long since=0;bool foreground=false;};
+inline OtherGame otherGame(){OtherGame best;DWORD foreground=0;GetWindowThreadProcessId(GetForegroundWindow(),&foreground);bool bestForeground=false;
+    HANDLE snap=CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);if(snap==INVALID_HANDLE_VALUE)return best;PROCESSENTRY32W e={};e.dwSize=sizeof(e);
+    for(BOOL ok=Process32FirstW(snap,&e);ok;ok=Process32NextW(snap,&e)){HANDLE p=OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,e.th32ProcessID);if(!p)continue;
+        wchar_t path[32768];DWORD len=32768;bool got=QueryFullProcessImageNameW(p,0,path,&len)!=FALSE;FILETIME c,x,k,u;unsigned long long since=GetProcessTimes(p,&c,&x,&k,&u)?fileTimeMs(c):1;CloseHandle(p);if(!got)continue;
+        bool fg=e.th32ProcessID==foreground;for(const auto& row:gameswitch::rows){if(!gameprofiles::within(path,row.dir))continue;
+            if(best.name.empty()||(fg&&!bestForeground)||(fg==bestForeground&&since<best.since)){best.name=row.name.substr(0,150);best.steam=row.platform=="steam"?row.id:"";if(best.steam.size()>12||best.steam.find_first_not_of("0123456789")!=std::string::npos)best.steam.clear();best.since=since;best.foreground=fg;bestForeground=fg;}break;}}
+    CloseHandle(snap);return best;}
 // Earliest-started running instance of each game (Unix ms), 0 = not running.
 inline void running(unsigned long long& tarkov,unsigned long long& pubg){tarkov=pubg=0;HANDLE snap=CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);if(snap==INVALID_HANDLE_VALUE){return;}
     PROCESSENTRY32W e={};e.dwSize=sizeof(e);
@@ -34,10 +43,13 @@ struct Watch {
         code=unprotect(jsonString(s,"phoneCode"));idle=std::max(10,jsonInt(s,"idle",20));}
     // Every 3 s: the game in play; sent when it changes (and again every 12 h, the relay keeps it a day).
     void poll(){ULONGLONG now=GetTickCount64();settings(now);if(code.empty()||now<checkAt){return;}checkAt=now+3000;
-        unsigned long long tk,pg;running(tk,pg);std::string game="none";unsigned long long since=0;
-        if(tk&&(!pg||tk<=pg)){game="tarkov";since=tk;}else if(pg){game="pubg";since=pg;}
-        if(game==sent&&now-sentAt<12ULL*3600*1000){return;}sent=game;sentAt=now;
-        post(L"/phone/game","{\"c\":\""+code+"\",\"game\":\""+game+"\",\"since\":"+std::to_string(since)+"}");}
+        if(!gameswitch::scanned&&!gameswitch::scanning)gameswitch::scan(nullptr);
+        unsigned long long tk,pg;running(tk,pg);std::string game="none",name,steam;unsigned long long since=0;
+        OtherGame other;if(gameswitch::scanned)other=otherGame();
+        if(!other.name.empty()&&(other.foreground||(!tk&&!pg))){game="other";name=jsonText(other.name);steam=other.steam;since=other.since;}
+        else if(tk&&(!pg||tk<=pg)){game="tarkov";since=tk;}else if(pg){game="pubg";since=pg;}
+        std::string identity=game+"|"+name+"|"+steam;if(identity==sent&&now-sentAt<12ULL*3600*1000){return;}sent=identity;sentAt=now;
+        post(L"/phone/game","{\"c\":\""+code+"\",\"game\":\""+game+"\",\"name\":\""+name+"\",\"steam\":\""+steam+"\",\"since\":"+std::to_string(since)+"}");}
     static unsigned idleMs(){LASTINPUTINFO i={sizeof(i),0};return GetLastInputInfo(&i)?GetTickCount()-i.dwTime:0;}
     void alert(const char* kind){settings(GetTickCount64());if(code.empty()||idleMs()<unsigned(idle)*1000){return;}std::string lang;for(wchar_t c:i18n::languageCode())lang+=(char)c;
         pubgNote(L"phone alert "+std::wstring(kind,kind+strlen(kind))+L" (idle "+std::to_wstring(idleMs()/1000)+L" s)");

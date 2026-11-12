@@ -14,7 +14,7 @@ if($exeVersion -ne $version){throw "BlueAsh.exe 버전($exeVersion)이 update_ui
 # Microsoft's WebView2 Runtime bootstrapper: setup runs it only on a PC without the runtime (quest card pictures on the map).
 $wv2=Join-Path $root 'installer\MicrosoftEdgeWebview2Setup.exe'
 if(!(Test-Path -LiteralPath $wv2)){Invoke-WebRequest -UseBasicParsing 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile $wv2}
-$sig=Get-AuthenticodeSignature -LiteralPath $wv2;if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'O=Microsoft Corporation'){Remove-Item -LiteralPath $wv2;throw 'WebView2 설치 도구 서명이 올바르지 않습니다.'}
+$sig=Get-AuthenticodeSignature -LiteralPath $wv2;if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'O=Microsoft Corporation'){throw 'WebView2 설치 도구 서명이 올바르지 않습니다.'}
 & $iscc /Qp "/DAppVersion=$version" "/DRoot=$root" "/DExeSource=$exePath" "/DOutputDir=$Out" (Join-Path $root 'installer\BlueAsh.iss')
 if($LASTEXITCODE){throw "ISCC 실패 ($LASTEXITCODE)"}
 $setup=Join-Path $Out "BlueAsh-Setup-$version.exe"

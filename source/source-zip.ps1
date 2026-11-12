@@ -9,11 +9,11 @@ Add-Type -AssemblyName System.IO.Compression,System.IO.Compression.FileSystem
 $root=Split-Path $PSScriptRoot -Parent
 $files=@(& git -C $root -c core.quotepath=off ls-files)|Where-Object{$_ -notmatch '^(AGENTS\.md|CLAUDE\.md|RULES\.md|\.claude/|\.codex/|docs/|relay/|brand/|BlueAsh\.exe$|t\.exe$)'}
 if($LASTEXITCODE -or $files.Count -lt 50){throw 'git ls-files를 읽지 못했습니다.'}
-[void][IO.Directory]::CreateDirectory($Out);$target=Join-Path $Out "BlueAsh-$Version-source.zip";if(Test-Path -LiteralPath $target){Remove-Item -LiteralPath $target}
+[void][IO.Directory]::CreateDirectory($Out);$target=Join-Path $Out "BlueAsh-$Version-source.zip";if(Test-Path -LiteralPath $target){throw "소스 ZIP이 이미 있습니다: $target"}
 $zip=[IO.Compression.ZipFile]::Open($target,'Create')
 try{foreach($f in $files){$src=Join-Path $root $f;if(Test-Path -LiteralPath $src -PathType Leaf){[void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,$src,"BlueAsh-$Version-source/$f",'Optimal')}}}finally{$zip.Dispose()}
 $size=(Get-Item -LiteralPath $target).Length
 # Cloudflare serves static files up to 25 MiB.
-if($size -gt 25MB){Remove-Item -LiteralPath $target;throw "소스 ZIP이 $([Math]::Round($size/1MB,1)) MB로 25 MB 제한을 넘습니다."}
+if($size -gt 25MB){throw "소스 ZIP이 $([Math]::Round($size/1MB,1)) MB로 25 MB 제한을 넘습니다."}
 Copy-Item -LiteralPath $target -Destination (Join-Path $Out 'BlueAsh-source-latest.zip') -Force
 "소스: $target ($([Math]::Round($size/1MB,1)) MB, 파일 $($files.Count)개)"

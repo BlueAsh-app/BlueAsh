@@ -930,15 +930,29 @@ namespace ModePulse {
   public static void SetDone(string mode,string id,bool on){HashSet<string> s;if(!done.TryGetValue(ModeKey(mode),out s))done[ModeKey(mode)]=s=new HashSet<string>();if(on)s.Add(id);else s.Remove(id);Save();}
   // ---- States: chapter done / locked (a required chapter not done) / active (something ticked) / open; a step is
   // done, next (the chapter's first unticked main objective), active (the rest of a started chapter) or locked.
-  static bool MainDone(Chapter c,string mode){foreach(var s in c.Steps)if(!s.Optional&&!IsDone(mode,s.Id))return false;return true;}
+  // A side of a choice is skipped once the other side has a ticked step; an ending's steps count only once that ending
+  // was started. Skipped and unstarted-ending steps are not needed to finish the chapter.
+  public static bool Skipped(Step s,string mode){if(IsDone(mode,s.Id))return false;var c=s.Chapter;
+   foreach(var b in c.Branches){string other=b[0]==s.Quest?b[1]:b[1]==s.Quest?b[0]:null;if(other!=null&&c.Steps.Exists(x=>x.Quest==other&&IsDone(mode,x.Id))&&!c.Steps.Exists(x=>x.Quest==s.Quest&&IsDone(mode,x.Id)))return true;}
+   if(s.Ending.Length>0&&!c.Steps.Exists(x=>x.Ending==s.Ending&&IsDone(mode,x.Id))&&c.Steps.Exists(x=>x.Ending.Length>0&&x.Ending!=s.Ending&&IsDone(mode,x.Id)))return true;return false;}
+  public static bool Required(Step s,string mode){return !s.Optional&&!Skipped(s,mode)&&(s.Ending.Length==0||s.Chapter.Steps.Exists(x=>x.Ending==s.Ending&&IsDone(mode,x.Id)));}
+  static bool MainDone(Chapter c,string mode){foreach(var s in c.Steps)if(Required(s,mode)&&!IsDone(mode,s.Id))return false;return true;}
   public static string ChapterState(Chapter c,string mode){if(MainDone(c,mode))return "done";foreach(var r in c.Requires){var rc=Find(r);if(rc!=null&&!MainDone(rc,mode))return "locked";}foreach(var s in c.Steps)if(IsDone(mode,s.Id))return "active";return "open";}
-  public static Step NextOf(Chapter c,string mode){if(ChapterState(c,mode)=="locked")return null;foreach(var s in c.Steps)if(!s.Optional&&!IsDone(mode,s.Id))return s;return null;}
-  public static string StateOf(Step s,string mode){if(IsDone(mode,s.Id))return "done";var cs=ChapterState(s.Chapter,mode);if(cs=="locked")return "locked";if(NextOf(s.Chapter,mode)==s)return "next";return cs=="open"?"locked":"active";}
+  public static Step NextOf(Chapter c,string mode){if(ChapterState(c,mode)=="locked")return null;foreach(var s in c.Steps)if(Required(s,mode)&&!IsDone(mode,s.Id))return s;return null;}
+  public static string StateOf(Step s,string mode){if(IsDone(mode,s.Id))return "done";if(Skipped(s,mode))return "skipped";var cs=ChapterState(s.Chapter,mode);if(cs=="locked")return "locked";if(NextOf(s.Chapter,mode)==s)return "next";return cs=="open"?"locked":"active";}
+  // "Done up to here": this step and every needed step before it that is not part of a choice (a choice is the player's to tick).
+  public static void FillTo(string mode,string id){Step t;if(!Steps.TryGetValue(id,out t))return;HashSet<string> set;if(!done.TryGetValue(ModeKey(mode),out set))done[ModeKey(mode)]=set=new HashSet<string>();
+   foreach(var s in t.Chapter.Steps){if(s.Index>t.Index)break;if(s==t||(Required(s,mode)&&!IsBranch(s)))set.Add(s.Id);}Save();}
+  // A whole chapter (and the chapters it needs) done: every needed step outside the choices.
+  public static void FinishChapter(string mode,string chapter){var c=Find(chapter);if(c==null)return;HashSet<string> set;if(!done.TryGetValue(ModeKey(mode),out set))done[ModeKey(mode)]=set=new HashSet<string>();
+   var todo=new List<Chapter>{c};for(int i=0;i<todo.Count;i++)foreach(var r in todo[i].Requires){var rc=Find(r);if(rc!=null&&!todo.Contains(rc))todo.Add(rc);}
+   foreach(var x in todo)foreach(var s in x.Steps)if(Required(s,mode)&&!IsBranch(s))set.Add(s.Id);Save();}
+  public static void ClearChapter(string mode,string chapter){var c=Find(chapter);HashSet<string> set;if(c==null||!done.TryGetValue(ModeKey(mode),out set))return;foreach(var s in c.Steps)set.Remove(s.Id);Save();}
   // Part of a choice: a sub-quest that cannot be completed together with another, or the way to one ending.
   public static bool IsBranch(Step s){if(s.Ending.Length>0)return true;foreach(var b in s.Chapter.Branches)if(b[0]==s.Quest||b[1]==s.Quest)return true;return false;}
-  public static string StateText(string state){return I18n.Text(state=="next"?"다음 목표":state=="active"?"진행 중":state=="locked"?"미해금":state=="done"?"완료":state=="branch"?"분기":"위치 미확인");}
-  public static int DoneCount(Chapter c,string mode,out int total){int n=0;total=0;foreach(var s in c.Steps){if(s.Optional)continue;total++;if(IsDone(mode,s.Id))n++;}return n;}
-  static bool Shown(Step s,string state){if(state=="done"&&HideDone)return false;if(state=="active"&&!ShowActive)return false;if(state=="next"&&!ShowNext)return false;if(state=="locked"&&Only.Length==0)return false;return !BranchOnly||IsBranch(s);}
+  public static string StateText(string state){return I18n.Text(state=="next"?"다음 목표":state=="active"?"진행 중":state=="locked"?"미해금":state=="done"?"완료":state=="branch"?"분기":state=="skipped"?"고르지 않은 쪽":"위치 미확인");}
+  public static int DoneCount(Chapter c,string mode,out int total){int n=0;total=0;foreach(var s in c.Steps){if(!Required(s,mode)&&!(IsDone(mode,s.Id)&&!s.Optional))continue;total++;if(IsDone(mode,s.Id))n++;}return n;}
+  static bool Shown(Step s,string state){if(state=="skipped")return false;if(state=="done"&&HideDone)return false;if(state=="active"&&!ShowActive)return false;if(state=="next"&&!ShowNext)return false;if(state=="locked"&&Only.Length==0)return false;return !BranchOnly||IsBranch(s);}
   // Image spot of a game x,z: on maps drawn floor by floor only when every floor that takes it agrees (a mark has no height).
   static double[] Place(string map,string shipped,double x,double z){var fl=FandomMarkers.Floors(map,shipped,x,z);
    if(fl!=null&&fl.Count>0){double u=0,v=0;foreach(var p in fl){u+=p[0];v+=p[1];}u/=fl.Count;v/=fl.Count;foreach(var p in fl)if(Math.Abs(p[0]-u)>0.02||Math.Abs(p[1]-v)>0.02)return null;return new[]{u,v};}
@@ -980,24 +994,29 @@ namespace ModePulse {
    bool spoil=Spoiler=="guide"||Spoiler=="all";
    var picks=new List<object>();foreach(var id in ids){Step o;if(Steps.TryGetValue(id,out o))picks.Add(new Dictionary<string,object>{{"id",o.Id},{"chapter",o.Chapter.Name},{"color",Hex(ColorOf(o.Chapter.Id))},{"text",T(o.Text)},{"state",StateOf(o,mode)},{"branch",IsBranch(o)}});}
    var rows=new List<object>();foreach(var x in c.Steps)rows.Add(StepRow(x,mode,mapName,x.Ending.Length>0&&!spoil));
-   Step prev=null,next=null;for(int i=s.Index-1;i>=0;i--)if(!c.Steps[i].Optional){prev=c.Steps[i];break;}for(int i=s.Index+1;i<c.Steps.Count;i++)if(!c.Steps[i].Optional){next=c.Steps[i];break;}
+   Step prev=null,next=null;for(int i=s.Index-1;i>=0;i--)if(!c.Steps[i].Optional&&!Skipped(c.Steps[i],mode)){prev=c.Steps[i];break;}for(int i=s.Index+1;i<c.Steps.Count;i++)if(!c.Steps[i].Optional&&!Skipped(c.Steps[i],mode)){next=c.Steps[i];break;}
    var todo=NextOf(c,mode);
    Func<Step,object> link=x=>{if(x==null)return null;var r=StepRow(x,mode,mapName,x.Ending.Length>0&&!spoil);var other=x.Maps.Count>0&&!x.Maps.Contains(map);r["otherMap"]=other?x.Maps[0]:"";r["otherMapName"]=other?mapName(x.Maps[0]):"";return r;};
    var floors=new List<string>();foreach(var mk in s.Marks){if(mk.Map!=map||mk.Floor<0)continue;var f=I18n.Format("편집기 층 {0}",mk.Floor);if(!floors.Contains(f))floors.Add(f);}
    var chapters=new List<object>();foreach(var x in Chapters){int t;int n=DoneCount(x,mode,out t);var req=new List<string>();foreach(var r in x.Requires){var rc=Find(r);if(rc!=null)req.Add(rc.Name);}var nx=NextOf(x,mode);
     chapters.Add(new Dictionary<string,object>{{"id",x.Id},{"name",x.Name},{"color",Hex(ColorOf(x.Id))},{"state",ChapterState(x,mode)},{"done",n},{"total",t},{"requires",req},{"next",nx==null?"":nx.Id}});}
-   // Branches: each pair of sub-quests that cannot both be completed (from the game's own quest data), only as far as the spoiler level allows.
-   var branches=new List<object>();foreach(var b in c.Branches){var sides=new List<object>();foreach(var q in b){var steps=c.Steps.FindAll(x=>x.Quest==q);var texts=new List<string>();foreach(var x in steps)texts.Add(T(x.Text));
-     sides.Add(new Dictionary<string,object>{{"quest",q},{"steps",Spoiler=="hint"?new List<string>():texts},{"factors",Spoiler=="hint"?null:Factors(steps,mapName)},{"mine",steps.Exists(x=>IsDone(mode,x.Id))}});}
+   // Choices: each pair of sub-quests that cannot both be completed (the game's own quest data), and the endings; their
+   // objectives only once the player chose to see them (story spoilers).
+   var branches=new List<object>();foreach(var b in c.Branches){var sides=new List<object>();foreach(var q in b){var steps=c.Steps.FindAll(x=>x.Quest==q);var rows2=new List<object>();foreach(var x in steps)rows2.Add(StepRow(x,mode,mapName,!spoil));
+     sides.Add(new Dictionary<string,object>{{"quest",q},{"steps",spoil?rows2:new List<object>()},{"factors",spoil?Factors(steps,mapName):null},{"mine",steps.Exists(x=>IsDone(mode,x.Id))},{"skipped",steps.Count>0&&steps.TrueForAll(x=>Skipped(x,mode))}});}
     branches.Add(new Dictionary<string,object>{{"sides",sides},{"involvesPick",b[0]==s.Quest||b[1]==s.Quest}});}
-   var endings=new List<object>();foreach(var e in c.Endings)endings.Add(new Dictionary<string,object>{{"system",Spoiler=="all"?e[1]:""},{"objectives",Convert.ToInt32(e[3])},{"steps",Spoiler=="all"?c.Steps.FindAll(x=>x.Ending==e[0]).ConvertAll(x=>(object)T(x.Text)):new List<object>()}});
+   var endings=new List<object>();foreach(var e in c.Endings){var steps=c.Steps.FindAll(x=>x.Ending==e[0]);var rows2=new List<object>();if(spoil)foreach(var x in steps)rows2.Add(StepRow(x,mode,mapName,false));
+    endings.Add(new Dictionary<string,object>{{"name",spoil?EndingName(e[1]):""},{"objectives",Convert.ToInt32(e[3])},{"steps",rows2},{"mine",steps.Exists(x=>IsDone(mode,x.Id))}});}
+   var notes=c.Notes.StartsWith("The reference capture",StringComparison.Ordinal)?"":T(c.Notes);
    int total2;int doneN=DoneCount(c,mode,out total2);
    return new Dictionary<string,object>{{"mode",ModeLabel(mode)},{"spoiler",Spoiler},{"picks",picks},{"step",StepRow(s,mode,mapName,false)},{"floors",floors},{"here",s.Maps.Contains(map)||s.Marks.Exists(m=>m.Map==map)},{"mapNames",s.Maps.ConvertAll(m=>(object)mapName(m))},
     {"isNext",todo==s},{"prev",link(prev)},{"next",link(next)},{"todo",todo==null||todo==s?null:link(todo)},
     {"chapter",new Dictionary<string,object>{{"id",c.Id},{"name",c.Name},{"color",Hex(ColorOf(c.Id))},{"icon",StoryIcon.Svg(c.Id)},{"state",ChapterState(c,mode)},{"done",doneN},{"total",total2},{"activation",T(c.Activation)},{"description",T(c.Description)},
-     {"notes",spoil?T(c.Notes):""},{"rewards",T(c.Rewards)},{"partial",c.Partial},{"referenced",c.Referenced},{"resolved",c.Resolved},{"missing",c.MissingTexts},{"wiki",c.Wiki.StartsWith("https://escapefromtarkov.fandom.com/",StringComparison.Ordinal)},{"steps",rows},{"hasBranch",c.Branches.Count>0||c.Endings.Count>0}}},
-    {"branches",Spoiler=="hide"?new List<object>():branches},{"branchCount",c.Branches.Count},{"endingCount",c.Endings.Count},{"endings",Spoiler=="hide"||Spoiler=="hint"?new List<object>():endings},{"chapters",chapters},
+     {"notes",spoil?notes:""},{"rewards",T(c.Rewards)},{"partial",c.Partial},{"referenced",c.Referenced},{"resolved",c.Resolved},{"missing",c.MissingTexts},{"wiki",c.Wiki.StartsWith("https://escapefromtarkov.fandom.com/",StringComparison.Ordinal)},{"steps",rows},{"hasBranch",c.Branches.Count>0||c.Endings.Count>0}}},
+    {"show",spoil},{"branches",branches},{"branchCount",c.Branches.Count},{"endingCount",c.Endings.Count},{"endings",endings},{"chapters",chapters},
     {"sources",string.Join(" · ",Sources)},{"checked",Checked}};}
+  // The game's ending ids, by the names the players and the wiki use.
+  static string EndingName(string system){switch(system){case "EscapedFromTarkovForHumanity":return I18n.Text("구원자 엔딩 (Savior)");case "EscapedFromTarkovAndSurvived":return I18n.Text("생존자 엔딩 (Survivor)");case "EscapedFromTarkovToFallInTheDarkness":return I18n.Text("타락 엔딩 (Fallen)");case "YouDidntEscapeFromYourself":return I18n.Text("채무자 엔딩 (Debtor)");default:return system;}}
   static string Hex(Color c){return "#"+c.R.ToString("x2")+c.G.ToString("x2")+c.B.ToString("x2");}
  }
  // Tarkov writes the player's position and rotation into in-raid screenshot names:
@@ -2029,97 +2048,109 @@ function pics(g,r){if(g!==G)return;const w=document.getElementById('w');if(!w)re
    if(cmd=="close"||cmd=="esc"){Hide();owner.Canvas.Focus();}
    else if(cmd=="key"){owner.HideMap();}
    else if(cmd=="tab"){int.TryParse(arg,out tab);}
+   else if(cmd=="finish"||cmd=="clear"){if(Story.Find(arg)!=null)owner.FinishStory(arg,cmd=="finish");}
+   else if(cmd=="show"){owner.StorySpoiler(arg=="1");}
    else if(!Regex.IsMatch(arg,"^([0-9a-f]{24}|hide|hint|guide|all|)$"))return;
    else if(cmd=="pick"){if(!Ids.Contains(arg))Ids=new List<string>{arg};Pick=arg;owner.Canvas.StoryFocus=arg;owner.Canvas.Invalidate();Refresh();}
    else if(cmd=="toggle"){owner.ToggleStory(arg);}
+   else if(cmd=="done"){var n=owner.DoneStory(arg);if(n!=arg){if(!Ids.Contains(n))Ids=new List<string>{n};Pick=n;owner.Canvas.StoryFocus=n;owner.Canvas.Invalidate();Refresh();}}
+   else if(cmd=="fill"){owner.FillStory(arg);}
    else if(cmd=="locate"){owner.LocateStory(arg);}
    else if(cmd=="spoiler"){Story.Spoiler=arg;Story.Save();Refresh();}
    else if(cmd=="wiki"){Story.Step s;if(Story.Steps.TryGetValue(Pick,out s)&&s.Chapter.Wiki.StartsWith("https://escapefromtarkov.fandom.com/",StringComparison.Ordinal))try{System.Diagnostics.Process.Start(s.Chapter.Wiki);}catch{}}
   }
   string Page(){
-   var text=new Dictionary<string,object>();foreach(var k in new[]{"공략","진행도","분기·보상","이 자리의 목표","단계 {0} / {1}","선택 목표","완료로 표시","완료 취소","위치","지도에서 위치 보기","이 지도에는 표시할 위치가 없습니다.","위치 데이터가 없습니다. 대략적인 지역만 안내합니다.","층","준비물·열쇠",
-    "따로 확인된 준비물 데이터가 없습니다. 목표 문장의 아이템·열쇠를 확인하세요.","완료 조건","목표 문장대로 하면 완료됩니다. 게임 로그로는 확인할 수 없어 직접 체크합니다.","챕터 시작 방법","이전 단계","다음 단계","다음 목표","지도로 이동","보기","챕터 진행","모든 챕터","필요:","이 챕터 데이터는 일부만 확인됐습니다. 하위 퀘스트 {0}/{1}개 확인, 문장 없는 목표 {2}개.","스포일러",
-    "숨김","힌트","공략","전체 공개","스포일러 보호 중입니다. 보려면 위에서 공개 수준을 고르세요.","이 챕터에는 함께 끝낼 수 없는 선택이 {0}곳 있습니다. 한쪽을 끝내면 다른 쪽은 끝낼 수 없습니다.","엔딩으로 갈라지는 길 {0}개가 있습니다.","선택 {0}","선택 A","선택 B","이 선택에 포함된 목표","목표 {0}개","목표 수","맵","생존·탈출 조건 있음","제거 조건 있음","아이템 전달·획득 있음","열쇠·키카드 언급","보스·위험 세력",
-    "포기하게 되는 것","다른 쪽 하위 퀘스트를 끝낼 수 없게 됩니다.","되돌릴 수 있는지","되돌릴 수 없습니다 (게임 데이터상 함께 완료 불가).","보상","미확인","우호도·엔딩 영향","난이도 요소 비교 (어느 쪽이 쉽다고 단정하지 않습니다)","선택한 쪽","엔딩","목표가 확인된 길","목표 데이터 없음","출처 메모",
-    "출처","확인 날짜","위키에서 챕터 보기","진행도는 이 PC에만 저장되며 모드별로 따로 기록됩니다.","보상·우호도·엔딩 영향은 확인된 데이터가 없으면 '미확인'으로 표시합니다.","PvP·PvE 공통 데이터로 공개돼 있습니다. 모드별 차이는 확인되지 않았습니다.","챕터 보상","닫기 (Esc)",
-    "진행 중","다음 목표","미해금","완료","분기","시작 전","잠김"})text[k]=I18n.Text(k);
-   var css=@"*{box-sizing:border-box}html,body{margin:0;background:PANEL;color:INK;font:14px/1.5 'FONT','Segoe UI',sans-serif;overflow:hidden;user-select:none}
-#card{position:absolute;inset:0;overflow-y:auto;border:1px solid BORDER;border-left:3px solid ACCENT;padding:14px 16px 18px 18px;scrollbar-color:BORDER PANEL}
-#x{position:sticky;top:0;float:right;margin:-6px -8px 0 8px;width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:MUTED;font-size:16px;cursor:pointer;z-index:2}#x:hover{background:HOVER;color:INK}
-.ico{font-family:'Segoe MDL2 Assets';font-style:normal}.head{display:flex;gap:12px;align-items:center;margin:2px 0 6px}.dia{width:34px;height:34px;transform:rotate(45deg);border-radius:6px;display:grid;place-items:center;flex:none;box-shadow:0 0 0 1.5px #fff8}.dia svg{transform:rotate(-45deg);width:21px;height:21px;fill:#fff}
-h1{font-size:18px;margin:0;line-height:1.25}.sub{color:MUTED;font-size:12.5px}.bar{height:6px;border-radius:3px;background:FIELD;margin:8px 0 2px;overflow:hidden}.bar i{display:block;height:100%;border-radius:3px}
-.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:1px 9px;border-radius:999px;border:1px solid BORDER;color:INK;white-space:nowrap}.chip .ico{font-size:11px}
-.st-next{border-color:#fff;background:#ffffff1a}.st-active{border-color:ATEXT;color:ATEXT}.st-locked{color:MUTED}.st-done{border-color:#2ecc71;color:#5fe39a}.st-branch{border-color:#f1c40f;color:#f5d76e}.st-unknown{border-style:dashed;color:MUTED}
-.tabs{display:flex;gap:6px;margin:14px 0 12px;border-bottom:1px solid BORDER}.tabs button{background:none;border:0;color:MUTED;font:inherit;font-size:13.5px;padding:7px 10px 9px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}.tabs button.on{color:INK;border-color:ACCENT;font-weight:600}.tabs button:hover{color:INK}
-h2{font-size:12.5px;color:MUTED;font-weight:600;margin:16px 0 6px;letter-spacing:.02em}.big{font-size:16.5px;font-weight:600;line-height:1.35;margin:6px 0 2px}.en{color:MUTED;font-size:12.5px;font-style:italic}
-.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid BORDER;background:FIELD;color:INK;border-radius:8px;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer}.btn:hover{background:HOVER}.btn.primary{background:ACCENT;border-color:ACCENT}.btn.primary:hover{background:AHOVER}.btn.ok{background:#14532d;border-color:#2ecc71}
-.box{background:FIELD;border:1px solid BORDER;border-radius:10px;padding:10px 12px;margin:6px 0}.muted{color:MUTED;font-size:12.5px}.warn{color:#f5d76e;font-size:12.5px}
-.nav{display:grid;grid-template-columns:1fr 1fr;gap:8px}.nav .box{margin:0;cursor:pointer}.nav .box:hover{border-color:ACCENT}.nav b{display:block;font-size:12px;color:MUTED;font-weight:600}
-.row{display:flex;gap:10px;align-items:flex-start;padding:6px 6px;border-radius:8px;cursor:pointer}.row:hover{background:HOVER}.row.cur{background:#2f6cff22}
-.ck{width:18px;height:18px;border-radius:5px;border:1.5px solid MUTED;flex:none;margin-top:2px;display:grid;place-items:center;color:#fff;font-size:11px}.ck.on{background:#22a35a;border-color:#22a35a}
-.row .t{flex:1}.row .t small{display:block;color:MUTED;font-size:11.5px}.opt{color:MUTED;font-size:11.5px}
-.pick{display:flex;gap:8px;align-items:center;padding:7px 9px;border-radius:8px;border:1px solid BORDER;margin:5px 0;cursor:pointer;font-size:13px}.pick:hover,.pick.on{border-color:ACCENT;background:#2f6cff1a}.dot{width:10px;height:10px;transform:rotate(45deg);border-radius:2px;flex:none}
-.seg{display:flex;border:1px solid BORDER;border-radius:9px;overflow:hidden;margin:4px 0 10px}.seg button{flex:1;background:none;border:0;color:MUTED;font:inherit;font-size:12.5px;padding:7px 0;cursor:pointer}.seg button.on{background:ACCENT;color:#fff}
-.sides{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sides .box{margin:0}.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12.5px}.kv span:nth-child(odd){color:MUTED}
-.chap{display:flex;gap:10px;align-items:center;padding:6px;border-radius:8px;cursor:pointer}.chap:hover{background:HOVER}.chap .n{margin-left:auto;color:MUTED;font-size:12px}
-.src{color:MUTED;font-size:11.5px;margin-top:20px;border-top:1px solid BORDER;padding-top:10px}a{color:ATEXT;cursor:pointer;text-decoration:underline}";
+   var text=new Dictionary<string,object>();foreach(var k in new[]{"이번 목표","챕터 진행","선택과 엔딩","이 자리의 목표","목표 {0} / {1}","선택 목표","완료하고 다음 목표로","완료로 표시","완료 취소","여기까지 모두 완료","지도에서 보기","지도로 이동","위치 데이터가 없습니다.","층","챕터 시작 방법","이어지는 목표","챕터의 마지막 목표입니다.",
+    "선택지에 속한 목표입니다. 다른 쪽과 함께 끝낼 수 없습니다.","선택 보기","게임 기록에는 스토리 진행이 남지 않아 직접 체크합니다. 줄 오른쪽 '여기까지'를 누르면 그 목표까지 한 번에 완료됩니다.","여기까지","챕터 전체 완료","챕터 초기화","한 번 더 누르면 초기화","모든 챕터","필요:",
+    "이 챕터 데이터는 일부만 확인됐습니다. 하위 퀘스트 {0}/{1}개 확인, 문장 없는 목표 {2}개.","선택 {0}","또는","고른 쪽","고르지 않은 쪽","목표 {0}개","생존·탈출","제거","아이템 전달","열쇠·키카드","보스: {0}",
+    "이 챕터에는 둘 중 하나만 끝낼 수 있는 선택이 {0}곳 있습니다.","엔딩으로 갈라지는 길이 {0}개 있습니다.","내용을 보면 스토리 전개가 드러날 수 있어 기본으로 가려 둡니다.","선택지 내용 보기","내용 가리기",
+    "한쪽 목표를 끝내면 다른 쪽은 끝낼 수 없고, 되돌릴 수 없습니다.","알려진 영향","엔딩","이 엔딩으로 가는 목표 {0}개","목표 데이터가 없습니다.","{0}개 더 보기","챕터 보상","고른 엔딩",
+    "출처","확인 날짜","위키에서 챕터 보기","진행도는 이 PC에만, 모드별로 따로 저장됩니다.","닫기 (Esc)","진행 중","다음 목표","미해금","완료","선택","시작 전"})text[k]=I18n.Text(k);
+   var css=@"*{box-sizing:border-box}html,body{margin:0;background:PANEL;color:INK;font:15px/1.6 'FONT','Segoe UI',sans-serif;overflow:hidden;user-select:none;-webkit-font-smoothing:antialiased}
+#card{position:absolute;inset:0;overflow-y:auto;border:1px solid BORDER;border-radius:14px;padding:18px 20px 22px;scrollbar-width:thin;scrollbar-color:BORDER transparent}
+#x{position:sticky;top:0;float:right;margin:-8px -10px 0 8px;width:34px;height:34px;border:0;border-radius:10px;background:transparent;color:MUTED;font-size:16px;cursor:pointer;z-index:2}#x:hover{background:HOVER;color:INK}
+.ico{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-style:normal;font-size:13px;line-height:1}
+.head{display:flex;gap:14px;align-items:center;margin:0 0 12px}.dia{width:38px;height:38px;transform:rotate(45deg);border-radius:8px;display:grid;place-items:center;flex:none;box-shadow:0 0 0 1.5px #ffffff55,0 6px 18px -6px var(--c)}.dia svg{transform:rotate(-45deg);width:22px;height:22px;fill:#fff}
+h1{font-size:20px;margin:0;line-height:1.25;letter-spacing:-.01em}.sub{color:MUTED;font-size:13px;margin-top:2px}
+.bar{height:6px;border-radius:3px;background:FIELD;overflow:hidden}.bar i{display:block;height:100%;border-radius:3px;background:var(--c)}
+.tabs{display:flex;gap:4px;padding:4px;margin:16px 0 18px;background:FIELD;border-radius:12px}.tabs button{flex:1;background:none;border:0;color:MUTED;font:inherit;font-size:13.5px;font-weight:600;padding:8px 4px;border-radius:9px;cursor:pointer;transition:background .15s,color .15s}.tabs button:hover{color:INK}.tabs button.on{background:PANEL;color:INK;box-shadow:0 1px 0 #ffffff10,0 2px 8px #0006}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;background:#ffffff10;color:MUTED;white-space:nowrap}
+.st-next{background:ACCENT;color:#fff}.st-active{background:#2f6cff26;color:ATEXT}.st-done{background:#22a35a2e;color:#6ee7a0}.st-branch{background:#f1c40f26;color:#f5d76e}.st-skipped{background:#ffffff0a;color:MUTED}.st-locked{background:#ffffff0a}
+.label{font-size:12.5px;font-weight:700;color:MUTED;letter-spacing:.03em;margin:22px 0 8px}
+.goal{font-size:19px;font-weight:700;line-height:1.4;margin:10px 0 2px;letter-spacing:-.01em}.en{color:MUTED;font-size:13px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid BORDER;background:FIELD;color:INK;border-radius:10px;padding:9px 14px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s}.btn:hover{background:HOVER}
+.btn.primary{background:ACCENT;border-color:ACCENT;color:#fff}.btn.primary:hover{background:AHOVER}.btn.ok{background:#22a35a26;border-color:#22a35a;color:#6ee7a0}.btn.small{padding:5px 10px;font-size:12.5px}.btn.danger{border-color:#e5484d;color:#ff8a8d}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.actions .primary{flex:1}
+.box{background:FIELD;border-radius:12px;padding:12px 14px;margin:8px 0}.muted{color:MUTED;font-size:13px}.note{display:flex;gap:10px;align-items:flex-start;background:#f1c40f14;border:1px solid #f1c40f40;color:#f5d76e;border-radius:12px;padding:10px 12px;font-size:13px;margin:12px 0}
+.where{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.map{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:5px 11px;border-radius:9px;background:#ffffff0d}
+.row{display:flex;gap:12px;align-items:flex-start;padding:9px 10px;border-radius:10px;cursor:pointer;position:relative}.row:hover{background:HOVER}.row.cur{background:#2f6cff1c}.row.nx{box-shadow:inset 3px 0 0 ACCENT}
+.row .t{flex:1;min-width:0}.row .t .n{color:MUTED;font-size:12.5px;margin-right:6px;font-variant-numeric:tabular-nums}.row .t small{display:block;color:MUTED;font-size:12px;margin-top:1px}.row.sk .t{color:MUTED;text-decoration:line-through;text-decoration-color:#ffffff40}
+.ck{width:20px;height:20px;border-radius:6px;border:1.5px solid #ffffff40;flex:none;margin-top:2px;display:grid;place-items:center;color:#fff;font-size:12px;transition:background .15s,border-color .15s}.ck:hover{border-color:ATEXT}.ck.on{background:#22a35a;border-color:#22a35a}
+.row .fill{position:absolute;right:8px;top:50%;transform:translateY(-50%);opacity:0;transition:opacity .15s;box-shadow:0 0 0 6px HOVER}.row:hover .fill{opacity:1}.tag{font-size:11px;font-weight:700;color:#f5d76e;margin-left:6px}
+.pick{display:flex;gap:10px;align-items:center;padding:9px 11px;border-radius:10px;background:FIELD;margin:6px 0;cursor:pointer;font-size:13.5px;border:1px solid transparent}.pick:hover,.pick.on{border-color:ACCENT}.dot{width:10px;height:10px;transform:rotate(45deg);border-radius:2px;flex:none}
+.opt{background:FIELD;border-radius:14px;padding:14px 16px;border:1px solid transparent}.opt.mine{border-color:#22a35a}.opt.sk{opacity:.55}.opt h3{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-size:15px}
+.letter{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:800;background:#ffffff14;flex:none}.opt ol{margin:0;padding-left:20px}.opt li{margin:4px 0;font-size:14px;line-height:1.5}.opt li.d{color:#6ee7a0}
+.facts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.or{display:flex;align-items:center;gap:10px;color:MUTED;font-size:12px;font-weight:700;margin:8px 4px}.or::before,.or::after{content:'';flex:1;height:1px;background:BORDER}
+.chap{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;cursor:pointer}.chap:hover{background:HOVER}.chap .nm{flex:1;min-width:0}.chap .mini{height:4px;border-radius:2px;background:#ffffff12;margin-top:5px;overflow:hidden}.chap .mini i{display:block;height:100%}.chap .n{color:MUTED;font-size:12.5px;font-variant-numeric:tabular-nums}
+.gate{text-align:center;padding:22px 18px}.gate p{margin:6px 0 16px}.src{color:MUTED;font-size:11.5px;line-height:1.5;margin-top:26px;border-top:1px solid BORDER;padding-top:12px}a{color:ATEXT;cursor:pointer;text-decoration:underline}";
    css=css.Replace("AHOVER",Hex(Theme.AccentHover)).Replace("INK",Hex(Theme.Ink)).Replace("PANEL",Hex(Theme.Panel)).Replace("BORDER",Hex(Theme.Border)).Replace("ACCENT",Hex(Theme.Accent)).Replace("MUTED",Hex(Theme.Muted)).Replace("HOVER",Hex(Theme.Hover)).Replace("ATEXT",Hex(Theme.AccentText)).Replace("FIELD",Hex(Theme.Field)).Replace("FONT",I18n.FontName);
-   var script=@"const T=TEXT,post=m=>window.chrome.webview.postMessage(m),card=document.getElementById('card');let D=null,tab=0;
+   var script=@"const T=TEXT,post=m=>window.chrome.webview.postMessage(m),card=document.getElementById('card');let D=null,tab=0,armed=false,more={};
 const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
 const fmt=(s,...a)=>s.replace(/\{(\d)\}/g,(m,i)=>a[i]);
-const ICON={next:'',active:'',locked:'',done:'',branch:'',unknown:'?'};
-function chip(state,label){const c=el('span','chip st-'+state);const i=el('i','ico',ICON[state]||'');if(state==='unknown')i.className='';c.append(i,document.createTextNode(label||T[{next:'다음 목표',active:'진행 중',locked:'미해금',done:'완료',branch:'분기',open:'시작 전'}[state]]||''));return c}
-function btn(label,cls,on,icon){const b=el('button','btn '+(cls||''));if(icon)b.append(el('i','ico',icon));b.append(document.createTextNode(label));b.onclick=on;return b}
-function render(d){D=d;tab=Math.min(d.tab||0,d.chapter.hasBranch?2:1);const top=card.scrollTop,same=card.dataset.pick===d.step.id;card.dataset.pick=d.step.id;card.replaceChildren(document.getElementById('x')||mkX());draw();if(same)card.scrollTop=top}
+const NAME={next:'다음 목표',active:'진행 중',locked:'미해금',done:'완료',branch:'선택',skipped:'고르지 않은 쪽',open:'시작 전'};
+function chip(state,label){return el('span','chip st-'+state,label||T[NAME[state]]||'')}
+function btn(label,cls,on,icon){const b=el('button','btn '+(cls||''));if(icon)b.append(el('i','ico',icon));b.append(document.createTextNode(label));b.onclick=e=>{e.stopPropagation();on(e)};return b}
+function render(d){D=d;tab=Math.min(d.tab||0,d.chapter.hasBranch?2:1);armed=false;const top=card.scrollTop,same=card.dataset.pick===d.step.id;card.dataset.pick=d.step.id;card.replaceChildren(document.getElementById('x')||mkX());card.style.setProperty('--c',d.chapter.color);draw();if(same)card.scrollTop=top}
 function mkX(){const x=el('button','','✕');x.id='x';x.title=T['닫기 (Esc)'];x.onclick=()=>post('close');return x}
+function redraw(){card.replaceChildren(card.querySelector('#x'));draw()}
 function draw(){const d=D,c=d.chapter;
- if(d.picks.length>1){card.append(el('h2','',T['이 자리의 목표']+' · '+d.picks.length));d.picks.forEach(p=>{const r=el('div','pick'+(p.id===d.step.id?' on':''));const dt=el('span','dot');dt.style.background=p.color;r.append(dt,el('span','',p.chapter+' · '+p.text));r.append(chip(p.branch&&p.state!=='done'&&p.state!=='locked'?'branch':p.state));r.onclick=()=>post('pick:'+p.id);card.append(r)})}
- const h=el('div','head'),dia=el('div','dia');dia.style.background=c.color;const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');for(const d of c.icon){const pa=document.createElementNS('http://www.w3.org/2000/svg','path');pa.setAttribute('d',d);pa.setAttribute('fill-rule','evenodd');svg.append(pa);}dia.append(svg);const tt=el('div','');tt.append(el('h1','',c.name));
- const sub=el('div','sub',d.mode+' · '+T['챕터 진행']+' '+c.done+' / '+c.total);tt.append(sub);h.append(dia,tt);card.append(h);
- const bar=el('div','bar'),fill=el('i');fill.style.width=(c.total?100*c.done/c.total:0)+'%';fill.style.background=c.color;bar.append(fill);card.append(bar);
- const tabs=el('div','tabs');[T['공략'],T['진행도']].concat(c.hasBranch?[T['분기·보상']]:[]).forEach((n,i)=>{const b=el('button',i===tab?'on':'',n);b.onclick=()=>{tab=i;post('tab:'+i);card.replaceChildren(card.querySelector('#x'));draw()};tabs.append(b)});card.append(tabs);
- [guide,progress,branch][tab]();
- const s=el('div','src');s.append(document.createTextNode(T['출처']+': '+d.sources+' · '+T['확인 날짜']+' '+d.checked+'. '+T['PvP·PvE 공통 데이터로 공개돼 있습니다. 모드별 차이는 확인되지 않았습니다.']+' '+T['진행도는 이 PC에만 저장되며 모드별로 따로 기록됩니다.']+' '));
+ const h=el('div','head'),dia=el('div','dia');dia.style.background=c.color;const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');for(const p of c.icon){const pa=document.createElementNS('http://www.w3.org/2000/svg','path');pa.setAttribute('d',p);pa.setAttribute('fill-rule','evenodd');svg.append(pa)}dia.append(svg);
+ const tt=el('div','');tt.style.flex='1';tt.append(el('h1','',c.name),el('div','sub',d.mode+' · '+T['챕터 진행']+' '+c.done+' / '+c.total));h.append(dia,tt);card.append(h);
+ const bar=el('div','bar'),fill=el('i');fill.style.width=(c.total?100*c.done/c.total:0)+'%';bar.append(fill);card.append(bar);
+ const tabs=el('div','tabs');[T['이번 목표'],T['챕터 진행']].concat(c.hasBranch?[T['선택과 엔딩']]:[]).forEach((n,i)=>{const b=el('button',i===tab?'on':'',n);b.onclick=()=>{tab=i;post('tab:'+i);redraw();card.scrollTop=0};tabs.append(b)});card.append(tabs);
+ [goal,progress,choices][tab]();
+ const s=el('div','src');s.append(document.createTextNode(T['진행도는 이 PC에만, 모드별로 따로 저장됩니다.']+' '+T['출처']+': '+d.sources+' · '+T['확인 날짜']+' '+d.checked+'. '));
  if(c.wiki){const a=el('a','',T['위키에서 챕터 보기']);a.onclick=()=>post('wiki');s.append(a)}card.append(s)}
-function guide(){const d=D,s=d.step,c=d.chapter;
- const line=el('div','');line.style.cssText='display:flex;gap:8px;align-items:center;flex-wrap:wrap';line.append(el('span','sub',fmt(T['단계 {0} / {1}'],s.n,c.steps.length)),chip(s.branch&&!s.done&&s.state!=='locked'?'branch':s.state));if(s.optional)line.append(el('span','opt',T['선택 목표']));card.append(line);
- card.append(el('div','big',s.text));if(s.en)card.append(el('div','en',s.en));
- const act=el('div','');act.style.marginTop='10px';act.append(btn(s.done?T['완료 취소']:T['완료로 표시'],s.done?'ok':'primary',()=>post('toggle:'+s.id),s.done?'':''));card.append(act);
- if(d.todo){const b=el('div','box');b.append(el('div','muted',T['다음 목표']+' · '+d.todo.text));const g=btn(T['보기'],'',()=>post('pick:'+d.todo.id));g.style.marginTop='6px';b.append(g);card.append(b)}
- card.append(el('h2','',T['위치']));const loc=el('div','box');
- if(s.maps.length)loc.append(el('div','',s.maps.join(' · ')));
- if(s.located&&d.here){if(d.floors.length)loc.append(el('div','muted',T['층']+': '+d.floors.join(', ')));const b=btn(T['지도에서 위치 보기'],'',()=>post('locate:'+s.id),'');b.style.marginTop='8px';loc.append(b)}
- else if(s.located){const b=btn(T['지도로 이동'],'',()=>post('locate:'+s.id),'');b.style.marginTop='6px';loc.append(b)}
- else loc.append(el('div','muted',T['위치 데이터가 없습니다. 대략적인 지역만 안내합니다.']));card.append(loc);
- if(s.n===1||c.state==='open'){if(c.activation){card.append(el('h2','',T['챕터 시작 방법']));card.append(el('div','box',c.activation))}}
- card.append(el('h2','',T['준비물·열쇠']));card.append(el('div','box muted',T['따로 확인된 준비물 데이터가 없습니다. 목표 문장의 아이템·열쇠를 확인하세요.']));
- card.append(el('h2','',T['완료 조건']));card.append(el('div','box muted',T['목표 문장대로 하면 완료됩니다. 게임 로그로는 확인할 수 없어 직접 체크합니다.']));
- const nav=el('div','nav');[[T['이전 단계'],d.prev],[T['다음 단계'],d.next]].forEach(([n,x])=>{const b=el('div','box');b.append(el('b','',n));if(!x){b.append(el('span','muted','-'));b.style.cursor='default'}else{b.append(el('div','',x.text));if(x.otherMap){const g=btn(x.otherMapName+' · '+T['지도로 이동'],'',e=>{e.stopPropagation();post('locate:'+x.id)},'');g.style.marginTop='6px';b.append(g)}b.onclick=()=>post('pick:'+x.id)}nav.append(b)});
- card.append(el('h2','',T['이전 단계']+' / '+T['다음 단계']));card.append(nav)}
+function where(x,big){const w=el('div','where');x.maps.forEach(m=>{const t=el('span','map');t.append(el('i','ico',''),document.createTextNode(m));w.append(t)});
+ if(x.located){const here=big?D.here:!x.otherMap;w.append(btn(here?T['지도에서 보기']:T['지도로 이동'],'small',()=>post('locate:'+x.id),here?'':''))}return w}
+function goal(){const d=D,s=d.step,c=d.chapter;
+ if(d.picks.length>1){card.append(el('div','label',T['이 자리의 목표']+' · '+d.picks.length));d.picks.forEach(p=>{const r=el('div','pick'+(p.id===s.id?' on':''));const dt=el('span','dot');dt.style.background=p.color;const t=el('span','',p.text);t.style.flex='1';r.append(dt,t,chip(p.branch&&p.state!=='done'&&p.state!=='locked'&&p.state!=='skipped'?'branch':p.state));r.onclick=()=>post('pick:'+p.id);card.append(r)});card.append(el('div','label',''))}
+ const line=el('div','');line.style.cssText='display:flex;gap:8px;align-items:center;flex-wrap:wrap';line.append(el('span','muted',fmt(T['목표 {0} / {1}'],s.n,c.steps.length)),chip(s.state));if(s.optional)line.append(chip('locked',T['선택 목표']));card.append(line);
+ card.append(el('div','goal',s.text));if(s.en)card.append(el('div','en',s.en));
+ if(s.branch&&!s.done&&s.state!=='skipped'){const n=el('div','note');n.append(el('i','ico',''));const t=el('div','');t.append(document.createTextNode(T['선택지에 속한 목표입니다. 다른 쪽과 함께 끝낼 수 없습니다.']+' '));const a=el('a','',T['선택 보기']);a.onclick=()=>{tab=2;post('tab:2');redraw();card.scrollTop=0};t.append(a);n.append(t);card.append(n)}
+ if(s.maps.length||s.located){const w=where(s,true);w.style.marginTop='14px';card.append(w);if(d.floors.length)card.append(el('div','muted',T['층']+': '+d.floors.join(', ')))}else{const m=el('div','muted',T['위치 데이터가 없습니다.']);m.style.marginTop='12px';card.append(m)}
+ const act=el('div','actions');if(s.done)act.append(btn(T['완료 취소'],'ok',()=>post('toggle:'+s.id),''));else{act.append(btn(T['완료하고 다음 목표로'],'primary',()=>post('done:'+s.id),''));if(s.n>1)act.append(btn(T['여기까지 모두 완료'],'',()=>post('fill:'+s.id)))}card.append(act);
+ if((s.n===1||c.state==='open')&&c.activation){card.append(el('div','label',T['챕터 시작 방법']));card.append(el('div','box',c.activation))}
+ card.append(el('div','label',T['이어지는 목표']));const ahead=c.steps.filter(x=>x.n>s.n&&!x.done&&!x.optional&&x.state!=='skipped').slice(0,3);
+ if(!ahead.length)card.append(el('div','muted',T['챕터의 마지막 목표입니다.']));ahead.forEach(x=>{const r=el('div','row');const t=el('div','t');t.append(el('span','n',x.n+'.'),document.createTextNode(x.text));if(x.branch)t.append(el('span','tag',T['선택']));if(x.maps.length)t.append(el('small','',x.maps.join(' · ')));r.append(t);r.onclick=()=>post('pick:'+x.id);card.append(r)})}
 function progress(){const d=D,c=d.chapter;
- if(c.partial)card.append(el('div','warn',fmt(T['이 챕터 데이터는 일부만 확인됐습니다. 하위 퀘스트 {0}/{1}개 확인, 문장 없는 목표 {2}개.'],c.resolved,c.referenced,c.missing)));
- c.steps.forEach(x=>{const r=el('div','row'+(x.id===d.step.id?' cur':''));r.style.paddingLeft=(6+16*x.indent)+'px';const k=el('div','ck'+(x.done?' on':''),x.done?'✓':'');k.onclick=e=>{e.stopPropagation();post('toggle:'+x.id)};
-  const t=el('div','t',x.n+'. '+x.text);if(x.optional)t.append(el('span','opt',' · '+T['선택 목표']));if(x.maps.length)t.append(el('small','',x.maps.join(' · ')));r.append(k,t);if(!x.done&&x.state!=='locked'&&x.state!=='active')r.append(chip(x.branch?'branch':x.state));else if(x.branch&&!x.done)r.append(chip('branch'));r.onclick=()=>post('pick:'+x.id);card.append(r)});
- card.append(el('h2','',T['모든 챕터']));d.chapters.forEach(x=>{const r=el('div','chap'),dt=el('span','dot');dt.style.background=x.color;r.append(dt,el('span','',x.name));
-  r.append(chip(x.state==='open'?'open':x.state));if(x.requires.length&&x.state==='locked')r.append(el('span','muted',T['필요:']+' '+x.requires.join(', ')));r.append(el('span','n',x.done+' / '+x.total));if(x.next)r.onclick=()=>post('pick:'+x.next);card.append(r)})}
-function branch(){const d=D,c=d.chapter;card.append(el('div','muted',T['스포일러']));const seg=el('div','seg');[['hide','숨김'],['hint','힌트'],['guide','공략'],['all','전체 공개']].forEach(([k,n])=>{const b=el('button',d.spoiler===k?'on':'',T[n]);b.onclick=()=>post('spoiler:'+k);seg.append(b)});card.append(seg);
- if(d.spoiler==='hide'){card.append(el('div','box muted',T['스포일러 보호 중입니다. 보려면 위에서 공개 수준을 고르세요.']));return}
- if(d.branchCount)card.append(el('div','box',fmt(T['이 챕터에는 함께 끝낼 수 없는 선택이 {0}곳 있습니다. 한쪽을 끝내면 다른 쪽은 끝낼 수 없습니다.'],d.branchCount)));
- if(d.endingCount)card.append(el('div','box',fmt(T['엔딩으로 갈라지는 길 {0}개가 있습니다.'],d.endingCount)));
- if(d.spoiler==='hint')return;
- d.branches.forEach((b,i)=>{card.append(el('h2','',fmt(T['선택 {0}'],i+1)));const g=el('div','sides');b.sides.forEach((s,j)=>{const x=el('div','box');x.append(el('b','',T[j?'선택 B':'선택 A']+(s.mine?' · '+T['선택한 쪽']:'')));
-  const ul=el('div','muted');s.steps.forEach(t=>ul.append(el('div','','• '+t)));x.append(ul);const f=s.factors,kv=el('div','kv');kv.style.marginTop='8px';
-  const add=(k,v)=>{kv.append(el('span','',k),el('span','',v))};add(T['목표 수'],String(f.steps));add(T['맵'],f.maps.length?f.maps.join(', '):'-');
-  [['survive','생존·탈출 조건 있음'],['kill','제거 조건 있음'],['items','아이템 전달·획득 있음'],['keys','열쇠·키카드 언급']].forEach(([k,n])=>{if(f[k])kv.append(el('span','','•'),el('span','',T[n]))});if(f.bosses.length)add(T['보스·위험 세력'],f.bosses.join(', '));x.append(kv);g.append(x)});card.append(g);
-  const kv=el('div','kv box');[[T['포기하게 되는 것'],T['다른 쪽 하위 퀘스트를 끝낼 수 없게 됩니다.']],[T['되돌릴 수 있는지'],T['되돌릴 수 없습니다 (게임 데이터상 함께 완료 불가).']],[T['보상'],T['미확인']],[T['우호도·엔딩 영향'],T['미확인']]].forEach(([k,v])=>kv.append(el('span','',k),el('span','',v)));card.append(kv)});
- if(d.branches.length)card.append(el('div','muted',T['난이도 요소 비교 (어느 쪽이 쉽다고 단정하지 않습니다)']));
- if(c.notes){card.append(el('h2','',T['출처 메모']));card.append(el('div','box',c.notes))}
- if(d.endings.length){card.append(el('h2','',T['엔딩']));d.endings.forEach(e=>{const x=el('div','box');x.append(el('b','',e.system||'?'));x.append(el('div','muted',e.objectives?T['목표가 확인된 길']+' · '+fmt(T['목표 {0}개'],e.objectives):T['목표 데이터 없음']));e.steps.forEach(t=>x.append(el('div','muted','• '+t)));card.append(x)})}
- card.append(el('h2','',T['챕터 보상']));card.append(el('div','box'+(c.rewards?'':' muted'),c.rewards||T['미확인']));card.append(el('div','muted',T['보상·우호도·엔딩 영향은 확인된 데이터가 없으면 \'미확인\'으로 표시합니다.']))}
+ const top=el('div','actions');top.style.marginTop='0';if(c.state!=='done')top.append(btn(T['챕터 전체 완료'],'',()=>post('finish:'+c.id),''));
+ const clr=btn(T['챕터 초기화'],'',()=>{if(!armed){armed=true;clr.lastChild.textContent=T['한 번 더 누르면 초기화'];clr.classList.add('danger');return}post('clear:'+c.id)},'');if(c.done)top.append(clr);if(top.children.length)card.append(top);
+ const tip=el('div','muted',T['게임 기록에는 스토리 진행이 남지 않아 직접 체크합니다. 줄 오른쪽 \'여기까지\'를 누르면 그 목표까지 한 번에 완료됩니다.']);tip.style.margin='12px 0 8px';card.append(tip);
+ if(c.partial)card.append(el('div','note',fmt(T['이 챕터 데이터는 일부만 확인됐습니다. 하위 퀘스트 {0}/{1}개 확인, 문장 없는 목표 {2}개.'],c.resolved,c.referenced,c.missing)));
+ c.steps.forEach(x=>{const r=el('div','row'+(x.id===d.step.id?' cur':'')+(x.state==='next'?' nx':'')+(x.state==='skipped'?' sk':''));r.style.paddingLeft=(10+18*x.indent)+'px';const k=el('div','ck'+(x.done?' on':''),x.done?'✓':'');k.onclick=e=>{e.stopPropagation();post('toggle:'+x.id)};
+  const t=el('div','t');t.append(el('span','n',x.n+'.'),document.createTextNode(x.text));if(x.branch&&x.state!=='skipped')t.append(el('span','tag',T['선택']));if(x.optional)t.append(el('span','tag',T['선택 목표']));if(x.maps.length)t.append(el('small','',x.maps.join(' · ')));r.append(k,t);
+  if(x.state==='next')r.append(chip('next'));else if(x.state==='skipped')r.append(chip('skipped'));else if(!x.done&&x.n>1){const f=btn(T['여기까지'],'small fill',()=>post('fill:'+x.id));r.append(f)}r.onclick=()=>post('pick:'+x.id);card.append(r)});
+ card.append(el('div','label',T['모든 챕터']));d.chapters.forEach(x=>{const r=el('div','chap'),dt=el('span','dot');dt.style.background=x.color;const nm=el('div','nm');nm.append(el('div','',x.name));const mini=el('div','mini'),mi=el('i');mi.style.width=(x.total?100*x.done/x.total:0)+'%';mi.style.background=x.color;mini.append(mi);nm.append(mini);
+  if(x.requires.length&&x.state==='locked')nm.append(el('div','muted',T['필요:']+' '+x.requires.join(', ')));r.append(dt,nm,chip(x.state==='open'?'open':x.state),el('span','n',x.done+' / '+x.total));if(x.next)r.onclick=()=>post('pick:'+x.next);card.append(r)})}
+function choices(){const d=D,c=d.chapter;
+ const sum=el('div','box');if(d.branchCount)sum.append(el('div','',fmt(T['이 챕터에는 둘 중 하나만 끝낼 수 있는 선택이 {0}곳 있습니다.'],d.branchCount)));if(d.endingCount)sum.append(el('div','',fmt(T['엔딩으로 갈라지는 길이 {0}개 있습니다.'],d.endingCount)));
+ if(!d.show){const g=el('div','box gate');g.append(sum.cloneNode(true));g.append(el('p','muted',T['내용을 보면 스토리 전개가 드러날 수 있어 기본으로 가려 둡니다.']));g.append(btn(T['선택지 내용 보기'],'primary',()=>post('show:1'),''));card.append(g);return}
+ const head=el('div','');head.style.cssText='display:flex;gap:10px;align-items:flex-start';sum.style.flex='1';sum.style.margin='0';head.append(sum,btn(T['내용 가리기'],'small',()=>post('show:0'),''));card.append(head);
+ if(d.branches.length){const n=el('div','note');n.append(el('i','ico',''),el('div','',T['한쪽 목표를 끝내면 다른 쪽은 끝낼 수 없고, 되돌릴 수 없습니다.']));card.append(n)}
+ d.branches.forEach((b,i)=>{card.append(el('div','label',fmt(T['선택 {0}'],i+1)));b.sides.forEach((s,j)=>{if(j)card.append(el('div','or',T['또는']));const o=el('div','opt'+(s.mine?' mine':'')+(s.skipped?' sk':''));const h3=el('h3','');h3.append(el('span','letter','AB'[j]),el('span','',fmt(T['목표 {0}개'],s.steps.length)));h3.lastChild.style.flex='1';if(s.mine)h3.append(chip('done',T['고른 쪽']));else if(s.skipped)h3.append(chip('skipped'));o.append(h3);
+  const ol=el('ol','');s.steps.forEach(x=>{const li=el('li',x.done?'d':'',(x.done?'✓ ':'')+x.text);li.style.cursor='pointer';li.onclick=()=>post('pick:'+x.id);ol.append(li)});o.append(ol);
+  const f=s.factors,fs=el('div','facts');if(f){if(f.maps.length)fs.append(chip('locked',f.maps.join(' · ')));[['survive','생존·탈출'],['kill','제거'],['items','아이템 전달'],['keys','열쇠·키카드']].forEach(([k,n])=>{if(f[k])fs.append(chip('locked',T[n]))});if(f.bosses.length)fs.append(chip('branch',fmt(T['보스: {0}'],f.bosses.join(', '))))}if(fs.children.length)o.append(fs);card.append(o)})});
+ if(c.notes){card.append(el('div','label',T['알려진 영향']));card.append(el('div','box',c.notes))}
+ if(d.endings.length){card.append(el('div','label',T['엔딩']));d.endings.forEach((e,i)=>{const o=el('div','opt'+(e.mine?' mine':''));o.style.marginBottom='10px';const h3=el('h3','');h3.append(el('span','',e.name));h3.firstChild.style.flex='1';if(e.mine)h3.append(chip('done',T['고른 엔딩']));o.append(h3);
+  if(!e.steps.length){o.append(el('div','muted',T['목표 데이터가 없습니다.']))}else{o.append(el('div','muted',fmt(T['이 엔딩으로 가는 목표 {0}개'],e.steps.length)));const ol=el('ol','');ol.style.marginTop='6px';const lim=more[i]?e.steps.length:5;e.steps.slice(0,lim).forEach(x=>{const li=el('li',x.done?'d':'',(x.done?'✓ ':'')+x.text);li.style.cursor='pointer';li.onclick=()=>post('pick:'+x.id);ol.append(li)});o.append(ol);
+   if(e.steps.length>lim){const m=btn(fmt(T['{0}개 더 보기'],e.steps.length-lim),'small',()=>{more[i]=true;const y=card.scrollTop;redraw();card.scrollTop=y});m.style.marginTop='8px';o.append(m)}}card.append(o)})}
+ if(c.rewards){card.append(el('div','label',T['챕터 보상']));card.append(el('div','box',c.rewards))}}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();post('esc')}else if(e.key==='Tab'||(!e.ctrlKey&&!e.altKey&&'wasdWASD'.includes(e.key)&&e.key.length===1)){e.preventDefault();post('key:'+e.key)}});";
    script=script.Replace("TEXT",Json(text));
    return "<!doctype html><html><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'\"><style>"+css+"</style></head><body><div id=\"card\"></div><script>"+script+"</script></body></html>";
   }
+
  }
  // Dark menu for the map's filter list (the system menu is white).
  public class DarkMenu:ToolStripProfessionalRenderer {
@@ -2174,6 +2205,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();
    Card.Bounds=CardRect();Card.ShowText(Convert.ToString(ch["name"]),I18n.Format("단계 {0} / {1}",st["n"],((IList)ch["steps"]).Count)+" · "+Story.StateText(Convert.ToString(st["state"]))+"\n\n"+st["text"]+(Convert.ToString(st["en"]).Length>0?"\n("+st["en"]+")":"")+"\n\n"+I18n.Text("챕터 진행")+" "+ch["done"]+" / "+ch["total"],
     I18n.Text(on?"완료 취소":"완료로 표시"),()=>{ToggleStory(id);ShowStory(ids,id);});}
   public void ToggleStory(string id){Story.Step s;if(!Story.Steps.TryGetValue(id,out s))return;var mode=Mode;Story.SetDone(mode,id,!Story.IsDone(mode,id));StoryUpdated();}
+  // Card actions: tick and move to the chapter's next objective, tick everything up to a step, a whole chapter done or cleared.
+  public string DoneStory(string id){Story.Step s;if(!Story.Steps.TryGetValue(id,out s))return id;Story.SetDone(Mode,id,true);StoryUpdated();var n=Story.NextOf(s.Chapter,Mode);return n==null?id:n.Id;}
+  public void FillStory(string id){Story.FillTo(Mode,id);StoryUpdated();}
+  public void FinishStory(string chapter,bool on){if(on)Story.FinishChapter(Mode,chapter);else Story.ClearChapter(Mode,chapter);StoryUpdated();}
+  public void StorySpoiler(bool show){Story.Spoiler=show?"all":"hide";Story.Save();StoryUpdated();}
   void StoryUpdated(){var h=StoryChanged;if(h!=null)h(this,EventArgs.Empty);if(story!=null)story.Refresh();}
   // Show where a step is: this map, or the helper switches maps (StoryLocateRequested) and then calls Canvas.FocusStory.
   public void LocateStory(string id){Story.Step s;if(!Story.Steps.TryGetValue(id,out s))return;string target=s.Maps.Contains(MapId)?MapId:"";foreach(var m in s.Marks)if(target.Length==0||m.Map==MapId){target=m.Map;if(m.Map==MapId)break;}if(target.Length==0&&s.Maps.Count>0)target=s.Maps[0];if(target.Length==0)return;
@@ -2189,7 +2225,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();
    var chapters=new ToolStripMenuItem(I18n.Text("챕터")+(Story.Only.Length>0?" · "+Story.Find(Story.Only).Name:""));Story.Load();
    Action<string,string> pick=(id,text)=>{var i=new ToolStripMenuItem(text){Checked=Story.Only==id};i.Click+=delegate{Story.Only=id;Story.Save();StoryUpdated();filterMenu.Close();};chapters.DropDownItems.Add(i);};
    pick("",I18n.Text("모든 챕터"));foreach(var c in Story.Chapters){int t;int n=Story.DoneCount(c,mode,out t);pick(c.Id,c.Name+"   "+n+"/"+t);}
-   var spoil=new ToolStripMenuItem(I18n.Text("스포일러 보호"));foreach(var lv in new[]{new[]{"hide","숨김"},new[]{"hint","힌트"},new[]{"guide","공략"},new[]{"all","전체 공개"}}){var key=lv[0];var i=new ToolStripMenuItem(I18n.Text(lv[1])){Checked=Story.Spoiler==key};i.Click+=delegate{Story.Spoiler=key;Story.Save();StoryUpdated();filterMenu.Close();};spoil.DropDownItems.Add(i);}
+   var spoil=check("스토리 선택지·엔딩 내용 보기",Story.Spoiler=="guide"||Story.Spoiler=="all",v=>Story.Spoiler=v?"all":"hide");
    foreach(var dd in new[]{chapters,spoil}){dd.DropDown.Renderer=filterMenu.Renderer;((ToolStripDropDownMenu)dd.DropDown).ShowImageMargin=false;((ToolStripDropDownMenu)dd.DropDown).ShowCheckMargin=true;}
    filterMenu.Items.Add(chapters);filterMenu.Items.Add(spoil);filterMenu.Font=Font;filterMenu.Show(under,new Point(0,under.Height));}
   public void ShowQuest(Pin p){if(p==null||p.Ref.Length==0)return;

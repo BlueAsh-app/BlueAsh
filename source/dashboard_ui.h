@@ -3,7 +3,7 @@
 namespace dashboard {
 inline int profileIndex(){return active?appliedProfileIndex:0;}
 inline int low(int id){return id==62?50:0;}inline int high(int id){return id==62?300:100;}
-inline int value(int id){const auto& p=profiles[profileIndex()];return id==62?(int)p.gamma:(int)p.volume;}
+inline int value(int id){const auto& p=active&&!fps&&normalRestored?appliedProfile:profiles[profileIndex()];return id==62?(int)p.gamma:(int)p.volume;}
 // The track runs from x 40 (after the icon) to 64 px before the right edge, where the value is written.
 constexpr int trackLeft=40,valueWidth=64;
 inline int fromPoint(int id,int x,int width){int span=std::max(1,width-valueWidth-trackLeft);return std::clamp(low(id)+(x-trackLeft)*(high(id)-low(id))/span,low(id),high(id));}

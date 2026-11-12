@@ -1,8 +1,9 @@
 #pragma once
 // Tarkov · the server a PvP / season raid was matched on (the NetworkGameCreate line's Sid, e.g. "JP-TK"; PvE raids have
-// none). A small badge at the top right of the Tarkov window from the match until 30 s after the raid starts, only while
+// none). A small badge at the top right of the Tarkov window from the match until 10 s after the raid starts, only while
 // Tarkov is in front. Click-through, never takes focus. Registry TarkovServerBadge ("0" = off, default on).
 namespace serverinfo {
+inline bool withinDisplayTime(unsigned long long now,unsigned long long seenAt,unsigned long long startedAt,const std::string& phase){return now-seenAt<600000&&(!startedAt||now-startedAt<10000)&&phase!="ended";}
 struct Name {const char* code;const wchar_t* name;};
 // "JP-TK" -> L"일본 · Tokyo", "SN-SIN" in English -> L"Singapore". Country names go through i18n, city names stay in English; an unknown code is shown as it is.
 inline std::wstring place(const std::string& sid){
@@ -65,13 +66,13 @@ struct ServerBadge {
             UpdateLayeredWindow(window,screen,&dst,&size,dc,&src,0,&bf,ULW_ALPHA);SetWindowPos(window,HWND_TOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_SHOWWINDOW);
             SelectObject(dc,ob);DeleteObject(dib);}
         DeleteObject(cap);DeleteObject(big);DeleteDC(dc);ReleaseDC(nullptr,screen);}
-    // Every second: a new match's server shows until 30 s after GameStarted (at most 10 min), while Tarkov is the front window.
+    // Every second: a new match's server shows until 10 s after GameStarted (at most 10 min), while Tarkov is the front window.
     void poll(const raid::Context& c){
         ULONGLONG now=GetTickCount64();
         if(c.server.empty()||!serverBadgeOn){hide();serial=0;return;}
         if(c.serial!=serial){serial=c.serial;seenAt=now;startedAt=0;shown.clear();}
         if(c.phase=="started"&&!startedAt){startedAt=now;}
-        bool due=now-seenAt<600000&&(!startedAt||now-startedAt<30000)&&c.phase!="ended";
+        bool due=serverinfo::withinDisplayTime(now,seenAt,startedAt,c.phase);
         HWND front=GetForegroundWindow();DWORD pid=0;GetWindowThreadProcessId(front,&pid);
         if(!due||!tarkovPid||pid!=tarkovPid||IsIconic(front)){hide();return;}
         if(shown!=c.server){draw(front,serverinfo::place(c.server));shown=c.server;}}

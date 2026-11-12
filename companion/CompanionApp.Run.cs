@@ -157,7 +157,9 @@ namespace ModePulse {
      if(alt.Count>=2&&alt.Count>now1.Count+1){map.Role.SelectedItem=other;hits=ExitMatch.Match(lines,map.Canvas.Pins.Where(p=>p.Kind=="exit"||p.Kind=="transit"));lastFrame=new HashSet<string>(hits);}}}
    // Shown once a name is read in two frames of the same check (any two of them: a misread frame in between no longer
    // resets it); a new check (exit key, raid start) starts over.
-   ExitMatch.Confirm(lastFrame,hits,map.Canvas.Available);UpdateTaxiStates(taxiEvidence);map.Canvas.Invalidate();
+   int known=map.Canvas.Available.Count;ExitMatch.Confirm(lastFrame,hits,map.Canvas.Available);UpdateTaxiStates(taxiEvidence);map.Canvas.Invalidate();
+   // the raid-start check stops once two reads in a row add nothing to what is shown (each read is a capture + OCR while the game renders)
+   if(autoExits!=null){if(known>0&&map.Canvas.Available.Count==known){if(++autoQuiet>=2)autoExits=null;}else autoQuiet=0;}
    map.State.Text=T("확인된 탈출구: ")+string.Join(", ",map.Canvas.Available);
    Status(T("탈출구 OCR 읽음: ")+string.Join(" / ",lines)+T("\r\n등록 좌표와 일치한 이름만 2회 확인 후 표시합니다."));
   }

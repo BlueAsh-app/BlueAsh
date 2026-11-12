@@ -96,7 +96,9 @@ struct Journal {std::wstring path;std::map<std::string,std::wstring> v;
             std::string val=l.substr(q+1);int w=MultiByteToWideChar(CP_UTF8,0,val.data(),(int)val.size(),nullptr,0);std::wstring wv(w,0);MultiByteToWideChar(CP_UTF8,0,val.data(),(int)val.size(),&wv[0],w);v[l.substr(0,q)]=wv;}
         return true;}
     bool save(){std::string s;for(auto& [k,w]:v){int n=WideCharToMultiByte(CP_UTF8,0,w.c_str(),(int)w.size(),nullptr,0,nullptr,nullptr);std::string u(n,0);WideCharToMultiByte(CP_UTF8,0,w.c_str(),(int)w.size(),&u[0],n,nullptr,nullptr);s+=k+"="+u+"\n";}
-        FILE* f=_wfopen(path.c_str(),L"wb");if(!f)return false;size_t n=fwrite(s.data(),1,s.size(),f);return fclose(f)==0&&n==s.size();}
+        // written beside and swapped in: a crash mid-write must not lose the original values
+        std::wstring tmp=path+L".tmp";FILE* f=_wfopen(tmp.c_str(),L"wb");if(!f)return false;size_t n=fwrite(s.data(),1,s.size(),f);bool ok=fflush(f)==0&&n==s.size();ok=fclose(f)==0&&ok;
+        if(!ok){DeleteFileW(tmp.c_str());return false;}return MoveFileExW(tmp.c_str(),path.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH)!=0;}
     bool exists()const{return GetFileAttributesW(path.c_str())!=INVALID_FILE_ATTRIBUTES;}};
 inline std::wstring dwordText(long v){return v<0?L"-":std::to_wstring(v);}
 // Applies everything. Returns how many settings could not be changed (0 = all done). The journal is saved before any change.

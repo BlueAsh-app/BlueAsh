@@ -78,7 +78,7 @@ namespace ModePulse {
    // The map switch lives in BlueAsh (게임별 기능 > 타르코프, registry MapEnabled), read every 2 s.
    if(DateTime.UtcNow>=mapsCheck){mapsCheck=DateTime.UtcNow.AddSeconds(2);mapsOn=Reg("MapEnabled")!="0";if(!mapsOn&&map.Visible)map.HideMap();}
    var codes=new List<int>();if(mapsOn){codes.Add(config.mapKey);if(binding!=null)foreach(var v in binding.Variants)codes.AddRange(v.Codes);}
-   double waitMs=250;if(captures>0&&exitRead==null)waitMs=Math.Max(15,Math.Min(250,(pendingAt-DateTime.UtcNow).TotalMilliseconds));if(exitRead!=null||autoExits!=null||mapRead!=null)waitMs=Math.Min(waitMs,50);if(claimState!=null||sendTask!=null)waitMs=Math.Min(waitMs,100);
+   double waitMs=250;if(captures>0&&exitRead==null)waitMs=Math.Max(15,Math.Min(250,(pendingAt-DateTime.UtcNow).TotalMilliseconds));if(exitRead!=null||autoExits!=null||mapRead!=null||raidPhase=="loading")waitMs=Math.Min(waitMs,50); /* loading: catch GameStarted in raid-state.txt within 0.1 s */if(claimState!=null||sendTask!=null)waitMs=Math.Min(waitMs,100);
    Input.WaitKeys(codes.ToArray(),(int)waitMs);
    var now=DateTime.UtcNow;var game=Desktop.Game();
    // Pin edits in the map editor: save this map's full list as the user's own version.
@@ -115,7 +115,7 @@ namespace ModePulse {
     bool autoDue=autoExits!=null&&tick>=autoExits.Next,manualDue=captures>0&&now>=pendingAt;
     if((autoDue||manualDue)&&exitRead==null&&game!=IntPtr.Zero&&!map.Visible&&!ocrBlocked){
      if(manualDue){captures--;pendingAt=now.AddMilliseconds(400);}
-     if(autoDue)autoExits.Next=tick+400;
+     if(autoDue)autoExits.Next=tick+150; /* the next read starts as soon as this one is done (one read takes about 0.1-0.25 s) */
      try{ReadExits(game);}catch(Exception ex){Status(Message(ex));captures=0;autoExits=null;}
     }
    }else Input.Watch(new int[0]);
@@ -156,7 +156,7 @@ namespace ModePulse {
    var found=CatalogRow(r=>S(r,"id")==mapName);if(found!=null)map.Maps.SelectedItem=S(found,"displayName");
    if(state[2]=="PMC"||state[2]=="SCAV")map.Role.SelectedItem=state[2];else map.State.Text=T("역할 미확정 · PMC/SCAV 직접 선택 필요");
    var schedule=RaidExits.Schedule(state,(long)Input.GetTickCount64(),autoExitKey);
-   if(schedule!=null){autoExitKey=schedule.Key;if(mapsOn){autoExits=schedule;lastFrame.Clear();}}
+   if(schedule!=null){autoExitKey=schedule.Key;if(mapsOn){autoExits=schedule;autoQuiet=0;lastFrame.Clear();}}
    if(config.discord&&phase=="started"&&raid.Length>0&&!announced.Contains(raid)){
     announced.Add(raid);announcedOrder.Add(raid);File.WriteAllText(sentFile,Json.Write(announcedOrder.Skip(Math.Max(0,announcedOrder.Count-200)).ToArray()),new UTF8Encoding(true));
     if(config.discord&&Input.Idle()>=(uint)(config.idle*1000))pendingNotice=new Notice{Id=raid,Due=now.AddSeconds(5),Idle=Input.Idle()};

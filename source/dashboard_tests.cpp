@@ -10,7 +10,7 @@
 #include "profiles.h"
 #include "i18n.h"
 settings::Profiles profiles=settings::defaults();
-bool active=false;int appliedProfileIndex=0;HWND win=nullptr;
+bool active=false,fps=false,normalRestored=false;settings::Profile appliedProfile;int appliedProfileIndex=0;HWND win=nullptr;
 HFONT smallFont=nullptr,smallBold=nullptr,iconFont=nullptr;HBRUSH panelBrush=nullptr;
 COLORREF well=0,blue=0,ink=0,muted=0;
 const wchar_t* configPath=L"Software\\ModeSwitch";bool autoGame=false;
@@ -30,6 +30,8 @@ int main(){
  assert(dashboard::fromPoint(61,-100,376)==0);
  assert(dashboard::fromPoint(61,1000,376)==100);
  assert(dashboard::fromPoint(62,10,0)==50);
+ active=true;normalRestored=true;appliedProfile.gamma=123;appliedProfile.volume=37;
+ assert(dashboard::value(62)==123&&dashboard::value(61)==37);normalRestored=false;
  profiles[3].extended=true;profiles[3].brightness[1]=123;profiles[3].contrast[2]=88;
  active=true;appliedProfileIndex=3;
  assert(dashboard::profileIndex()==3);

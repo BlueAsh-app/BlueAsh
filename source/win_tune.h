@@ -167,7 +167,9 @@ inline std::vector<Spot> spots(){std::vector<Spot> s;wchar_t t[MAX_PATH+1]={};st
     s.push_back({L"temp",{temp}});s.push_back({L"wintemp",{win+L"\\Temp"},true});
     s.push_back({L"reports",{local+L"\\Microsoft\\Windows\\WER\\ReportArchive",local+L"\\Microsoft\\Windows\\WER\\ReportQueue"}});
     s.push_back({L"reports-all",{data+L"\\Microsoft\\Windows\\WER\\ReportArchive",data+L"\\Microsoft\\Windows\\WER\\ReportQueue"},true});
-    s.push_back({L"dumps",{local+L"\\CrashDumps"}});return s;}
+    s.push_back({L"dumps",{local+L"\\CrashDumps"}});
+    // an unset variable would leave "\Temp" etc., the root of the current drive: such a spot is dropped
+    s.erase(std::remove_if(s.begin(),s.end(),[](const Spot& p){for(auto& d:p.dirs)if(d.size()<3||d[1]!=L':')return true;return false;}),s.end());return s;}
 inline bool oldEnough(const FILETIME& w,const FILETIME& now,double hours){ULONGLONG a=((ULONGLONG)w.dwHighDateTime<<32)|w.dwLowDateTime,b=((ULONGLONG)now.dwHighDateTime<<32)|now.dwLowDateTime;return b>a&&(b-a)/36e9>=hours;}
 struct Swept {unsigned long long bytes=0;int files=0,skipped=0;bool readable=true;};
 // del=false only counts. Depth-limited; reparse points (junctions, symlinks) are neither followed nor deleted.

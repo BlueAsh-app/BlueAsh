@@ -41,14 +41,22 @@ try{
  # Every chapter, every step: count positions that can be placed on their map.
  [ModePulse.Story]::Focus='';$placed=0;$unplaced=0;foreach($c in $ch){foreach($s in $c.Steps){foreach($m in $s.Marks){$ok=$true;for($i=0;$i+1 -lt $m.Pts.Length;$i+=2){$f=[ModePulse.FandomMarkers]::Floors($m.Map,$shipped,$m.Pts[$i],$m.Pts[$i+1]);if($f -ne $null -and $f.Count -gt 0){$ok=$false}elseif($f -eq $null -or $f.Count -eq 0){if($null -eq [ModePulse.FandomMarkers]::ToImage($m.Map,$shipped,$m.Pts[$i],$m.Pts[$i+1])){$ok=$false}}};if($ok){$placed++}else{$unplaced++}}}}
  "marks placed without floor doubt: $placed, needing a floor or a transform: $unplaced"
- # Spoiler levels shape the branch data.
- $fsIds=New-Object 'System.Collections.Generic.List[string]';$fsIds.Add($keep.Id);$name=[Func[string,string]]{param($i)$i}
- [ModePulse.Story]::Spoiler='hide';$d=[ModePulse.Story]::Card($fsIds,$keep.Id,'pve','bigmap',$name);Assert ($d['branches'].Count -eq 0 -and $d['chapter']['notes'] -eq '') 'hidden spoilers'
- [ModePulse.Story]::Spoiler='hint';$d=[ModePulse.Story]::Card($fsIds,$keep.Id,'pve','bigmap',$name);Assert ($d['branchCount'] -eq 2 -and $d['branches'][0]['sides'][0]['steps'].Count -eq 0) 'hint: count only'
- [ModePulse.Story]::Spoiler='guide';$d=[ModePulse.Story]::Card($fsIds,$keep.Id,'pve','bigmap',$name);Assert ($d['branches'][1]['sides'][1]['steps'].Count -ge 1 -and $d['chapter']['notes'].Length -gt 0) 'guide: sides and notes'
- $t=[ModePulse.Story]::Find('the-ticket');$e=@($t.Steps|Where-Object Ending)[0];$tid=New-Object 'System.Collections.Generic.List[string]';$tid.Add($e.Id)
- [ModePulse.Story]::Spoiler='hint';$d=[ModePulse.Story]::Card($tid,$e.Id,'pve','terminal',$name);Assert ($d['endings'].Count -eq 0 -and ($d['chapter']['steps']|Where-Object {$_['id'] -eq $e.Id})['text'] -ne $e.Text) 'hint: ending steps masked'
- [ModePulse.Story]::Spoiler='guide';$d=[ModePulse.Story]::Card($tid,$e.Id,'pve','terminal',$name);Assert ($d['endings'][0]['system'] -eq '') 'guide: ending names hidden'
- [ModePulse.Story]::Spoiler='all';$d=[ModePulse.Story]::Card($tid,$e.Id,'pve','terminal',$name);Assert ($d['endings'].Count -eq 4 -and $d['endings'][0]['system'].Length -gt 0) 'full reveal: endings'
+ # Choice details only when the player asks to see them (hide/hint = hidden, guide/all = shown).
+ $fsIds=New-Object "System.Collections.Generic.List[string]";$fsIds.Add($keep.Id);$name=[Func[string,string]]{param($i)$i}
+ [ModePulse.Story]::Spoiler="hide";$d=[ModePulse.Story]::Card($fsIds,$keep.Id,"pve","bigmap",$name);Assert (!$d["show"] -and $d["branchCount"] -eq 2 -and $d["branches"][0]["sides"][0]["steps"].Count -eq 0 -and $d["chapter"]["notes"] -eq "") "hidden choices: count only"
+ [ModePulse.Story]::Spoiler="all";$d=[ModePulse.Story]::Card($fsIds,$keep.Id,"pve","bigmap",$name);Assert ($d["show"] -and $d["branches"][1]["sides"][1]["steps"].Count -ge 1 -and $d["chapter"]["notes"].Length -gt 0) "shown: sides and notes"
+ $t=[ModePulse.Story]::Find("the-ticket");$e=@($t.Steps|Where-Object Ending)[0];$tid=New-Object "System.Collections.Generic.List[string]";$tid.Add($e.Id)
+ [ModePulse.Story]::Spoiler="hide";$d=[ModePulse.Story]::Card($tid,$e.Id,"pve","terminal",$name);Assert ($d["endings"][0]["name"] -eq "" -and ($d["chapter"]["steps"]|Where-Object {$_["id"] -eq $e.Id})["text"] -ne $e.Text) "hidden: ending names and steps masked"
+ [ModePulse.Story]::Spoiler="all";$d=[ModePulse.Story]::Card($tid,$e.Id,"pve","terminal",$name);Assert ($d["endings"].Count -eq 4 -and $d["endings"][0]["name"].Length -gt 0) "shown: endings"
+ # A ticked side of a choice skips the other side; the chapter can finish without it.
+ $side=@($fs.Steps|Where-Object {$_.Quest -eq $fs.Branches[0][0]});$other=@($fs.Steps|Where-Object {$_.Quest -eq $fs.Branches[0][1]})
+ [ModePulse.Story]::SetDone("pve",$side[0].Id,$true);Assert ([ModePulse.Story]::StateOf($other[0],"pve") -eq "skipped" -and ![ModePulse.Story]::Required($other[0],"pve")) "other side skipped"
+ # Done up to here: needed steps before it (not choices) and the step itself.
+ $last=@($fs.Steps|Where-Object {!$_.Optional -and ![ModePulse.Story]::IsBranch($_)})[-1];[ModePulse.Story]::FillTo("pve",$last.Id)
+ Assert ([ModePulse.Story]::IsDone("pve",$last.Id) -and !($other|Where-Object {[ModePulse.Story]::IsDone("pve",$_.Id)})) "fill to here skips the unchosen side"
+ # A tick on both sides (partial progress): neither side is skipped, so the chapter is not done early.
+ [ModePulse.Story]::SetDone("pve",$other[0].Id,$true);Assert ([ModePulse.Story]::StateOf($side[-1],"pve") -ne "skipped" -and [ModePulse.Story]::StateOf($other[-1],"pve") -ne "skipped" -and [ModePulse.Story]::ChapterState($fs,"pve") -ne "done") "ticks on both sides skip neither"
+ [ModePulse.Story]::ClearChapter("pve","falling-skies");Assert ([ModePulse.Story]::ChapterState($fs,"pve") -eq "open") "chapter cleared"
+ $u=[ModePulse.Story]::Find("the-unheard");[ModePulse.Story]::FinishChapter("pve","the-unheard");Assert ([ModePulse.Story]::ChapterState($u,"pve") -eq "done") "finish a chapter without choices"
 }finally{Remove-Item -Recurse -Force $tmp}
 'PASS: story chapters, Korean text, states, per-mode progress, placement, spoiler levels'

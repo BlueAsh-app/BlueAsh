@@ -7,6 +7,7 @@
 #include <sstream>
 #include <memory>
 #include <map>
+#include <tuple>
 // Labels shown on the map (1 cars, 2 boats, 4 secret rooms) and the key that shows / hides them (지도 표시 settings, pubg_map_page.h).
 inline unsigned pubgMapKinds=7,pubgMapKey='L';
 std::wstring keyName(unsigned vk); // ModeSwitch.cpp
@@ -279,27 +280,56 @@ struct MapOverlay {
         for(int yy=0;yy<sh;yy++)for(int xx=0;xx<sw;xx++){double d=std::hypot(xx+0.5-cx,yy+0.5-cy);size_t i=size_t(yy)*sw+xx;
             fill[i]=(unsigned char)(255*std::clamp(r-d+0.5,0.0,1.0));outline[i]=(unsigned char)(255*std::clamp(r+2-d+0.5,0.0,1.0));}
         stamp(x-sw/2,y-sh/2,sw,sh,outline,fill,c);}
-    // The car and the boat are the Windows icon font's own glyphs (Car side view E811, Ferry E7E3; Segoe Fluent Icons on Windows 11,
-    // Segoe MDL2 Assets before), the same set as BlueAsh's sidebar icons. Rendered once per size into a coverage mask.
-    static const std::vector<unsigned char>& glyphMask(int s,bool car){
-        static std::map<std::pair<int,bool>,std::vector<unsigned char>> cache;auto key=std::make_pair(s,car);auto hit=cache.find(key);if(hit!=cache.end()){return hit->second;}
-        if(cache.size()>32){cache.clear();}std::vector<unsigned char> mask(size_t(s)*s);
-        wchar_t windir[MAX_PATH]={};GetWindowsDirectoryW(windir,MAX_PATH);bool fluent=GetFileAttributesW((std::wstring(windir)+L"\\Fonts\\SegoeIcons.ttf").c_str())!=INVALID_FILE_ATTRIBUTES;
-        BITMAPINFO bi={};bi.bmiHeader.biSize=sizeof(bi.bmiHeader);bi.bmiHeader.biWidth=s;bi.bmiHeader.biHeight=-s;bi.bmiHeader.biPlanes=1;bi.bmiHeader.biBitCount=32;
-        HDC dc=CreateCompatibleDC(nullptr);void* bits=nullptr;HBITMAP bmp=CreateDIBSection(dc,&bi,DIB_RGB_COLORS,&bits,nullptr,0);
-        if(dc&&bmp){HGDIOBJ ob=SelectObject(dc,bmp);HFONT f=CreateFontW(-(int)std::lround(s*(car?0.58:0.54)),0,0,0,FW_NORMAL,0,0,0,DEFAULT_CHARSET,0,0,ANTIALIASED_QUALITY,0,fluent?L"Segoe Fluent Icons":L"Segoe MDL2 Assets");
-            HGDIOBJ of=SelectObject(dc,f);SetBkMode(dc,TRANSPARENT);SetTextColor(dc,RGB(255,255,255));memset(bits,0,size_t(s)*s*4);RECT all={0,0,s,s};wchar_t g[2]={wchar_t(car?0xE811:0xE7E3),0};
-            DrawTextW(dc,g,1,&all,DT_CENTER|DT_VCENTER|DT_SINGLELINE|DT_NOPREFIX);GdiFlush();const unsigned char* px=(const unsigned char*)bits;
-            for(size_t i=0;i<mask.size();i++){mask[i]=std::max(px[i*4],std::max(px[i*4+1],px[i*4+2]));}SelectObject(dc,of);DeleteObject(f);SelectObject(dc,ob);}
+    // The car and the boat are BlueAsh's own vector silhouettes (side view, facing right) on a 24-unit grid, filled with GDI
+    // paths at 4x and box-filtered into a coverage mask of s x s, the glyph box g px wide centred. Small sizes drop the fine
+    // details (windows, hubs, hull stripe, wake) that would only blur. Cached per size.
+    static const std::vector<unsigned char>& glyphMask(int s,int g,bool car){
+        static std::map<std::tuple<int,int,bool>,std::vector<unsigned char>> cache;auto key=std::make_tuple(s,g,car);auto hit=cache.find(key);if(hit!=cache.end()){return hit->second;}
+        if(cache.size()>32){cache.clear();}std::vector<unsigned char> mask(size_t(s)*s);const int Q=4,S=s*Q;
+        BITMAPINFO bi={};bi.bmiHeader.biSize=sizeof(bi.bmiHeader);bi.bmiHeader.biWidth=S;bi.bmiHeader.biHeight=-S;bi.bmiHeader.biPlanes=1;bi.bmiHeader.biBitCount=32;
+        HDC dc=CreateCompatibleDC(nullptr);void* bits=nullptr;HBITMAP bmp=dc?CreateDIBSection(dc,&bi,DIB_RGB_COLORS,&bits,nullptr,0):nullptr;
+        if(dc&&bmp){HGDIOBJ ob=SelectObject(dc,bmp);memset(bits,0,size_t(S)*S*4);bool fine=g>=18;double k=g*Q/24.0,ox=(S-g*Q)/2.0,oy=ox+(car?-0.2:-1.4)*k;
+            auto P=[&](double x,double y){return POINT{(LONG)std::lround(ox+x*k),(LONG)std::lround(oy+y*k)};};
+            HBRUSH white=(HBRUSH)GetStockObject(WHITE_BRUSH),black=(HBRUSH)GetStockObject(BLACK_BRUSH);HGDIOBJ op=SelectObject(dc,GetStockObject(NULL_PEN));
+            auto shape=[&](std::initializer_list<double> v,HBRUSH b){ // x y, then 0 x y (line) | 1 x1 y1 x2 y2 x y (curve); closed
+                auto it=v.begin();BeginPath(dc);POINT m=P(it[0],it[1]);MoveToEx(dc,m.x,m.y,nullptr);it+=2;
+                while(it!=v.end()){if(*it==0){POINT q=P(it[1],it[2]);LineTo(dc,q.x,q.y);it+=3;}else{POINT c3[3]={P(it[1],it[2]),P(it[3],it[4]),P(it[5],it[6])};PolyBezierTo(dc,c3,3);it+=7;}}
+                CloseFigure(dc);EndPath(dc);SelectObject(dc,b);FillPath(dc);};
+            auto disc=[&](double x,double y,double r,HBRUSH b){SelectObject(dc,b);POINT a=P(x-r,y-r),c=P(x+r,y+r);Ellipse(dc,a.x,a.y,c.x,c.y);};
+            if(car){shape({1.8,15.2, 0,1.8,12.6, 1,1.8,11.6,2.6,11.0,3.8,10.8, 0,6.6,10.3, 1,7.6,8.6,8.6,7.4,10.2,7.2, 0,13.6,7.2, 1,14.8,7.2,15.8,7.8,17.0,9.4,
+                    1,17.4,9.9,18.0,10.2,19.0,10.4, 0,21.0,10.8, 1,22.0,11.0,22.4,11.8,22.4,12.8, 0,22.4,15.2},white);
+                if(fine){shape({7.8,10.1, 0,9.1,8.4, 0,11.3,8.3, 0,11.3,10.1},black);shape({12.1,8.3, 0,13.6,8.3, 1,14.6,8.3,15.3,8.8,16.3,10.1, 0,12.1,10.1},black);}
+                disc(6.4,15.2,2.75,black);disc(17.8,15.2,2.75,black);disc(6.4,15.2,1.95,white);disc(17.8,15.2,1.95,white);
+                if(fine){disc(6.4,15.2,0.7,black);disc(17.8,15.2,0.7,black);}}
+            else{shape({2.0,11.6, 0,17.6,11.6, 1,19.8,11.6,21.6,11.3,22.8,10.6, 1,21.8,13.2,20.2,15.0,17.4,15.6, 0,4.4,15.6, 1,3.2,15.6,2.4,14.8,2.2,13.8},white);
+                shape({6.6,11.7, 0,8.6,8.4, 0,13.4,8.4, 0,16.8,11.7},white);
+                if(fine){shape({8.5,10.9, 0,9.6,9.2, 0,12.9,9.2, 0,14.7,10.9},black);shape({3.4,13.0, 0,20.6,12.6, 0,20.2,13.3, 0,3.6,13.7},black);
+                    LOGBRUSH lb={BS_SOLID,RGB(255,255,255),0};HPEN wave=ExtCreatePen(PS_GEOMETRIC|PS_SOLID|PS_ENDCAP_ROUND|PS_JOIN_ROUND,std::max(1,(int)std::lround(1.1*k)),&lb,0,nullptr);
+                    HGDIOBJ pw=SelectObject(dc,wave);BeginPath(dc);POINT w0=P(3.5,18.4);MoveToEx(dc,w0.x,w0.y,nullptr);
+                    for(int i=0;i<3;i++){double x=3.5+i*5.8;POINT c3[3]={P(x+1.45,17.4),P(x+4.35,19.4),P(x+5.8,18.4)};PolyBezierTo(dc,c3,3);}
+                    EndPath(dc);StrokePath(dc);SelectObject(dc,pw);DeleteObject(wave);}}
+            SelectObject(dc,op);GdiFlush();const unsigned char* px=(const unsigned char*)bits;
+            for(int y=0;y<s;y++)for(int x=0;x<s;x++){int sum=0;for(int v=0;v<Q;v++)for(int u=0;u<Q;u++)sum+=px[(size_t(y*Q+v)*S+x*Q+u)*4+1];mask[size_t(y)*s+x]=(unsigned char)(sum/(Q*Q));}
+            SelectObject(dc,ob);}
         if(bmp){DeleteObject(bmp);}if(dc){DeleteDC(dc);}return cache[key]=mask;}
-    // A round badge in BlueAsh's own look: deep navy disc with a hairline dark edge, a thin ring in the accent colour and the
-    // car / boat glyph in the accent colour inside (radius R = 2.4 r). Premultiplied layers, 4x4 samples per pixel.
-    void vehicle(int x,int y,int r,COLORREF c,bool car,double alpha){double R=r*2.4,ring=std::max(1.5,R*0.12);int s=(int)std::ceil(R)*2+6;double cx=s/2.0,cy=s/2.0;
-        size_t n=size_t(s)*s;std::vector<unsigned char> none(n),disc(n),edge(n),band(n),glyph(n);const auto& mask=glyphMask(s,car);
-        for(int yy=0;yy<s;yy++)for(int xx=0;xx<s;xx++){int fd=0,fe=0,fb=0;
-            for(int sy=0;sy<4;sy++)for(int sx=0;sx<4;sx++){double px=xx+(sx+0.5)/4,py=yy+(sy+0.5)/4,d=std::hypot(px-cx,py-cy);fd+=d<=R;fe+=d<=R+1.2;fb+=d<=R&&d>=R-ring;}
-            size_t i=size_t(yy)*s+xx;disc[i]=(unsigned char)(255*fd/16*alpha*0.9);edge[i]=(unsigned char)(255*fe/16*alpha*0.55);band[i]=(unsigned char)(255*fb/16*alpha);glyph[i]=(unsigned char)(mask[i]*alpha);}
-        int x0=x-s/2,y0=y-s/2;stamp(x0,y0,s,s,edge,disc,RGB(13,22,44));stamp(x0,y0,s,s,none,band,c);stamp(x0,y0,s,s,none,glyph,c);}
+    // A marker in BlueAsh's look: a dark navy glass disc (lighter at the top, a faint sheen) with a thin accent-colour ring
+    // and a soft glow of the same colour around it, a soft shadow below, and the silhouette in the accent colour brightening
+    // towards the top. Radius R = 2.2 r, 4x4 samples per pixel, premultiplied layers.
+    void vehicle(int x,int y,int r,COLORREF c,bool car,double alpha){double R=r*2.2,soft=std::max(2.0,R*0.45);int s=(int)std::ceil(R+soft)*2+4;double cx=s/2.0,cy=s/2.0;
+        size_t n=size_t(s)*s;std::vector<unsigned char> none(n),shadow(n),glow(n),base(n),lift(n),shine(n),ring(n),ringHi(n),glyph(n),glyphHi(n);
+        const auto& mask=glyphMask(s,(int)std::lround(R*1.62),car);double rw=std::max(1.1,R*0.085);
+        for(int yy=0;yy<s;yy++)for(int xx=0;xx<s;xx++){int fd=0,fr=0,fs=0;double sh=0,gl=0;
+            for(int sy=0;sy<4;sy++)for(int sx=0;sx<4;sx++){double px=xx+(sx+0.5)/4,py=yy+(sy+0.5)/4,d=std::hypot(px-cx,py-cy);fd+=d<=R;fr+=d<=R&&d>=R-rw;
+                fs+=std::hypot(px-cx,py-(cy-R*0.62))<=R*0.78&&d<=R-rw; // sheen: a lens over the upper part of the disc
+                gl+=d>R?std::clamp(1-(d-R)/(R*0.38),0.0,1.0):0;double ds=std::hypot(px-cx,py-cy-R*0.14);sh+=std::clamp(1-(ds-R*0.72)/(soft+R*0.3),0.0,1.0);}
+            size_t i=size_t(yy)*s+xx;double t=std::clamp((yy+0.5-(cy-R))/(2*R),0.0,1.0); // 0 at the top of the disc, 1 at the bottom
+            shadow[i]=(unsigned char)(255*std::pow(sh/16,1.7)*alpha*0.6);glow[i]=(unsigned char)(255*std::pow(gl/16,2.0)*alpha*0.32);
+            base[i]=(unsigned char)(255*fd/16*alpha*0.94);lift[i]=(unsigned char)(255*fd/16*alpha*(1-t)*0.55);shine[i]=(unsigned char)(255*fs/16*alpha*0.07*(1-t));
+            ring[i]=(unsigned char)(255*fr/16*alpha);ringHi[i]=(unsigned char)(255*fr/16*alpha*(1-t)*0.45);
+            int g=mask[i];glyph[i]=(unsigned char)(g*alpha);glyphHi[i]=(unsigned char)(g*alpha*(1-t)*0.5);}
+        int x0=x-s/2,y0=y-s/2;stamp(x0,y0,s,s,shadow,none,0);stamp(x0,y0,s,s,none,glow,c);stamp(x0,y0,s,s,none,base,RGB(8,12,26));stamp(x0,y0,s,s,none,lift,RGB(26,38,68));
+        stamp(x0,y0,s,s,none,shine,RGB(255,255,255));stamp(x0,y0,s,s,none,ring,c);stamp(x0,y0,s,s,none,ringHi,RGB(255,255,255));
+        stamp(x0,y0,s,s,none,glyph,c);stamp(x0,y0,s,s,none,glyphHi,RGB(255,255,255));}
     // ox,oy,S in captured-frame pixels (frame = client area for a borderless window).
     void draw(HWND game,const std::vector<pubgmap::Label>& labels,double ox,double oy,double S,int frameW,int frameH,const std::wstring& mapName,bool all=true){
         if(!ensure()){return;}Aware a;RECT rc={};if(!GetClientRect(game,&rc)){return;}POINT org={0,0};ClientToScreen(game,&org);int cw=rc.right,ch=rc.bottom;if(cw<100||ch<100){return;}

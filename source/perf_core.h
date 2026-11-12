@@ -5,7 +5,7 @@
 //  - diagnose(): what may limit the frame rate, each with its evidence and a confidence. No single reading decides a
 //    bottleneck: GPU load, the busiest CPU core, VRAM, free RAM, power/thermal state and frame caps are read together,
 //    and one session never gives "high" (that needs an earlier session of the same game with the same finding).
-//  - compare(), target(), advise(): before/after verdict, target FPS state and upgrade advice. Nothing here predicts a
+//  - compare(), target(): before/after verdict and target FPS state. Nothing here predicts a
 //    frame rate: there is no verified benchmark data in BlueAsh, so advice is qualitative and says when data is missing.
 // Texts are Korean keys (translated by the UI through i18n::text); numbers travel separately (Line.a / Line.b).
 #include <vector>
@@ -67,24 +67,6 @@ enum TargetState {Met,Near,Missed,CappedBelow,NoData};
 inline TargetState target(const Stats& s,int want,int limit,int refresh,int vsync){if(want<=0||!enough(s))return NoData;
     if(limit>0&&limit<want*.98){return CappedBelow;}if(vsync>0&&refresh>0&&(double)refresh/vsync<want*.98)return CappedBelow;
     if(s.fps>=want*.98&&s.low1>=want*.75){return Met;}if(s.fps>=want*.9){return Near;}return Missed;}
-// Upgrade advice, in the order the person should consider it: free fixes and settings before parts.
-enum AdviceKind {NoUpgrade,TuneSettings,CpuUpgrade,GpuUpgrade,RamCapacityUp,RamSpeedFix,MoreData};
-struct Advice {AdviceKind kind;Conf conf;};
-// direction: 0 = quality first, 1 = balanced, 2 = competitive (frame rate first).
-inline std::vector<Advice> advise(const std::vector<Finding>& f,TargetState t,int direction){std::vector<Advice> out;
-    auto has=[&](Kind k,Conf atLeast)->const Finding*{for(auto& x:f)if(x.kind==k&&x.conf<=atLeast)return &x;return nullptr;};
-    if(t==NoData){out.push_back({MoreData,None});return out;}
-    if(auto x=has(RamSpeed,Low))out.push_back({RamSpeedFix,x->conf});
-    if(t==Met){out.push_back({NoUpgrade,Medium});return out;}
-    if(t==CappedBelow){out.push_back({TuneSettings,Medium});return out;}
-    auto gpu=has(GpuLimit,Medium),cpu=has(CpuLimit,Medium),vram=has(Vram,Low),ram=has(RamCapacity,Low);
-    if(has(PowerThermal,Medium)||has(Background,Medium)){out.push_back({TuneSettings,Medium});} // free fixes first: they change the next measurement
-    if(gpu||vram){if(direction!=0)out.push_back({TuneSettings,(gpu?gpu:vram)->conf});out.push_back({GpuUpgrade,lower((gpu?gpu:vram)->conf)});}
-    if(cpu){out.push_back({CpuUpgrade,lower(cpu->conf)});}
-    if(ram){out.push_back({RamCapacityUp,ram->conf});}
-    if(!gpu&&!cpu&&!vram&&!ram){out.push_back({MoreData,Low});}
-    // One entry per kind, first occurrence kept.
-    std::vector<Advice> u;for(auto& a:out){bool dup=false;for(auto& b:u)dup=dup||b.kind==a.kind;if(!dup)u.push_back(a);}return u;}
 // A measured session, one line in perf-history.tsv (tab-separated key=value; unknown keys are kept out of the way).
 struct Session {std::wstring game,when,cpu,gpu,res,method;double ramGB=0,seconds=0,fps=0,low1=0,avgMs=0,sdMs=0,gpuUtil=-1,cpuMaxCore=-1;int frames=0,frameGen=0,main=-1,mainConf=3,boost=0;};
 inline std::wstring clean(std::wstring v){for(auto& c:v)if(c==L'\t'||c==L'\n'||c==L'\r'||c==L'=')c=L' ';return v;}

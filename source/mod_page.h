@@ -94,13 +94,13 @@ void scrollToBar(int top){int total=listHeight(),view=list.bottom-list.top-12,ba
 RECT cardRect(int i){int x=strip.left+i*(cardW+cardGap)-gameScroll;return {x,strip.top,x+cardW,strip.bottom};}
 int gameAt(int x,int y){if(y<strip.top||y>=strip.bottom||x<strip.left||x>=strip.right){return -1;}for(int i=0;i<(int)rows.size();i++){RECT c=cardRect(i);if(x>=c.left&&x<c.right){return i;}}return -1;}
 int modAt(int x,int y){Row* r=chosen();if(!r||x<list.left||x>=list.right||y<list.top+6||y>=list.bottom-6){return -1;}int i=(y-list.top-6+modScroll)/rowH;return i<(int)r->mods.size()?i:-1;}
-// Clipped to a design rectangle (stretched like the rest when the window is large).
-struct Clip {HDC dc;Clip(HDC d,RECT r):dc(d){if(painting::stretch.on)r=painting::stretch.box(r);SaveDC(dc);IntersectClipRect(dc,r.left,r.top,r.right,r.bottom);}~Clip(){RestoreDC(dc,-1);}};
+// Clipped to a rectangle.
+struct Clip {HDC dc;Clip(HDC d,RECT r):dc(d){SaveDC(dc);IntersectClipRect(dc,r.left,r.top,r.right,r.bottom);}~Clip(){RestoreDC(dc,-1);}};
 void paint(HDC dc){UINT one=DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS;int tg=target();
     textAt(dc,i18n::text(L"게임"),{36,24,400,52},sectionFont,ink);
     if(!rows.empty())textAt(dc,fmt(L"모드가 있는 게임 %d개",(int)rows.size()),{400,24,774,52},smallFont,muted,DT_RIGHT|DT_VCENTER|DT_SINGLELINE);
     {RECT b=refreshRect;bool live=spinAt||scanning;if(refreshHover&&!busy)roundBox(dc,b,tint,tint,10);COLORREF ic=busy?RGB(70,86,120):live?blue:refreshHover?ink:muted;double deg=spinAngle();
-        if(deg!=0){RECT s=painting::stretch.on?painting::stretch.box(b):b;double a=deg*3.14159265358979/180,c=std::cos(a),n=std::sin(a),cx=(s.left+s.right)/2.0,cy=(s.top+s.bottom)/2.0;int mode=SetGraphicsMode(dc,GM_ADVANCED);XFORM keep={};GetWorldTransform(dc,&keep); /* keep the display scale (dpi.h): rotate inside it */
+        if(deg!=0){RECT s=b;double a=deg*3.14159265358979/180,c=std::cos(a),n=std::sin(a),cx=(s.left+s.right)/2.0,cy=(s.top+s.bottom)/2.0;int mode=SetGraphicsMode(dc,GM_ADVANCED);XFORM keep={};GetWorldTransform(dc,&keep); /* keep the display scale (dpi.h): rotate inside it */
             XFORM x={(FLOAT)c,(FLOAT)n,(FLOAT)-n,(FLOAT)c,(FLOAT)(cx-cx*c+cy*n),(FLOAT)(cy-cx*n-cy*c)};ModifyWorldTransform(dc,&x,MWT_LEFTMULTIPLY);glyph(dc,0xE72C,b,iconFont,ic);SetWorldTransform(dc,&keep);SetGraphicsMode(dc,mode);}
         else glyph(dc,0xE72C,b,iconFont,ic);}
     if(rows.empty()){if(scanning){for(int i=0;i<3;i++)painting::skeleton(dc,{36+i*(cardW+cardGap),strip.top,36+i*(cardW+cardGap)+cardW,strip.bottom},18,36,816,rowFill,RGB(36,54,96));}
@@ -170,7 +170,6 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
             if(x>=strip.right-30&&gameScroll<cardsWidth()-(int)(strip.right-strip.left)){gameScroll+=cardW+cardGap;clampScroll();InvalidateRect(h,nullptr,FALSE);return 0;}}
         int g=gameAt(x,y);if(g>=0&&g!=pick&&!busy){pick=g;modScroll=0;note.clear();clampScroll();buttons();InvalidateRect(h,nullptr,FALSE);}return 0;}
     case WM_MOUSEWHEEL:{POINT p={(short)LOWORD(lp),(short)HIWORD(lp)};ScreenToClient(h,&p);int d=GET_WHEEL_DELTA_WPARAM(wp);
-        // the strip sits above the page's vertical stretch line, so client y is its design y
         if(p.y>=strip.top&&p.y<strip.bottom)gameScroll-=d*(cardW+cardGap)/WHEEL_DELTA;else modScroll-=d*rowH*3/WHEEL_DELTA;clampScroll();InvalidateRect(h,nullptr,FALSE);return 0;}
     case WM_COMMAND:if(HIWORD(wp)==BN_CLICKED){if(LOWORD(wp)==261)translate();else if(LOWORD(wp)==260)restore();else if(LOWORD(wp)==262)PostMessageW(win,WM_COMMAND,49,0);}return 0;
     case WM_PAINT:{PAINTSTRUCT ps;HDC dc=BeginPaint(h,&ps);RECT c;GetClientRect(h,&c);HDC mem=CreateCompatibleDC(dc);HBITMAP bmp=CreateCompatibleBitmap(dc,std::max(1L,c.right),std::max(1L,c.bottom));auto old=SelectObject(mem,bmp);

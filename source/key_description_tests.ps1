@@ -2,7 +2,7 @@
 function Assert($ok,$name){if(!$ok){throw $name}}
 Add-Type -AssemblyName System.Web.Extensions,System.Drawing,System.Windows.Forms
 $dll=Join-Path $PSScriptRoot '../companion/CompanionUI.dll';Add-Type -Path $dll
-Add-Type -TypeDefinition 'using System;using System.Collections;using System.Reflection;public static class KeyDescriptionTest{public static string Read(Hashtable local,Hashtable english){return (string)typeof(ModePulse.Quests).GetMethod("KeyDescription",BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,new object[]{local,english,"test"});}}' -ReferencedAssemblies System.Web.Extensions,System.Windows.Forms,System.Drawing,$dll
+Add-Type -TypeDefinition 'using System;using System.Collections;using System.Reflection;public static class KeyDescriptionTest{public static string Read(Hashtable local,Hashtable english){return (string)typeof(ModePulse.Quests).GetMethod("KeyDescription",BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,new object[]{local,english,"test",null});}}' -ReferencedAssemblies System.Web.Extensions,System.Windows.Forms,System.Drawing,$dll
 $english=@{'test Description'='English key description.'}
 foreach($locale in 'ko','en','zh-CN','ja','ru','es','pt-BR','de','fr','it','pl','tr','zh-TW'){
  $local=@{'test Description'=('Localized description '+$locale)}

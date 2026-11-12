@@ -115,7 +115,11 @@ LRESULT CALLBACK thunk(HWND h,UINT m,WPARAM w,LPARAM l){WNDPROC p=procOf(h);LRES
 // Windows' own procedures (DefWindowProc, a control's original procedure) get physical coordinates back.
 inline LRESULT toWindows(WNDPROC base,HWND h,UINT m,WPARAM w,LPARAM l){
     if(!virt(h))return base?(CallWindowProcW)(base,h,m,w,l):(DefWindowProcW)(h,m,w,l);
+    // A DC callOurs scaled for our procedure goes back to physical pixels for Windows' own one: a subclassed edit box
+    // erased its background 1.5x too large (the class paints with its parent's clipping) and left a block beside it.
+    HDC dc=m==WM_ERASEBKGND||m==WM_PRINTCLIENT?(HDC)w:nullptr;bool sc=dc&&scaledDc(dc);if(sc)setScale(dc,false);
     LPARAM l2=convert(m,w,l,-1);LRESULT r=base?(CallWindowProcW)(base,h,m,w,l2):(DefWindowProcW)(h,m,w,l2);if(hasStruct(m))convert(m,w,l,+1);
+    if(sc)setScale(dc,true);
     return r;}
 inline LRESULT defWindowProc(HWND h,UINT m,WPARAM w,LPARAM l){return toWindows(nullptr,h,m,w,l);}
 inline LRESULT callWindowProc(WNDPROC p,HWND h,UINT m,WPARAM w,LPARAM l){if(ours.count(p))return p(h,m,w,l);if(p==thunk){WNDPROC q=procOf(h);return q==DefWindowProcW?defWindowProc(h,m,w,l):q(h,m,w,l);}return toWindows(p,h,m,w,l);}

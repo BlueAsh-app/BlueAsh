@@ -15,7 +15,7 @@ namespace ModePulse {
   MapWindow map;string mapId="";string questLogs="",markerShipped,markerCache,seenPath,mode="";
   Dictionary<string,string[]> seenExits=new Dictionary<string,string[]>();object extracts;
   HashSet<string> lastFrame=new HashSet<string>();Dictionary<string,string> taxiLastFrame=new Dictionary<string,string>();
-  DateTime pendingAt=DateTime.MaxValue;int captures=0;bool ocrBlocked;int exitGeneration=0;ExitSchedule autoExits;string autoExitKey="";
+  DateTime pendingAt=DateTime.MaxValue;int captures=0;bool ocrBlocked;int exitGeneration=0;ExitSchedule autoExits;int autoQuiet;string autoExitKey="";
 
   void SavePins(){
    var b=new StringBuilder("{");bool first=true;

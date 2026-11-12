@@ -44,7 +44,7 @@ if($Promote){
  $beta=Get-Content -LiteralPath $betaPath -Raw -Encoding UTF8|ConvertFrom-Json
  foreach($p in @($beta.parts)){if(!(Test-Path -LiteralPath (Join-Path $updates $p))){throw "베타 조각 파일이 없습니다: $p"}}
  if([version]$beta.version -le (Published $stablePath)){throw "베타($($beta.version))가 지금 배포된 버전보다 새롭지 않습니다."}
- Copy-Item -LiteralPath $betaPath -Destination $stablePath -Force;Remove-Item -LiteralPath $betaPath;AddHistory $beta
+ Copy-Item -LiteralPath $betaPath -Destination $stablePath -Force;AddHistory $beta
  "BlueAsh $($beta.version) → 모두에게 배포"
  Deploy;GitHub $beta.version;return
 }
@@ -62,9 +62,8 @@ if(!$Direct -and [version]$version -lt $latest){throw "$version 은(는) 베타 
 
 # Self-test of the exact exe being published, in a scratch folder (the running BlueAsh's own files stay untouched).
 $check=Join-Path ([IO.Path]::GetTempPath()) ('blueash-selftest-'+[Guid]::NewGuid().ToString('N'))
-$p=Start-Process -FilePath $exe -ArgumentList ('--selftest "'+$check+'"') -Wait -PassThru
+$p=Start-Process -FilePath $exe -ArgumentList ('--selftest "'+$check+'"') -Wait -PassThru -WindowStyle Hidden
 $report=Join-Path $check 'selftest.txt';$detail=$(if(Test-Path -LiteralPath $report){(Get-Content -LiteralPath $report -Encoding UTF8) -join ' / '}else{'(보고 없음)'})
-Remove-Item -LiteralPath $check -Recurse -Force -ErrorAction SilentlyContinue
 if($p.ExitCode -ne 0){throw "자체 점검 실패(코드 $($p.ExitCode)): $detail — 배포하지 않았습니다."}
 "자체 점검 통과: $detail"
 
@@ -76,14 +75,14 @@ $zipPath=Join-Path ([IO.Path]::GetTempPath()) "BlueAsh-$version-$([Guid]::NewGui
 $files='BlueAsh.exe','README.txt','NOTICE.txt','LICENSE.txt'
 $zip=[IO.Compression.ZipFile]::Open($zipPath,'Create')
 try{foreach($f in $files){$src=$(if($f -eq 'BlueAsh.exe'){$exe}else{Join-Path $root $f});if(!(Test-Path -LiteralPath $src)){throw "$f 없음"};[void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,$src,'BlueAsh/'+$f,'Optimal')}}finally{$zip.Dispose()}
-$bytes=[IO.File]::ReadAllBytes($zipPath);Remove-Item -LiteralPath $zipPath
+$bytes=[IO.File]::ReadAllBytes($zipPath)
 $sha=[BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash($bytes)).Replace('-','')
 $partSize=8MB;$parts=@()
 for($i=0;$i*$partSize -lt $bytes.Length;$i++){$n=[Math]::Min($partSize,$bytes.Length-$i*$partSize);$chunk=New-Object byte[] $n;[Array]::Copy($bytes,$i*$partSize,$chunk,0,$n);[IO.File]::WriteAllBytes((Join-Path $out "part$i"),$chunk);$parts+="$version/part$i"}
 $manifest=[ordered]@{version=$version;date=(Get-Date -Format 'yyyy-MM-dd');notes=@($Notes);size=$bytes.Length;sha256=$sha;url="https://modepulse-relay.modepulse.workers.dev/update/BlueAsh-$version.zip";parts=$parts}
 $target=$(if($Direct){$stablePath}else{$betaPath})
 [IO.File]::WriteAllText($target,($manifest|ConvertTo-Json -Depth 4),(New-Object Text.UTF8Encoding($false)))
-if($Direct-and(Test-Path -LiteralPath $betaPath)){Remove-Item -LiteralPath $betaPath}
+if($Direct-and(Test-Path -LiteralPath $betaPath)){Copy-Item -LiteralPath $stablePath -Destination $betaPath -Force}
 if($Direct){AddHistory ([pscustomobject]$manifest)}
 "BlueAsh $version · $([Math]::Round($bytes.Length/1MB,1)) MB · $($parts.Count) parts · sha256 $sha · "+$(if($Direct){'모두에게 바로 배포'}else{'베타로 배포 (확인 뒤 release.ps1 -Promote)'})
 # GPL-3.0: the source of this exact build goes out with it (relay/public/source, linked from NOTICE.txt and README.txt).

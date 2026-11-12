@@ -38,13 +38,6 @@ int main(){
     // Target: met, near, missed, capped below, no data.
     assert(target(s,100,0,0,-1)==Met);assert(target(s,105,0,0,-1)==Near);assert(target(s,144,0,0,-1)==Missed);assert(target(s,144,120,0,-1)==CappedBelow);
     assert(target(s,144,0,60,1)==CappedBelow);assert(target(stats(frames(10,50)),60,0,0,-1)==NoData);assert(target(s,0,0,0,-1)==NoData);
-    // Advice: target met -> no upgrade; GPU limit -> settings then GPU; quality first -> no settings step; no data -> more data.
-    {Sample x;x.gpuUtil=99;auto f=diagnose(s,x);auto a=advise(f,Met,1);assert(a.size()==1&&a[0].kind==NoUpgrade);
-     a=advise(f,Missed,1);assert(a[0].kind==TuneSettings&&a[1].kind==GpuUpgrade&&a[1].conf==Low);
-     a=advise(f,Missed,0);assert(a[0].kind==GpuUpgrade);}
-    {Sample x;x.gpuUtil=60;x.cpuMaxCore=50;auto a=advise(diagnose(s,x),Missed,1);assert(a.back().kind==MoreData);}
-    assert(advise({},NoData,1)[0].kind==MoreData);
-    {Sample x;x.gpuUtil=60;x.cpuMaxCore=98;auto a=advise(diagnose(s,x),Missed,2);bool cpu=false;for(auto& k:a)cpu=cpu||k.kind==CpuUpgrade;assert(cpu);}
     // History line round trip; tabs/equals in names cannot break the format; garbage is rejected.
     {Session a;a.game=L"steam-1\t=x";a.fps=123.5;a.low1=80;a.frames=2470;a.gpuUtil=97;a.main=GpuLimit;Session b;assert(parse(line(a),b)&&b.game==L"steam-1  x"&&std::fabs(b.fps-123.5)<.01&&b.main==GpuLimit&&b.frames==2470);
      assert(!parse(L"",b)&&!parse(L"hello",b)&&!parse(L"fps=1e9\tgame=x",b));}

@@ -12,7 +12,7 @@ Assert ($script:UpdateWords.Count -ge 38) 'updater strings missing'
 foreach($code in $script:UpdateLanguages){
  $script:UpdateLanguage=$code
  foreach($key in $script:UpdateWords.Keys){
-  $row=$script:UpdateWords[$key];Assert ($row.Count -eq 5) "language missing $key"
+  $row=$script:UpdateWords[$key];Assert ($row.Count -eq $script:UpdateLanguages.Count) "language missing $key"
   $text=U $key
   Assert (![string]::IsNullOrWhiteSpace($text)) "empty translation $code $key"
   $sourceFormat=([regex]::Matches($key,'\{\d+(?:[^}]*)?\}')|ForEach-Object {$_.Value}|Sort-Object) -join '|'

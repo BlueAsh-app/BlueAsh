@@ -45,7 +45,7 @@ inline Result read(winocr::Reader& ocr,const unsigned char* px,size_t pitch,cons
 }
 class BoardCapture {
     std::thread worker;HANDLE stopEvent=nullptr;std::mutex mutex;std::atomic<bool> active{false};HWND targetWindow=nullptr;
-    struct State {bool locked=false;double end=0,labelAt=0,numAt=0,oneAt=0,singleAt=0;int labels=0,lastNum=0,singles=0;std::wstring status=i18n::text(L"대기");} state;
+    struct State {bool locked=false;double end=0,labelAt=0,numAt=0,oneAt=0,singleAt=0,floor=0;int labels=0,lastNum=0,singles=0,twoRun=0;std::wstring status=i18n::text(L"대기");} state;
     // Digit crop as a 24-bit BMP (for checking what the reader saw in a real match).
     static void saveMask(const std::wstring& path,const std::vector<unsigned char>& m,int w,int h){FILE* f=_wfopen(path.c_str(),L"wb");if(!f){return;}int row=(w*3+3)&~3;
         BITMAPFILEHEADER fh={};BITMAPINFOHEADER ih={};ih.biSize=sizeof(ih);ih.biWidth=w;ih.biHeight=-h;ih.biPlanes=1;ih.biBitCount=24;fh.bfType=0x4D42;fh.bfOffBits=sizeof(fh)+sizeof(ih);fh.bfSize=fh.bfOffBits+row*h;
@@ -89,6 +89,9 @@ class BoardCapture {
                 double t=now();tracker.feed(t,vals);
                 {std::lock_guard<std::mutex> l(mutex);state.locked=tracker.locked;state.end=tracker.end;if(hasLabel){state.labelAt=t;state.labels++;}
                  if(!vals.empty()){state.lastNum=vals.back();state.numAt=t;}
+                 // Two digit blobs under the label in two reads in a row = 10 or more: boarding is at least ~9.5 s away (floor), and any
+                 // single-digit or "1" sighting before it was a digit the threshold dropped (19 read as a lone "1" alarmed ~17 s early).
+                 if(hasLabel){if(blobs==2){if(++state.twoRun>=2){state.floor=std::max(state.floor,t+9.5);state.singleAt=0;state.singles=0;state.oneAt=0;}}else{state.twoRun=0;}}
                  // Under the label: one blob = 9 or less (first seen -> singleAt); a narrow one = "1", the last second.
                  if(hasLabel&&blobs==1){if(!state.singleAt)state.singleAt=t;state.singles++;if(!state.oneAt&&(countread::isOne(r)||(!vals.empty()&&vals.back()==1)))state.oneAt=t;}
                  state.status=tracker.locked?i18n::text(L"카운트다운 확인 · 탑승 대기"):i18n::text(L"카운트다운 찾는 중");}
@@ -118,12 +121,14 @@ struct BoardWatch {
         if(!pubgJoinOn||!pubgMatchAt||pubgBoarded||now-pubgMatchAt>300000){if(capture.running())capture.stop();return;}
         if(now-pubgMatchAt<10000)return; // starting island loads first; a late join can land mid-countdown
         auto s=capture.read();double nowS=now/1000.0;
+        // Never before the earliest boarding the two-digit reads allow; and with a locked OCR countdown, the backups wait for its end.
+        bool early=nowS<s.floor||(s.locked&&nowS<s.end-2);
         // "1" on screen -> 2 s later (the plane boards right after the countdown).
-        if(s.oneAt>0&&nowS>=s.oneAt+2){board(i18n::text(L"숫자 1 확인 후 2초"));return;}
-        if(s.locked&&nowS>=s.end+1){board(i18n::text(L"카운트다운 끝"));return;}
+        if(s.oneAt>0&&nowS>=s.oneAt+2&&nowS>=s.floor){board(i18n::text(L"숫자 1 확인 후 2초"));return;}
+        if(s.locked&&nowS>=s.end+1&&nowS>=s.floor){board(i18n::text(L"카운트다운 끝"));return;}
         // Backups: 10 s after the single-digit phase began (9 -> 0, +1 s); or the label gone for 2 s after it.
-        if(s.singleAt>0&&nowS>=s.singleAt+10){board(i18n::text(L"한 자리 숫자 시작 후 10초"));return;}
-        if(s.singles>=2&&nowS-s.labelAt>=2){board(i18n::text(L"한 자리 숫자 뒤 문구 사라짐"));return;}
+        if(!early&&s.singleAt>0&&nowS>=s.singleAt+10){board(i18n::text(L"한 자리 숫자 시작 후 10초"));return;}
+        if(!early&&s.singles>=2&&nowS-s.labelAt>=2){board(i18n::text(L"한 자리 숫자 뒤 문구 사라짐"));return;}
         DWORD pid=pubggame::gamePid();HWND h=pid?wgc::window(pid):nullptr;
         if(!h){if(capture.running()||!noWindow){noWindow=true;pubgNote(pid?i18n::text(L"배그 창을 찾지 못함"):i18n::text(L"배그 프로세스 없음"));}capture.stop();return;}noWindow=false;
         if(IsIconic(h)&&!warned){warned=true;

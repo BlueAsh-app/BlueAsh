@@ -65,12 +65,12 @@ void pasteShot(HWND h){
 int shotAt(int x,int y){for(int i=0;i<(int)feedbackShots.size();i++){int l=shotX+i*(shotW+shotGap);if(x>=l&&x<l+shotW&&y>=shotY&&y<shotY+shotH)return i;}return -1;}
 void paintShots(HDC dc){
     if(!painting::token){return;}Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-    // Slot i on the page (moved with the page's stretch; the GDI+ drawing below is not mapped by itself).
-    auto slot=[](int i){RECT r={shotX+i*(shotW+shotGap),shotY,shotX+i*(shotW+shotGap)+shotW,shotY+shotH};return painting::stretch.on?painting::stretch.keep(r):r;};
-    // Empty slots: a dashed outline with a faint picture mark, so the three places for pictures read at a glance.
+    // Slot i on the page.
+    auto slot=[](int i){RECT r={shotX+i*(shotW+shotGap),shotY,shotX+i*(shotW+shotGap)+shotW,shotY+shotH};return r;};
+    // Empty slots: a dashed outline, so the three places for pictures read at a glance. (No icon-font mark: GDI text drawn
+    // while this GDI+ Graphics holds the DC ignored the DPI transform and landed as small boxes elsewhere.)
     for(int i=(int)feedbackShots.size();i<3;i++){Gdiplus::GraphicsPath slotPath;painting::path(slotPath,slot(i),12);
         Gdiplus::Pen dash(painting::color(line),1.2f);dash.SetDashStyle(Gdiplus::DashStyleDash);g.DrawPath(&dash,&slotPath);}
-    for(int i=(int)feedbackShots.size();i<3;i++){int l=shotX+i*(shotW+shotGap);glyph(dc,0xEB9F,{l,shotY,l+shotW,shotY+shotH},iconFont,line);}
     for(int i=0;i<(int)feedbackShots.size();i++){RECT s=slot(i);int l=s.left,top=s.top;
         Gdiplus::GraphicsPath clip;painting::path(clip,s,12);g.SetClip(&clip);g.DrawImage(feedbackShots[i].thumb,l,top,shotW,shotH);g.ResetClip();
         Gdiplus::Pen edge(painting::color(line),1.f);g.DrawPath(&edge,&clip);

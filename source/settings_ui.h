@@ -110,7 +110,7 @@ void modeTabs(HWND h){addSetting(h,L"BUTTON",i18n::text(L"컬러 & 사운드"),B
 // Both tab pages paint the backdrop and their own panels (no picture behind them), off-screen and copied once.
 void pagePanels(HWND h,HDC target,const std::function<void(HDC)>& draw){
     RECT r={};GetClientRect(h,&r);HDC dc=CreateCompatibleDC(target);HBITMAP bmp=CreateCompatibleBitmap(target,std::max(1L,r.right),std::max(1L,r.bottom));auto old=SelectObject(dc,bmp);
-    {painting::StretchOff off_;POINT o={};MapWindowPoints(h,win,&o,1);if(!copyBackdrop(dc,r,o)){FillRect(dc,&r,backgroundBrush);}}draw(dc);
+    {POINT o={};MapWindowPoints(h,win,&o,1);if(!copyBackdrop(dc,r,o)){FillRect(dc,&r,backgroundBrush);}}draw(dc);
     BitBlt(target,0,0,r.right,r.bottom,dc,0,0,SRCCOPY);SelectObject(dc,old);DeleteObject(bmp);DeleteDC(dc);
 }
 // The status line (59) of the tab pages sits on the backdrop below the panels. The label stays hidden and only keeps
@@ -131,7 +131,6 @@ void paintProfilePage(HDC dc){
     if(painting::token){Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);Gdiplus::Pen pen(painting::color(ri),1.6f);painting::roundCaps(pen);Gdiplus::SolidBrush fill(painting::color(ri));
         // contrast: a circle half filled; sharpness: a half-filled triangle; hue: a circle split in three
         g.DrawEllipse(&pen,33.f,281.f,18.f,18.f);g.FillPie(&fill,33.f,281.f,18.f,18.f,90.f,180.f);
-        if(painting::stretch.on){g.TranslateTransform((float)(painting::stretch.x(460)-460),0.f);} // the right panel's icons move with it (a wider window)
         Gdiplus::PointF tri[]={{460.f,229.f},{470.f,247.f},{450.f,247.f}},half[]={{460.f,229.f},{470.f,247.f},{460.f,247.f}};g.DrawPolygon(&pen,tri,3);g.FillPolygon(&fill,half,3);
         g.DrawEllipse(&pen,451.f,281.f,18.f,18.f);g.FillPie(&fill,451.f,281.f,18.f,18.f,-90.f,120.f);g.DrawLine(&pen,460.f,290.f,460.f,281.f);g.DrawLine(&pen,460.f,290.f,468.f,295.f);g.DrawLine(&pen,460.f,290.f,452.f,295.f);}
     glyph(dc,0xE706,{26,224,58,252},iconFont,ri);textAt(dc,L"γ",{26,328,58,356},sectionFont,ri,DT_CENTER|DT_VCENTER|DT_SINGLELINE);glyph(dc,0xE995,{444,328,476,356},iconFont,ri);

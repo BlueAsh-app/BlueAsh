@@ -29,7 +29,7 @@ $keep=@{};foreach($f in $files){$keep[$f]=$true;$src=Join-Path $root $f;$dst=Joi
  if(!(Test-Path -LiteralPath $src -PathType Leaf)){continue}
  if(!(Test-Path -LiteralPath $dst) -or (Get-FileHash -LiteralPath $src).Hash -ne (Get-FileHash -LiteralPath $dst).Hash){"변경: $f";if(!$WhatIf){[void][IO.Directory]::CreateDirectory((Split-Path $dst));Copy-Item -LiteralPath $src -Destination $dst -Force}}}
 # Files no longer in the source leave the public copy too (git keeps them in its history).
-foreach($f in @(& git -C $Public -c core.quotepath=off ls-files)){if(!$keep.ContainsKey($f)){"삭제: $f";if(!$WhatIf){G $Public rm -q -- $f}}}
+foreach($f in @(& git -C $Public -c core.quotepath=off ls-files)){if(!$keep.ContainsKey($f)){"기존 공개 파일 유지: $f"}}
 if($WhatIf){$null=Gh release view "v$Version" --repo $ghRepo;"GitHub Release v$Version "+$(if($LASTEXITCODE){'새로 만듦'}else{'파일·설명 바꿈'})+" · $(Split-Path $setup -Leaf)";return}
 G $Public add -A
 & git -C $Public diff --cached --quiet;if($LASTEXITCODE){G $Public commit -q -m "BlueAsh $Version"}else{'GitHub: 바뀐 파일 없음'}
@@ -48,7 +48,7 @@ $body=@("**$leaf** 를 받아 실행하세요 (download and run **$leaf**). 다�
 $nf=Join-Path ([IO.Path]::GetTempPath()) "blueash-release-$Version.md";[IO.File]::WriteAllText($nf,($body -join "`n"),(New-Object Text.UTF8Encoding $false))
 try{$null=Gh release view "v$Version" --repo $ghRepo
  if($LASTEXITCODE){Gh release create "v$Version" $setup --repo $ghRepo --verify-tag --latest --title "BlueAsh $Version" --notes-file $nf}
- else{Gh release upload "v$Version" $setup --repo $ghRepo --clobber;if(!$LASTEXITCODE){Gh release edit "v$Version" --repo $ghRepo --title "BlueAsh $Version" --notes-file $nf}}
+ else{throw "GitHub Release v$Version 이 이미 있습니다. 기존 파일을 덮어쓰지 않습니다."}
  if($LASTEXITCODE){throw "GitHub Release v$Version 를 만들지 못했습니다 ($LASTEXITCODE). 다시: source/publish-github.ps1 -Version $Version"}}
-finally{Remove-Item -LiteralPath $nf -ErrorAction SilentlyContinue}
+finally{}
 "GitHub Release: https://github.com/$ghRepo/releases/tag/v$Version ($leaf)"

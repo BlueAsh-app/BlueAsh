@@ -119,7 +119,7 @@ namespace ModePulse {
    long start;if(!long.TryParse(state[7],out start)||start<=0)return null;
    var key=state[0]+":"+state[5]+":"+start;
    if(key==previous||tick<start||tick-start>2500)return null;
-   return new ExitSchedule{Key=key,Until=tick+3800,Next=tick+150};
+   return new ExitSchedule{Key=key,Until=tick+4500,Next=tick+60};
   }
  }
 }

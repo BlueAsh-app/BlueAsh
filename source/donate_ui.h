@@ -85,7 +85,7 @@ LRESULT CALLBACK donateProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
     case WM_PAINT:{PAINTSTRUCT ps;HDC dc=BeginPaint(h,&ps);
         // A white plate around the QR (phone cameras read dark-on-light), the code drawn with hard pixels. The plate is
         // finished off-screen over the page background and copied in one go.
-        RECT pr=painting::stretch.on?painting::stretch.keep(donatePlate):donatePlate;int pw=pr.right-pr.left,ph=pr.bottom-pr.top;HDC mem=CreateCompatibleDC(dc);HBITMAP bmp=CreateCompatibleBitmap(dc,pw,ph);auto old=SelectObject(mem,bmp);
+        RECT pr=donatePlate;int pw=pr.right-pr.left,ph=pr.bottom-pr.top;HDC mem=CreateCompatibleDC(dc);HBITMAP bmp=CreateCompatibleBitmap(dc,pw,ph);auto old=SelectObject(mem,bmp);
         BitBlt(mem,0,0,pw,ph,dc,pr.left,pr.top,SRCCOPY);
         if(painting::token){Gdiplus::Graphics g(mem);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);Gdiplus::GraphicsPath p;painting::path(p,{0,0,pw,ph},22);Gdiplus::SolidBrush white(Gdiplus::Color(255,255,255,255));g.FillPath(&white,&p);
             if(!donateQr&&donateLoading){g.Flush(Gdiplus::FlushIntentionSync);painting::skeleton(mem,{14,14,pw-14,ph-14},14,0,pw,RGB(226,231,240),RGB(255,255,255));}

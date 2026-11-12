@@ -185,7 +185,7 @@ begin
     HasWebView2(HKLM, 'SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}') or
     HasWebView2(HKCU, 'Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}'));
 end;
-// The language picked on the download site rides in the file name: BlueAsh-Setup-2.28.0-de.exe (the site's /download
+// The language picked on the download site rides in the file name: BlueAsh-Setup-2.29.0-de.exe (the site's /download
 // function names it; a browser may add " (1)"). Tags have no "-" so the last "-" part is the tag. Empty when absent.
 function SiteLanguage(): String;
 var n: String; i: Integer;

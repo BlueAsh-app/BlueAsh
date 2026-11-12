@@ -447,7 +447,7 @@ const dlsslib::Game* chosen();int loadLimit(const dlsslib::Game& g);int chipValu
 void layoutNow();void perfLayoutNow();
 std::map<std::wstring,std::vector<std::pair<std::wstring,COLORREF>>> pillMemo; // labels under the carousel per game: they read files
 void layout(){pillMemo.clear();bool hold=page&&IsWindowVisible(page);if(hold)SendMessageW(page,WM_SETREDRAW,FALSE,0);layoutNow();
-    if(hold){SendMessageW(page,WM_SETREDRAW,TRUE,0);if(!quietMoves)RedrawWindow(page,nullptr,nullptr,RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN|RDW_UPDATENOW);}}
+    if(hold){SendMessageW(page,WM_SETREDRAW,TRUE,0);RedrawWindow(page,nullptr,nullptr,RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN|RDW_UPDATENOW);}}
 // The enlarged picture: the viewer over the whole page, five big preset buttons (painted, bigPreset) under it.
 RECT bigPreset(int p){RECT pr;GetClientRect(page,&pr);int w=(pr.right-56-4*14)/5,x=28+p*(w+14),y=pr.bottom-28-68;return {x,y,x+w,y+68};}
 void layoutNow(){auto* g=current();bool o=g&&opti(*g);
