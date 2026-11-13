@@ -1,2 +1,2 @@
-﻿BlueAsh 2.29.0 — 게임 모드 이전 설정 복원, 휴대폰 게임 표시·실시간 감지, 타르코프 서버 표시 개선 (2026-11-13)
+﻿BlueAsh 2.30.0 — 보안 검사 재검토 공지 (2026-11-13)
 Built to a scratch path (the repository BlueAsh.exe is the running copy and was not replaced).

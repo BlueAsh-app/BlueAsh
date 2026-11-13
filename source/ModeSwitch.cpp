@@ -297,7 +297,7 @@ COLORREF bg=RGB(7,12,27),panel=RGB(13,22,44),ink=RGB(247,249,255),muted=RGB(158,
 bool active=false,fps=false,gammaTouched=false,ready=false,trayPresent=false,hotkeyEnabled=true,hotkeyRegistered=false,startHidden=false,closeToTray=true;
 int dashLabelRight=414; // dashboard: where the 디스플레이 / 브라우저 볼륨 labels end (sized to the longest translation)
 bool languageRestart=false,languageToSettings=true;HWND languageBox=nullptr; // languageToSettings: reopen on 설정 (its drop-down) or on the dashboard (top-right pill)
-MaintenanceState maintenance;HWND maintenanceMenu=nullptr;
+MaintenanceState maintenance;HWND maintenanceMenu=nullptr;bool securityNotice=false;
 int mainPage=0,selectedGame=0;bool pubgJoinOn=true,pubgMapOn=true;
 // Set by the update check (update_ui.h): a newer version exists; the sidebar and tray show it. balloonUpdateAt = when the "new version" notice went up.
 bool updateReady=false;ULONGLONG balloonUpdateAt=0,balloonStabilityAt=0;std::wstring updateVersion;
@@ -758,7 +758,7 @@ void drawButtonTo(DRAWITEMSTRUCT* ds){
         if(on)painting::iconGlow(dc,r,RGB(120,160,255),3,1.6,[&](HDC d,RECT q){mark(d,q,RGB(255,255,255));});
         mark(dc,r,c);return;
     }
-    if(home&&id==87){bool on=hover||pressed||maintenanceMenu;if(on)roundBox(dc,r,well,line,12);glyph(dc,0xEA8F,r,footFont,on?ink:muted);if(maintenance.current==1)painting::circle(dc,{r.right-12,r.top+3,r.right-3,r.top+12},RGB(224,66,78),CLR_NONE);return;}
+    if(home&&id==87){bool on=hover||pressed||maintenanceMenu;if(on)roundBox(dc,r,well,line,12);glyph(dc,0xEA8F,r,footFont,on?ink:muted);if(maintenance.current==1||securityNotice)painting::circle(dc,{r.right-12,r.top+3,r.right-3,r.top+12},maintenance.current==1?RGB(224,66,78):RGB(94,143,255),CLR_NONE);return;}
     if(home&&(id>=82&&id<=85)){
         // Window controls drawn by BlueAsh (no Windows title bar): language pill "KO ⌄", minimize, close.
         bool on=hover||pressed||(id==82&&languageMenu);COLORREF k=on?RGB(242,246,255):RGB(170,178,196);
@@ -1293,7 +1293,7 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
     case WM_APP+232:stabui::recorded((stability::Event*)lp);return 0;
     case WM_APP+182:raidWatch.deployed((unsigned)wp);return 0;
     case WM_APP+183:donateWatch.remember(wp);return 0;
-    case WM_APP+184:maintenanceDone((int)wp);return 0;
+    case WM_APP+184:maintenanceDone((int)wp,(int)lp);return 0;
     case WM_APP+185:{std::unique_ptr<std::vector<gameswitch::Row>> r((std::vector<gameswitch::Row>*)lp);gameswitch::rows=*r;gameswitch::scanned=true;gameswitch::scanning=false;
         if(IsWindow(gameswitch::notify)&&GetDlgItem(gameswitch::notify,60)){addGameRows(gameswitch::notify);}return 0;}
     case WM_APP+186:{std::unique_ptr<std::wstring> id((std::wstring*)lp);gameswitch::changed(*id);return 0;}
@@ -1346,7 +1346,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,LPWSTR command,int show){dpi::i
         HWND existing=FindWindowW(L"ModeSwitch",nullptr);
         if(existing&&!startHidden){
             wchar_t title[128]={};GetWindowTextW(existing,title,128);
-            if(std::wstring(title)!=L"BlueAsh 2.29.0")MessageBoxW(nullptr,i18n::text(L"이전 버전이 트레이에서 실행 중입니다. 이전 프로그램을 완전 종료한 뒤 BlueAsh.exe를 다시 실행하세요."),i18n::text(L"BlueAsh · 이전 버전 실행 중"),MB_OK|MB_ICONINFORMATION);
+            if(std::wstring(title)!=L"BlueAsh 2.30.0")MessageBoxW(nullptr,i18n::text(L"이전 버전이 트레이에서 실행 중입니다. 이전 프로그램을 완전 종료한 뒤 BlueAsh.exe를 다시 실행하세요."),i18n::text(L"BlueAsh · 이전 버전 실행 중"),MB_OK|MB_ICONINFORMATION);
             else{ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);}
         }
         CloseHandle(mutex);return 0;
@@ -1361,7 +1361,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,LPWSTR command,int show){dpi::i
     RegisterClassW(&wc);
     DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_THICKFRAME|WS_CLIPCHILDREN;
     RECT bounds={0,0,1160,780}; // the client is the whole window (WM_NCCALCSIZE)
-    HWND h=CreateWindowW(wc.lpszClassName,L"BlueAsh 2.29.0",style,CW_USEDEFAULT,CW_USEDEFAULT,bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,instance,nullptr);
+    HWND h=CreateWindowW(wc.lpszClassName,L"BlueAsh 2.30.0",style,CW_USEDEFAULT,CW_USEDEFAULT,bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,instance,nullptr);
     if(!h){painting::shutdown();CoUninitialize();CloseHandle(mutex);return 1;}
     ChangeWindowMessageFilterEx(h,WM_APP+177,MSGFLT_ALLOW,nullptr); // the updater runs as the normal user even when BlueAsh is elevated: let its "please close" through
     {MARGINS shadow={0,0,0,1};DwmExtendFrameIntoClientArea(h,&shadow);SetWindowPos(h,nullptr,0,0,0,0,SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);} // keep the shadow without a frame
