@@ -3464,20 +3464,20 @@
     "tr": " (yol kaydedilemedi)",
     "zh-TW": " （無法儲存路徑）"
   },
-  "BlueAsh 2.31.0\r\n알림: ": {
-    "ko": "BlueAsh 2.31.0\r\n알림: ",
-    "en": "BlueAsh 2.31.0\r\nAlerts: ",
-    "zh-CN": "BlueAsh 2.31.0\r\n提醒：",
-    "ja": "BlueAsh 2.31.0\r\n通知: ",
-    "ru": "BlueAsh 2.31.0\r\nУведомления: ",
-    "es": "BlueAsh 2.31.0\r\nAlertas: ",
-    "pt-BR": "BlueAsh 2.31.0\r\nAlertas: ",
-    "de": "BlueAsh 2.31.0\r\nAlarme: ",
-    "fr": "BlueAsh 2.31.0\r\nAlertes : ",
-    "it": "BlueAsh 2.31.0\r\nAvvisi: ",
-    "pl": "BlueAsh 2.31.0\r\nAlerty: ",
-    "tr": "BlueAsh 2.31.0\r\nUyarılar: ",
-    "zh-TW": "BlueAsh 2.31.0\r\n提醒："
+  "BlueAsh 2.31.1\r\n알림: ": {
+    "ko": "BlueAsh 2.31.1\r\n알림: ",
+    "en": "BlueAsh 2.31.1\r\nAlerts: ",
+    "zh-CN": "BlueAsh 2.31.1\r\n提醒：",
+    "ja": "BlueAsh 2.31.1\r\n通知: ",
+    "ru": "BlueAsh 2.31.1\r\nУведомления: ",
+    "es": "BlueAsh 2.31.1\r\nAlertas: ",
+    "pt-BR": "BlueAsh 2.31.1\r\nAlertas: ",
+    "de": "BlueAsh 2.31.1\r\nAlarme: ",
+    "fr": "BlueAsh 2.31.1\r\nAlertes : ",
+    "it": "BlueAsh 2.31.1\r\nAvvisi: ",
+    "pl": "BlueAsh 2.31.1\r\nAlerty: ",
+    "tr": "BlueAsh 2.31.1\r\nUyarılar: ",
+    "zh-TW": "BlueAsh 2.31.1\r\n提醒："
   },
   " / 볼륨: ": {
     "ko": " / 볼륨: ",
@@ -28138,5 +28138,20 @@
     "pl": "Brak pomiarów",
     "tr": "Henüz ölçüm yok",
     "zh-TW": "還沒有測量"
+  },
+  "휴대폰 알림": {
+    "ko": "휴대폰 알림",
+    "en": "Phone alerts",
+    "zh-CN": "手机提醒",
+    "ja": "スマホ通知",
+    "ru": "Уведомления на телефон",
+    "es": "Avisos al móvil",
+    "pt-BR": "Alertas no celular",
+    "de": "Handy-Alarme",
+    "fr": "Alertes mobile",
+    "it": "Avvisi sul telefono",
+    "pl": "Alerty na telefon",
+    "tr": "Telefon uyarıları",
+    "zh-TW": "手機提醒"
   }
 }

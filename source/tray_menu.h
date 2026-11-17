@@ -97,7 +97,7 @@ void trayMenu(){
     for(int id:{33,37,39}){trayAdd(tarkov,1,id,featureTitle(id),featureOn(id));}trayAdd(tarkov,1,46,featureTitle(46));
     trayAdd(pubg,1,47,featureTitle(47),pubgJoinOn);trayAdd(pubg,1,48,featureTitle(48),pubgMapOn);
     trayAdd(games,3,(UINT_PTR)tarkov,i18n::text(L"타르코프"));trayAdd(games,3,(UINT_PTR)pubg,i18n::text(L"배그"));
-    trayAdd(menu,3,(UINT_PTR)games,i18n::text(L"게임 도우미"));trayAdd(menu,1,44,i18n::text(L"알림"));
+    trayAdd(menu,3,(UINT_PTR)games,i18n::text(L"게임 도우미"));trayAdd(menu,1,44,i18n::text(L"휴대폰 알림"));
     trayAdd(menu,1,38,updateReady?i18n::text(L"업데이트 · 새 버전 ")+updateVersion:std::wstring(i18n::text(L"업데이트")));
     trayAdd(menu,1,50,i18n::text(L"설정"));
     trayAdd(menu,2,0,L"");

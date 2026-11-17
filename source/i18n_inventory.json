@@ -5689,8 +5689,7 @@
     "key": "알림",
     "files": [
       "maintenance_ui.h",
-      "ModeSwitch.cpp",
-      "tray_menu.h"
+      "ModeSwitch.cpp"
     ],
     "localized": true,
     "exclusion": ""
@@ -6488,6 +6487,15 @@
       "ModeSwitch.cpp",
       "tray_menu.h",
       "tune_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "휴대폰 알림",
+    "files": [
+      "ModeSwitch.cpp",
+      "tray_menu.h"
     ],
     "localized": true,
     "exclusion": ""
@@ -9884,7 +9892,7 @@
     "exclusion": ""
   },
   {
-    "key": "BlueAsh 2.31.0\r\n알림: ",
+    "key": "BlueAsh 2.31.1\r\n알림: ",
     "files": [
       "raid_alert.h"
     ],
@@ -10381,6 +10389,14 @@
   },
   {
     "key": "2.29.0 설치 파일에 대한 백신 재검토를 요청했습니다. 최신 결과는 검사 결과 보기에서 확인해 주세요.",
+    "files": [
+      "security_notice.h"
+    ],
+    "localized": false,
+    "exclusion": ""
+  },
+  {
+    "key": "이전 VirusTotal 검사에서 71개 엔진 중 4개가 BlueAsh 2.29.0 설치 파일을 악성으로 탐지해 오탐 가능성의 재검토를 요청했습니다. 최신 검사에서는 2개가 탐지했습니다. 이전 탐지 업체 한 곳은 시간 초과로 확인 중이며, 재검토 결과를 기다리고 있습니다.",
     "files": [
       "security_notice.h"
     ],

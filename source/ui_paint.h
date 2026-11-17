@@ -69,9 +69,10 @@ inline void coffee(HDC dc,RECT r,COLORREF ink,double t=-1){
  Gdiplus::PointF band[]={{side(12.5f),12.5f},{side(16.5f),16.5f},{24.f-side(16.5f),16.5f},{24.f-side(12.5f),12.5f}};g.FillPolygon(&fill,band,4);
  Gdiplus::Pen thin(color(ink),1.2f);thin.SetStartCap(Gdiplus::LineCapRound);thin.SetEndCap(Gdiplus::LineCapRound);
  if(t<0){for(float x:{10.f,14.f})g.DrawBezier(&thin,x,3.4f,x-1.f,2.4f,x+1.f,1.6f,x,0.6f);return;}
- // heat shimmer: two wisps stay over the cup while a wave travels up them, swaying more and fading toward the top
- for(int i=0;i<2;i++){float bx=10.f+i*4.f;const int n=14;Gdiplus::PointF pt[n+1];for(int k=0;k<=n;k++){float s=k/(float)n,y=4.6f-s*4.6f;float amp=.35f+s*1.05f;pt[k]={bx+amp*(float)std::sin(s*5.4-t*3.1+i*1.9)+(float)(.25*std::sin(t*.9+i)),y};}
-  for(int k=0;k<n;k++){float s=(k+.5f)/n;float a=std::min(1.f,s*4.f)*(1.f-s)*(.78f+.22f*(float)std::sin(t*1.7+i*2.4));Gdiplus::Pen w(Gdiplus::Color((BYTE)(235*a),GetRValue(ink),GetGValue(ink),GetBValue(ink)),1.3f-.35f*s);w.SetStartCap(Gdiplus::LineCapRound);w.SetEndCap(Gdiplus::LineCapRound);g.DrawLine(&w,pt[k],pt[k+1]);}}
+ // steam: three wisps rising from the lid (the middle one longest) that waver together, like heat over a hot cup; it reaches above the icon box (the button has room)
+ {const float xs[3]={8.4f,12.f,15.6f},len[3]={6.2f,8.6f,6.2f};double sway=std::sin(t*2.2),breathe=.85+.15*std::sin(t*1.1);
+  for(int i=0;i<3;i++){const int n=16;Gdiplus::PointF pt[n+1];float L=len[i]*(float)breathe;for(int k=0;k<=n;k++){float s=k/(float)n;float amp=(.25f+s*1.25f)*(float)sway;pt[k]={xs[i]+amp*(float)std::sin(s*3.6),4.2f-s*L};}
+   for(int k=0;k<n;k++){float s=(k+.5f)/n;float a=std::min(1.f,s*3.5f)*(1.f-s*s);Gdiplus::Pen w(Gdiplus::Color((BYTE)(225*a),GetRValue(ink),GetGValue(ink),GetBValue(ink)),1.45f-.5f*s);w.SetStartCap(Gdiplus::LineCapRound);w.SetEndCap(Gdiplus::LineCapRound);g.DrawLine(&w,pt[k],pt[k+1]);}}}
 }
 // A soft light behind an icon: the colour fades from the middle to nothing at the edge of r.
 inline void glow(HDC dc,RECT r,COLORREF c,BYTE strength){

@@ -974,7 +974,7 @@ void closePage();
 // mainPage: 0 컨트롤 센터, 1 게임별 기능, 2 모드 설정 (탭: 컬러 & 사운드 / 단축키), 4 업데이트, 5 디스코드 알림,
 // 6~8 타르코프 도구 설정 (레이드 시작 알림 / 아이템 시세 / 인게임 지도, opened by the gears; 닫기 returns to 게임별 기능).
 // Every page shares the header box drawn by the main window: a title and one line saying what the page is for.
-const wchar_t* pageTitle(){const wchar_t* t[]={i18n::text(L"게임에 집중하세요."),i18n::text(L"게임 도우미"),i18n::text(L"프로필"),L"",i18n::text(L"업데이트"),i18n::text(L"자리 비움 알림"),i18n::text(L"레이드 시작 알림"),i18n::text(L"아이템 시세"),i18n::text(L"인게임 지도"),i18n::text(L"설정"),i18n::text(L"문제·건의 보내기"),i18n::text(L"비행기 탑승 알림"),i18n::text(L"커피 한 잔 후원"),i18n::text(L"지도 표시"),i18n::text(L"그래픽 설정"),i18n::text(L"윈도우 최적화"),i18n::text(L"모드 번역"),i18n::text(L"PC 안정성"),i18n::text(L"에임랩")};return t[mainPage];}
+const wchar_t* pageTitle(){const wchar_t* t[]={i18n::text(L"게임에 집중하세요."),i18n::text(L"게임 도우미"),i18n::text(L"프로필"),L"",i18n::text(L"업데이트"),i18n::text(L"휴대폰 알림"),i18n::text(L"레이드 시작 알림"),i18n::text(L"아이템 시세"),i18n::text(L"인게임 지도"),i18n::text(L"설정"),i18n::text(L"문제·건의 보내기"),i18n::text(L"비행기 탑승 알림"),i18n::text(L"커피 한 잔 후원"),i18n::text(L"지도 표시"),i18n::text(L"그래픽 설정"),i18n::text(L"윈도우 최적화"),i18n::text(L"모드 번역"),i18n::text(L"PC 안정성"),i18n::text(L"에임랩")};return t[mainPage];}
 const wchar_t* pageNote(){
     switch(mainPage){case 0:return i18n::text(L"화면과 소리, 게임 알림을 한곳에서 관리하세요.");case 1:return i18n::text(L"게임을 고르고, 쓰고 싶은 도구를 켜세요.");
     case 2:return modeTab?i18n::text(L"일반 ↔ 게임 모드를 바꾸는 단축키를 정합니다."):i18n::text(L"모드마다 화면 색감과 브라우저 볼륨을 정합니다.");case 4:return i18n::text(L"새 버전으로 바꿔도 설정은 그대로 남습니다.");
@@ -1124,7 +1124,7 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         control(L"BUTTON",i18n::text(L"대시보드"),BS_OWNERDRAW|WS_TABSTOP,12,112,196,48,40);
         control(L"BUTTON",i18n::text(L"게임 도우미"),BS_OWNERDRAW|WS_TABSTOP,12,168,196,48,41);
         // Alerts are shared by every game, so they sit in the sidebar rather than under one game.
-        control(L"BUTTON",i18n::text(L"알림"),BS_OWNERDRAW|WS_TABSTOP,12,224,196,48,44);
+        control(L"BUTTON",i18n::text(L"휴대폰 알림"),BS_OWNERDRAW|WS_TABSTOP,12,224,196,48,44);
         control(L"BUTTON",i18n::text(L"프로필"),BS_OWNERDRAW|WS_TABSTOP,12,280,196,48,32);
         // 업데이트 is an icon at the top right beside the alerts (the sidebar keeps the features only)
         control(L"BUTTON",i18n::text(L"그래픽 설정"),BS_OWNERDRAW|WS_TABSTOP,12,336,196,48,86);control(L"BUTTON",i18n::text(L"윈도우 최적화"),BS_OWNERDRAW|WS_TABSTOP,12,392,196,48,88);control(L"BUTTON",i18n::text(L"PC 안정성"),BS_OWNERDRAW|WS_TABSTOP,12,448,196,48,89);
@@ -1377,7 +1377,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,LPWSTR command,int show){dpi::i
         HWND existing=FindWindowW(L"ModeSwitch",nullptr);
         if(existing&&!startHidden){
             wchar_t title[128]={};GetWindowTextW(existing,title,128);
-            if(std::wstring(title)!=L"BlueAsh 2.31.0")MessageBoxW(nullptr,i18n::text(L"이전 버전이 트레이에서 실행 중입니다. 이전 프로그램을 완전 종료한 뒤 BlueAsh.exe를 다시 실행하세요."),i18n::text(L"BlueAsh · 이전 버전 실행 중"),MB_OK|MB_ICONINFORMATION);
+            if(std::wstring(title)!=L"BlueAsh 2.31.1")MessageBoxW(nullptr,i18n::text(L"이전 버전이 트레이에서 실행 중입니다. 이전 프로그램을 완전 종료한 뒤 BlueAsh.exe를 다시 실행하세요."),i18n::text(L"BlueAsh · 이전 버전 실행 중"),MB_OK|MB_ICONINFORMATION);
             else{ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);}
         }
         CloseHandle(mutex);return 0;
@@ -1392,7 +1392,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,LPWSTR command,int show){dpi::i
     RegisterClassW(&wc);
     DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_THICKFRAME|WS_CLIPCHILDREN;
     RECT bounds={0,0,1160,780}; // the client is the whole window (WM_NCCALCSIZE)
-    HWND h=CreateWindowW(wc.lpszClassName,L"BlueAsh 2.31.0",style,CW_USEDEFAULT,CW_USEDEFAULT,bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,instance,nullptr);
+    HWND h=CreateWindowW(wc.lpszClassName,L"BlueAsh 2.31.1",style,CW_USEDEFAULT,CW_USEDEFAULT,bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,instance,nullptr);
     if(!h){painting::shutdown();CoUninitialize();CloseHandle(mutex);return 1;}
     ChangeWindowMessageFilterEx(h,WM_APP+177,MSGFLT_ALLOW,nullptr); // the updater runs as the normal user even when BlueAsh is elevated: let its "please close" through
     {MARGINS shadow={0,0,0,1};DwmExtendFrameIntoClientArea(h,&shadow);SetWindowPos(h,nullptr,0,0,0,0,SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);} // keep the shadow without a frame
