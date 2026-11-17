@@ -58,7 +58,8 @@ inline void bug(HDC dc,RECT r,COLORREF ink){
 }
 // Take-away coffee cup (sidebar 커피 한 잔 후원), the bug icon's pen on the same 24 x 24 grid: a domed lid on a wide rim, a cup
 // that narrows to the bottom and a solid sleeve band (lines alone read as a bin), with two wisps of steam above.
-inline void coffee(HDC dc,RECT r,COLORREF ink){
+// t >= 0: the steam is alive (seconds; three wisps rise, sway and fade in turn); t < 0: the two still wisps.
+inline void coffee(HDC dc,RECT r,COLORREF ink,double t=-1){
  if(!token){return;}Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);g.TranslateTransform((float)r.left,(float)r.top);g.ScaleTransform((float)(r.right-r.left)/24,(float)(r.bottom-r.top)/24);
  Gdiplus::Pen p(color(ink),1.6f);p.SetStartCap(Gdiplus::LineCapRound);p.SetEndCap(Gdiplus::LineCapRound);p.SetLineJoin(Gdiplus::LineJoinRound);Gdiplus::SolidBrush fill(color(ink));
  auto side=[](float y){return 6.6f+(y-9.f)*2.0f/12.f;}; // the cup's left edge at height y (9 = under the rim, 21 = bottom)
@@ -67,7 +68,10 @@ inline void coffee(HDC dc,RECT r,COLORREF ink){
  Gdiplus::PointF cup[]={{side(9.f),9.f},{side(21.f),21.f},{24.f-side(21.f),21.f},{24.f-side(9.f),9.f}};g.DrawLines(&p,cup,4);
  Gdiplus::PointF band[]={{side(12.5f),12.5f},{side(16.5f),16.5f},{24.f-side(16.5f),16.5f},{24.f-side(12.5f),12.5f}};g.FillPolygon(&fill,band,4);
  Gdiplus::Pen thin(color(ink),1.2f);thin.SetStartCap(Gdiplus::LineCapRound);thin.SetEndCap(Gdiplus::LineCapRound);
- for(float x:{10.f,14.f})g.DrawBezier(&thin,x,3.4f,x-1.f,2.4f,x+1.f,1.6f,x,0.6f);
+ if(t<0){for(float x:{10.f,14.f})g.DrawBezier(&thin,x,3.4f,x-1.f,2.4f,x+1.f,1.6f,x,0.6f);return;}
+ // heat shimmer: two wisps stay over the cup while a wave travels up them, swaying more and fading toward the top
+ for(int i=0;i<2;i++){float bx=10.f+i*4.f;const int n=14;Gdiplus::PointF pt[n+1];for(int k=0;k<=n;k++){float s=k/(float)n,y=4.6f-s*4.6f;float amp=.35f+s*1.05f;pt[k]={bx+amp*(float)std::sin(s*5.4-t*3.1+i*1.9)+(float)(.25*std::sin(t*.9+i)),y};}
+  for(int k=0;k<n;k++){float s=(k+.5f)/n;float a=std::min(1.f,s*4.f)*(1.f-s)*(.78f+.22f*(float)std::sin(t*1.7+i*2.4));Gdiplus::Pen w(Gdiplus::Color((BYTE)(235*a),GetRValue(ink),GetGValue(ink),GetBValue(ink)),1.3f-.35f*s);w.SetStartCap(Gdiplus::LineCapRound);w.SetEndCap(Gdiplus::LineCapRound);g.DrawLine(&w,pt[k],pt[k+1]);}}
 }
 // A soft light behind an icon: the colour fades from the middle to nothing at the edge of r.
 inline void glow(HDC dc,RECT r,COLORREF c,BYTE strength){
@@ -203,5 +207,22 @@ inline bool drawLogo(HDC dc,RECT r,bool red=false){
  if(!logo){return false;}Gdiplus::Graphics g(dc);g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);g.SetCompositingQuality(Gdiplus::CompositingQualityHighQuality);
  Gdiplus::ImageAttributes attributes;attributes.SetWrapMode(Gdiplus::WrapModeTileFlipXY);
  if(red){Gdiplus::ColorMatrix m={{{0,0,1,0,0},{0,.62f,0,0,0},{1,0,0,0,0},{0,0,0,1,0},{0,0,0,0,1}}};attributes.SetColorMatrix(&m);}return g.DrawImage(logo,Gdiplus::Rect(r.left,r.top,r.right-r.left,r.bottom-r.top),0,0,logo->GetWidth(),logo->GetHeight(),Gdiplus::UnitPixel,&attributes)==Gdiplus::Ok;
+}
+// Feature icons for the 게임 도우미 rows, the bug icon's line style on the same 24 x 24 grid: 0 bell, 1 banknote, 2 folded
+// map, 3 house, 4 scope. A tinted rounded tile behind (the feature's colour over the row) tells the features apart.
+inline void feature(HDC dc,RECT tile,int kind,COLORREF ink,COLORREF row){
+ if(!token){return;}Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
+ {Gdiplus::GraphicsPath t;path(t,tile,14);Gdiplus::LinearGradientBrush b(Gdiplus::Point(tile.left,tile.top),Gdiplus::Point(tile.left,tile.bottom),color(mixColor(row,ink,.22)),color(mixColor(row,ink,.12)));
+  g.FillPath(&b,&t);Gdiplus::Pen e(Gdiplus::Color(110,GetRValue(ink),GetGValue(ink),GetBValue(ink)),1.f);g.DrawPath(&e,&t);}
+ float s=(float)(tile.right-tile.left)*.56f;g.TranslateTransform((tile.left+tile.right)/2.f-s/2,(tile.top+tile.bottom)/2.f-s/2);g.ScaleTransform(s/24,s/24);
+ Gdiplus::Pen pen(color(ink),1.8f);roundCaps(pen);Gdiplus::SolidBrush fillInk(color(ink));
+ if(kind==0){Gdiplus::GraphicsPath b;b.AddLine(5.5f,17.f,6.6f,15.4f);b.AddBezier(6.6f,15.4f,7.4f,14.f,7.f,9.6f,8.6f,7.3f);b.AddBezier(8.6f,7.3f,9.5f,5.9f,10.7f,5.2f,12.f,5.2f);
+  b.AddBezier(12.f,5.2f,13.3f,5.2f,14.5f,5.9f,15.4f,7.3f);b.AddBezier(15.4f,7.3f,17.f,9.6f,16.6f,14.f,17.4f,15.4f);b.AddLine(17.4f,15.4f,18.5f,17.f);b.CloseFigure();g.DrawPath(&pen,&b);
+  g.DrawArc(&pen,9.8f,17.6f,4.4f,3.6f,0.f,180.f);g.DrawLine(&pen,12.f,3.f,12.f,5.2f);}
+ else if(kind==1){Gdiplus::GraphicsPath n;path(n,RECT{3,6,21,18},5);g.DrawPath(&pen,&n);g.DrawEllipse(&pen,9.3f,9.3f,5.4f,5.4f);g.FillEllipse(&fillInk,5.6f,8.6f,1.6f,1.6f);g.FillEllipse(&fillInk,16.8f,13.8f,1.6f,1.6f);}
+ else if(kind==2){Gdiplus::PointF m[]={{3.5f,6.5f},{9.f,4.5f},{15.f,6.5f},{20.5f,4.5f},{20.5f,17.5f},{15.f,19.5f},{9.f,17.5f},{3.5f,19.5f}};g.DrawPolygon(&pen,m,8);g.DrawLine(&pen,9.f,4.5f,9.f,17.5f);g.DrawLine(&pen,15.f,6.5f,15.f,19.5f);}
+ else if(kind==3){Gdiplus::PointF roof[]={{3.5f,11.5f},{12.f,4.5f},{20.5f,11.5f}};g.DrawLines(&pen,roof,3);Gdiplus::PointF body[]={{5.8f,9.6f},{5.8f,19.5f},{18.2f,19.5f},{18.2f,9.6f}};g.DrawLines(&pen,body,4);
+  Gdiplus::GraphicsPath d;path(d,RECT{10,14,14,20},3);g.DrawPath(&pen,&d);}
+ else{g.DrawEllipse(&pen,4.5f,4.5f,15.f,15.f);g.DrawLine(&pen,12.f,2.f,12.f,7.5f);g.DrawLine(&pen,12.f,16.5f,12.f,22.f);g.DrawLine(&pen,2.f,12.f,7.5f,12.f);g.DrawLine(&pen,16.5f,12.f,22.f,12.f);g.FillEllipse(&fillInk,10.8f,10.8f,2.4f,2.4f);}
 }
 }

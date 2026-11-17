@@ -27,7 +27,7 @@ bool checked(HWND h,int id){HWND c=GetDlgItem(h,id);if(c&&isSwitch(c))return Get
 // dragged or moved with the arrow keys; an empty box (the channels differ) shows no knob.
 namespace valueSlider{
 struct Range{int low,high;bool gamma;};
-inline Range range(int id){switch(id){case 150:return {30,150,false};case 151:return {0,199,false}; /* brightness: under 30 the driver ignores it, over 150 the screen washes out white */case 152:return {50,300,true};case 154:return {0,359,false};default:return {0,100,false};}}
+inline Range range(int id){switch(id){case 150:return {30,150,false};case 151:return {60,150,false}; /* brightness: under 30 the driver ignores it, over 150 the screen washes out white */case 152:return {70,250,true}; /* contrast and gamma: the readable limits (settings::readable) */case 154:return {0,359,false};default:return {0,100,false};}}
 inline bool read(HWND s,int& v){wchar_t b[32]={};GetDlgItemTextW(GetParent(s),GetDlgCtrlID(s)-100,b,32);unsigned u=0;auto r=range(GetDlgCtrlID(s));if(!(r.gamma?settings::parseGamma(b,u):settings::integer(b,u)))return false;v=std::clamp((int)u,r.low,r.high);return true;}
 inline void write(HWND s,int v){auto r=range(GetDlgCtrlID(s));v=std::clamp(v,r.low,r.high);SetDlgItemTextW(GetParent(s),GetDlgCtrlID(s)-100,(r.gamma?settings::gammaText((unsigned)v):std::to_wstring(v)).c_str());}
 constexpr int pad=9;
@@ -76,7 +76,7 @@ bool collectColorEditor(HWND h){
     auto p=shownProfile();unsigned values[3]={};
     for(int i=0;i<3;i++)if(colorDirty[i]){
         bool ok=i==2?settings::parseGamma(field(h,50+i),values[i]):settings::integer(field(h,50+i),values[i])&&values[i]<=199;
-        if(!ok){SetDlgItemTextW(h,59,i18n::text(L"밝기·대비는 0~199, 감마는 0.50~3.00 사이로 넣어 주세요."));return false;}
+        if(!ok){SetDlgItemTextW(h,59,i18n::text(L"밝기 30~150, 대비 60~150, 감마 0.70~2.50 사이로 넣어 주세요."));return false;}
     }
     if(!settings::parseVolume(field(h,53),p.vibrance)||!settings::integer(field(h,54),p.hue)||p.hue>359||!settings::parseVolume(field(h,55),p.volume)){
         SetDlgItemTextW(h,59,i18n::text(L"선명도·볼륨은 0~100, 색조는 0~359 사이로 넣어 주세요."));return false;
@@ -86,10 +86,17 @@ bool collectColorEditor(HWND h){
         if(colorDirty[1])p.contrast[c]=values[1];
         if(colorDirty[2])settings::setGamma(p,c,values[2]);
     }
-    p.extended=checked(h,57);if(!p.extended)settings::allGamma(p,p.gamma);
+    p.extended=checked(h,57);if(!p.extended)settings::allGamma(p,p.gamma);settings::readable(p);
     if(editProfile<4)draft[editProfile]=p;else{auto& id=editRows[editProfile-4].dir;if(gameDraft.count(id)||!gameswitch::same(p,draft[1]))gameDraft[id]=p;} /* an untouched game gets no entry: it will not switch modes */
     return true;
 }
+bool readEditor(HWND h,settings::Profile& p){p=shownProfile();unsigned values[3]={};
+    for(int i=0;i<3;i++)if(colorDirty[i]){bool ok=i==2?settings::parseGamma(field(h,50+i),values[i]):settings::integer(field(h,50+i),values[i])&&values[i]<=199;if(!ok)return false;}
+    if(!settings::parseVolume(field(h,53),p.vibrance)||!settings::integer(field(h,54),p.hue)||p.hue>359||!settings::parseVolume(field(h,55),p.volume))return false;
+    for(int c=0;c<3;c++)if(!editChannel||c==editChannel-1){if(colorDirty[0])p.brightness[c]=std::clamp(values[0],30u,150u);if(colorDirty[1])p.contrast[c]=values[1];if(colorDirty[2])settings::setGamma(p,c,values[2]);}
+    p.extended=checked(h,57);if(!p.extended)settings::allGamma(p,p.gamma);settings::readable(p);return true;}
+// Is the profile on the page the one the current mode uses (then saving applies it, otherwise it waits for its mode)?
+bool editingInUse(){if(!fps)return editProfile==0;if(appliedProfileIndex==4)return editProfile>=4&&editProfile-4<(int)editRows.size()&&editRows[editProfile-4].dir==gameProfileId;return editProfile==appliedProfileIndex;}
 void storeColorEditor(HWND h){
     if(!collectColorEditor(h))return;
     bool automatic=checked(h,58);
@@ -100,8 +107,10 @@ void storeColorEditor(HWND h){
     gameProfiles=keep;gameswitch::setDirs();
     profiles=draft;autoGame=automatic;fillColorEditor(h);
     for(int id:{1,2,61,62}){InvalidateRect(GetDlgItem(win,id),nullptr,TRUE);}
-    // Applied right away, also before any mode was applied this run (the normal mode is shown selected from the start).
-    bool ok=changeMode(fps,active?appliedProfileIndex:-1);
+    // The preview goes back first; then the profile the current mode uses is applied (pinned, so the normal profile
+    // applies even before any mode was applied this run); a profile of another mode waits for that mode.
+    endPreview();if(!editingInUse()){SetDlgItemTextW(h,59,i18n::text(L"저장했습니다. 이 프로필을 쓰는 모드에서 적용됩니다."));return;}
+    bool ok=changeMode(fps,fps?appliedProfileIndex:0);
     SetDlgItemTextW(h,59,ok?i18n::text(L"저장했습니다. 지금 모드에도 바로 적용했습니다."):i18n::text(L"저장은 했지만 적용하지 못했습니다. 컨트롤 센터의 오류 문구를 확인하세요."));
 }
 // 모드 설정 has two tabs, each its own page: switching asks the main window to open the other one (90 -> 32, 91 -> 34).
@@ -172,27 +181,28 @@ LRESULT CALLBACK editorProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
             if(id>=50&&id<=52)colorDirty[id-50]=true;
             if(id==50||id==51||id==53||id==54||(id==52&&editChannel))checkBox(h,57,true);
         }
-        if(event==EN_CHANGE&&id>=50&&id<=55){InvalidateRect(GetDlgItem(h,id+100),nullptr,FALSE);}
+        if(event==EN_CHANGE&&id>=50&&id<=55){InvalidateRect(GetDlgItem(h,id+100),nullptr,FALSE);if(!filling)SetTimer(h,3,60,nullptr);}
         if(event==CBN_SELCHANGE&&(id==60||id==61)){
             int previous=id==60?editProfile:editChannel;
             int next=(int)SendDlgItemMessageW(h,id,CB_GETCURSEL,0,0);
             if(!collectColorEditor(h)){SendDlgItemMessageW(h,id,CB_SETCURSEL,previous,0);return 0;}
-            if(id==60)editProfile=next;else editChannel=next;fillColorEditor(h);
+            if(id==60)editProfile=next;else editChannel=next;fillColorEditor(h);if(previewOn)SetTimer(h,3,60,nullptr); /* while previewing, another profile shows at once */
         }
         if(event==BN_CLICKED){
             if(modeTabClick(id))return 0;
-            if(id==57||id==58){checkBox(h,id,!checked(h,id));return 0;}
+            if(id==57||id==58){checkBox(h,id,!checked(h,id));if(id==57)SetTimer(h,3,60,nullptr);return 0;}
             if(id==40||id==IDOK)storeColorEditor(h);
-            else if(id==41){if(editProfile<4)draft[editProfile]=settings::defaults()[editProfile];else gameDraft.erase(editRows[editProfile-4].dir);fillColorEditor(h);SetDlgItemTextW(h,59,i18n::text(L"기본값으로 되돌렸습니다. 저장을 눌러야 반영됩니다."));}
+            else if(id==41){if(editProfile<4)draft[editProfile]=settings::defaults()[editProfile];else gameDraft.erase(editRows[editProfile-4].dir);fillColorEditor(h);SetTimer(h,3,60,nullptr);SetDlgItemTextW(h,59,i18n::text(L"기본값으로 되돌렸습니다. 저장을 눌러야 반영됩니다."));}
             else if(id==42||id==IDCANCEL)DestroyWindow(h);
         }return 0;
     }
+    case WM_TIMER:if(wp==3){KillTimer(h,3);settings::Profile p;if(readEditor(h,p)&&previewProfile(p)){wchar_t t[512]={};GetDlgItemTextW(h,59,t,512);std::wstring want=i18n::text(L"화면에 미리 적용 중 · 저장을 누르면 저장되고, 닫으면 원래대로 돌아갑니다.");if(want!=t)SetDlgItemTextW(h,59,want.c_str());}}return 0;
     case WM_ERASEBKGND:pagePanels(h,(HDC)wp,[&](HDC dc){paintProfilePage(dc);drawStatus(h,dc);});return 1;
     case WM_CTLCOLORSTATIC:return pageStatic(wp,lp);
     case WM_CTLCOLORLISTBOX:case WM_CTLCOLOREDIT:{HDC dc=(HDC)wp;SetTextColor(dc,ink);SetBkColor(dc,panel);return (LRESULT)panelBrush;}
     case WM_DRAWITEM:drawButton((DRAWITEMSTRUCT*)lp);return TRUE;
     case WM_CLOSE:DestroyWindow(h);return 0;
-    case WM_DESTROY:editor=nullptr;if(IsWindow(win)){EnableWindow(win,TRUE);SetForegroundWindow(win);}return 0;
+    case WM_DESTROY:KillTimer(h,3);endPreview();editor=nullptr;if(IsWindow(win)){EnableWindow(win,TRUE);SetForegroundWindow(win);}return 0;
     }return DefWindowProcW(h,msg,wp,lp);
 }
 std::vector<unsigned> shortcutKeys;

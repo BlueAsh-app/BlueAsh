@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <array>
+#include <algorithm>
+#include <initializer_list>
 #include <vector>
 namespace settings {
 struct Profile {
@@ -12,6 +14,10 @@ struct Profile {
 inline unsigned channelGamma(const Profile& p,int c){return c==0?p.gamma:c==1?p.greenGamma:p.blueGamma;}
 inline void setGamma(Profile& p,int c,unsigned v){if(c==0)p.gamma=v;else if(c==1)p.greenGamma=v;else p.blueGamma=v;}
 inline void allGamma(Profile& p,unsigned v){p.gamma=p.greenGamma=p.blueGamma=v;}
+// The screen stays readable whatever the sliders say (a player trying the extremes must not end up with a black or grey
+// screen): brightness 30..150, contrast 60..150, gamma 0.70..2.50. Applied to every value sent to the display.
+const unsigned brightLow=30,brightHigh=150,contrastLow=60,contrastHigh=150,gammaLow=70,gammaHigh=250;
+inline void readable(Profile& p){for(auto& v:p.brightness)v=std::clamp(v,brightLow,brightHigh);for(auto& v:p.contrast)v=std::clamp(v,contrastLow,contrastHigh);for(unsigned* g:{&p.gamma,&p.greenGamma,&p.blueGamma})*g=std::clamp(*g,gammaLow,gammaHigh);}
 inline const wchar_t* profileName(int i){const wchar_t* n[]={L"일반 모드",L"게임 모드",L"배틀그라운드",L"타르코프"};return n[i];}
 using Profiles=std::array<Profile,4>;
 inline Profiles defaults(){

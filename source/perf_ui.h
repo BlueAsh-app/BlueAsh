@@ -390,12 +390,12 @@ void optPaint(HDC dc){if(tuneTab!=0){tunePaint(dc);return;}tuneClearHits();RECT 
     else ::textAt(dc,on?i18n::text(L"켜짐 · BlueAsh를 끄거나 이 스위치를 끄면 원래대로 돌아갑니다"):i18n::text(L"켜면 아래 Windows 설정을 게임에 맞게 바꿉니다"),{L.left+20,L.top+48,L.right-20,L.top+72},smallFont,on?RGB(90,200,140):muted,one);
     int x=L.left+20,w=L.right-L.left-40,y=L.top+84;GUID cur={};bool got=perfboost::active(cur);GUID want={};bool plan=perfboost::gamePlan(want);
     // While switching, each row shows the old state until its turn, the ring while it charges, then the new state.
-    bool st[5]={n.power,n.gameMode,n.dvr,n.visual,n.mouse};double ch[5];for(int i=0;i<5;i++){ch[i]=-1;if(oa.busy){double p=oaPhase(i);ch[i]=p;st[i]=p>=1?oa.on:!oa.on;}}
+    bool st[5]={n.power,n.gameMode,n.dvr,n.visual,n.bar};double ch[5];for(int i=0;i<5;i++){ch[i]=-1;if(oa.busy){double p=oaPhase(i);ch[i]=p;st[i]=p>=1?oa.on:!oa.on;}}
     checkRow(dc,{x,y,x+w,y+56},st[0]?1:-1,L"고성능 전원 계획",!st[0]?(plan?std::wstring(L"-"):std::wstring(i18n::text(L"이 PC에 없음 (새로 만들지 않음)"))):got&&!hw.powerPlan.empty()&&!oa.busy?hw.powerPlan:std::wstring(i18n::text(L"켜짐")),ch[0],oa.on);y+=52;
     checkRow(dc,{x,y,x+w,y+56},st[1]?1:-1,L"게임 모드",st[1]?i18n::text(L"켜짐"):i18n::text(L"꺼짐"),ch[1],oa.on);y+=52;
     checkRow(dc,{x,y,x+w,y+56},st[2]?1:-1,L"백그라운드 녹화 끄기",st[2]?i18n::text(L"꺼짐"):i18n::text(L"켜짐"),ch[2],oa.on);y+=52;
     checkRow(dc,{x,y,x+w,y+56},st[3]?1:-1,L"애니메이션·투명 효과 끄기",st[3]?i18n::text(L"꺼짐"):i18n::text(L"켜짐"),ch[3],oa.on);y+=52;
-    checkRow(dc,{x,y,x+w,y+56},st[4]?1:-1,L"마우스 가속 끄기",st[4]?i18n::text(L"꺼짐"):i18n::text(L"켜짐"),ch[4],oa.on);
+    checkRow(dc,{x,y,x+w,y+56},st[4]?1:-1,L"Xbox Game Bar 오버레이 끄기",st[4]?i18n::text(L"꺼짐"):i18n::text(L"켜짐"),ch[4],oa.on);
     y+=52;::textAt(dc,i18n::text(L"시작 프로그램·백그라운드·정리 같은 나머지 점검은 위 탭에 있습니다."),{x,y+8,x+w,y+30},captionFont,muted,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);
     section(dc,R,L"내 PC 성능 체크");pcPaint(dc,R);}
 void optToggle(){if(oa.busy||optThread)return;bool on=!optApplied();oa=OptAnim{};oa.start=nowMs();oa.on=on;oa.busy=true;perfStatus.clear();perfBad=false;checkBox(page,414,on);

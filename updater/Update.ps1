@@ -4,7 +4,7 @@
 # whatever happens after that, BlueAsh is started again (the new version, or the restored old one).
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Net.Http,System.IO.Compression.FileSystem
-Add-Type -TypeDefinition 'using System;using System.Runtime.InteropServices;public static class ModeSwitchUpdateNative{[DllImport("user32.dll")]public static extern bool PostMessage(IntPtr h,uint m,IntPtr w,IntPtr l);[DllImport("user32.dll",CharSet=CharSet.Unicode)]public static extern IntPtr FindWindow(string c,string t);[DllImport("user32.dll")]public static extern uint GetWindowThreadProcessId(IntPtr h,out uint pid);}'
+Add-Type -TypeDefinition 'using System;using System.Runtime.InteropServices;public static class ModeSwitchUpdateNative{[DllImport("user32.dll")]public static extern bool PostMessage(IntPtr h,uint m,IntPtr w,IntPtr l);[DllImport("user32.dll",CharSet=CharSet.Unicode)]public static extern IntPtr FindWindow(string c,string t);[DllImport("user32.dll")]public static extern uint GetWindowThreadProcessId(IntPtr h,out uint pid);[DllImport("kernel32.dll")]public static extern IntPtr OpenProcess(uint a,bool i,uint p);[DllImport("kernel32.dll")]public static extern bool CloseHandle(IntPtr h);[DllImport("kernel32.dll",CharSet=CharSet.Unicode)]public static extern bool QueryFullProcessImageName(IntPtr h,uint f,System.Text.StringBuilder s,ref uint n);public static string PathOf(uint pid){IntPtr h=OpenProcess(0x1000,false,pid);if(h==IntPtr.Zero)return null;try{var s=new System.Text.StringBuilder(1024);uint n=1024;return QueryFullProcessImageName(h,0,s,ref n)?s.ToString():null;}finally{CloseHandle(h);}}}'
 . (Join-Path $PSScriptRoot 'UpdateCore.ps1')
 # BlueAsh's data folder: BlueAsh (ModeSwitch up to 2.27, renamed by the app at start; same rule as source/data_dir.h)
 $store=Join-Path $env:LOCALAPPDATA 'BlueAsh';$oldStore=Join-Path $env:LOCALAPPDATA 'ModeSwitch';if(!(Test-Path -LiteralPath $store) -and (Test-Path -LiteralPath $oldStore)){$store=$oldStore};[void][IO.Directory]::CreateDirectory($store)
@@ -103,7 +103,8 @@ try {
  $backup=Join-Path $store ('update-backups\'+[DateTime]::Now.ToString('yyyyMMdd-HHmmss'))
  # The BlueAsh window must belong to the exe just installed (not, say, a copy run from elsewhere).
  function Test-NewWindow{$h=[ModeSwitchUpdateNative]::FindWindow('ModeSwitch',[NullString]::Value);if($h -eq [IntPtr]::Zero){return $false};$id=[uint32]0;[void][ModeSwitchUpdateNative]::GetWindowThreadProcessId($h,[ref]$id)
-  try{return (Get-Process -Id $id -ErrorAction Stop).Path -ieq (Join-Path $Install 'BlueAsh.exe')}catch{return $false}}
+  # QueryFullProcessImageName, not Get-Process .Path: that one needs memory access and is empty for an elevated BlueAsh
+  $p=[ModeSwitchUpdateNative]::PathOf($id);return $p -and ($p -ieq (Join-Path $Install 'BlueAsh.exe'))}
  $changed=Apply-UpdatePlan $plan $Install $backup
  if($setupInstall){foreach($t in 'README.txt','NOTICE.txt','LICENSE.txt'){$p=Join-Path $Install $t;if(Test-Path -LiteralPath $p){try{$i=Get-Item -LiteralPath $p -Force;$i.Attributes=$i.Attributes -bor [IO.FileAttributes]::Hidden}catch{}}}}
  # The new BlueAsh must open its window (class ModeSwitch) within 30 s and still have it 5 s later; if it never does,

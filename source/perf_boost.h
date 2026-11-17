@@ -85,10 +85,10 @@ inline void themeChanged(){DWORD_PTR r=0;SendMessageTimeoutW(HWND_BROADCAST,WM_S
 inline bool mouseGet(int m[3]){return SystemParametersInfoW(SPI_GETMOUSE,0,m,0)!=0;}
 inline bool mouseSet(const int m[3]){int v[3]={m[0],m[1],m[2]};return SystemParametersInfoW(SPI_SETMOUSE,0,v,SPIF_UPDATEINIFILE|SPIF_SENDCHANGE)!=0;}
 // What is in place now (for the page): true = the game-friendly value.
-struct Now {bool power=false,gameMode=false,dvr=false,windowed=false,visual=false,mouse=false;std::wstring plan;};
+struct Now {bool power=false,gameMode=false,dvr=false,windowed=false,visual=false,bar=false;std::wstring plan;};
 inline Now now(){Now n;GUID g={};if(perfboost::active(g)){n.power=perfboost::isGamePlan(g);}long gm=readDword(gameBar,L"AutoGameModeEnabled");n.gameMode=gm!=0;
     n.dvr=readDword(gameConfig,L"GameDVR_Enabled")==0&&readDword(gameDvr,L"AppCaptureEnabled")!=1;std::wstring dx;n.windowed=readText(directX,L"DirectXUserGlobalSettings",dx)&&dx.find(L"SwapEffectUpgradeEnable=1")!=std::wstring::npos;
-    n.visual=animNow()==0&&readDword(personalize,L"EnableTransparency")==0;int m[3]={};n.mouse=mouseGet(m)&&m[2]==0;return n;}
+    n.visual=animNow()==0&&readDword(personalize,L"EnableTransparency")==0;n.bar=readDword(gameBar,L"UseNexusForGameBarEnabled")==0;return n;}
 // Journal: one "key=value" per line (UTF-8). Values: a GUID, a number, "-" = did not exist, or the original text.
 struct Journal {std::wstring path;std::map<std::string,std::wstring> v;
     bool load(){v.clear();FILE* f=_wfopen(path.c_str(),L"rb");if(!f)return false;std::string s;char b[4096];size_t n;while((n=fread(b,1,sizeof(b),f))>0)s.append(b,n);fclose(f);size_t i=0;
@@ -112,7 +112,9 @@ inline int apply(Journal& j){j.load();
     {auto it=j.v.find("windowed");if(it!=j.v.end()){if(it->second==L"-"?removeValue(directX,L"DirectXUserGlobalSettings"):writeText(directX,L"DirectXUserGlobalSettings",it->second.substr(1))){j.v.erase(it);}}}
     if(!j.v.count("anim"))j.v["anim"]=std::to_wstring(animNow());
     if(!j.v.count("transparency"))j.v["transparency"]=dwordText(readDword(personalize,L"EnableTransparency"));
-    if(!j.v.count("mouse")){int m[3]={};if(mouseGet(m))j.v["mouse"]=std::to_wstring(m[0])+L","+std::to_wstring(m[1])+L","+std::to_wstring(m[2]);}
+    // 마우스 가속 끄기 is no longer part of the mode: it gives no FPS and changed how the mouse feels. An older version's change goes back.
+    {auto it=j.v.find("mouse");int m[3]={};if(it!=j.v.end()&&swscanf(it->second.c_str(),L"%d,%d,%d",&m[0],&m[1],&m[2])==3&&mouseSet(m))j.v.erase(it);}
+    if(!j.v.count("bar"))j.v["bar"]=dwordText(readDword(gameBar,L"UseNexusForGameBarEnabled"));
     if(!j.save()){return 5;}int failed=0;
     GUID want={},cur={};if(perfboost::gamePlan(want)&&perfboost::active(cur)&&!IsEqualGUID(cur,want)&&PowerSetActiveScheme(nullptr,&want)!=ERROR_SUCCESS)failed++;
     if(!writeDword(gameBar,L"AutoGameModeEnabled",1))failed++;
@@ -120,13 +122,13 @@ inline int apply(Journal& j){j.load();
     if(!writeDword(gameDvr,L"AppCaptureEnabled",0))failed++;
     if(!animSet(0))failed++;
     if(writeDword(personalize,L"EnableTransparency",0)){themeChanged();}else failed++;
-    {int m[3]={};if(!mouseGet(m)){failed++;}else if(m[2]){m[2]=0;if(!mouseSet(m))failed++;}}
+    if(!writeDword(gameBar,L"UseNexusForGameBarEnabled",0))failed++; /* the Xbox Game Bar overlay (Win+G) */
     return failed;}
 // Puts every recorded value back. True when all are back (the journal is then removed); false keeps it for another try.
 inline bool restore(Journal& j){if(!j.load())return true;bool ok=true;
     auto dword=[&](const char* key,const wchar_t* path,const wchar_t* name){auto it=j.v.find(key);if(it==j.v.end())return;if(it->second==L"-"){ok=removeValue(path,name)&&ok;}else{ok=writeDword(path,name,(DWORD)_wtol(it->second.c_str()))&&ok;}};
     {auto it=j.v.find("power");GUID g={},cur={};if(it!=j.v.end()&&perfboost::guidOf(it->second,g)&&!(perfboost::active(cur)&&IsEqualGUID(cur,g))){ok=PowerSetActiveScheme(nullptr,&g)==ERROR_SUCCESS&&ok;}}
-    dword("gamemode",gameBar,L"AutoGameModeEnabled");dword("dvr",gameConfig,L"GameDVR_Enabled");dword("capture",gameDvr,L"AppCaptureEnabled");
+    dword("gamemode",gameBar,L"AutoGameModeEnabled");dword("bar",gameBar,L"UseNexusForGameBarEnabled");dword("dvr",gameConfig,L"GameDVR_Enabled");dword("capture",gameDvr,L"AppCaptureEnabled");
     {auto it=j.v.find("windowed");if(it!=j.v.end()){if(it->second==L"-"){ok=removeValue(directX,L"DirectXUserGlobalSettings")&&ok;}else{ok=writeText(directX,L"DirectXUserGlobalSettings",it->second.substr(1))&&ok;}}}
     {auto it=j.v.find("anim");if(it!=j.v.end()){ok=animSet(_wtoi(it->second.c_str()))&&ok;}}
     {auto it=j.v.find("transparency");if(it!=j.v.end()){ok=(it->second==L"-"?removeValue(personalize,L"EnableTransparency"):writeDword(personalize,L"EnableTransparency",(DWORD)_wtol(it->second.c_str())))&&ok;themeChanged();}}

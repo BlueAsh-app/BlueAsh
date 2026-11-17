@@ -1,14 +1,19 @@
 #pragma once
 // "?" buttons beside a dashboard panel title (75 화면과 소리, 76 게임 알림): a small card under the button explains
 // the panel. It closes when clicked, on Esc, or as soon as anything else is clicked (it loses activation).
-std::wstring helpTitle,helpBody;ULONGLONG helpClosedAt=0; // helpCard, helpFor: declared before drawButton (ModeSwitch.cpp)
+std::wstring helpTitle,helpBody;ULONGLONG helpClosedAt=0;void(*helpClosed)(int id)=nullptr; /* a page that draws its own "?" repaints it */ // helpCard, helpFor: declared before drawButton (ModeSwitch.cpp)
 std::wstring helpText(int id,std::wstring& title){
     if(id==75){title=i18n::text(L"화면과 소리");
         return std::wstring(i18n::text(L"일반 모드와 게임 모드마다 고른 모니터의 감마와 고른 브라우저의 소리 크기를 따로 기억합니다."))+L"\n\n"
             +i18n::text(L"모드 카드나 단축키를 누르면 한 번에 바뀌고, BlueAsh를 완전히 끄면 일반 모드로 돌아갑니다.")+L"\n\n"
             +i18n::text(L"밝기·대비·선명도·색조와 게임별 프로필은 세부 설정에서 정합니다.");}
+    if(id==77){title=L"cm/360";
+        return std::wstring(i18n::text(L"마우스를 몇 cm 움직이면 배그 안에서 한 바퀴(360°) 도는지입니다. 숫자가 클수록 감도가 낮아 크게 움직여야 하고, 작을수록 조금만 움직여도 많이 돕니다."))+L"\n\n"
+            +i18n::text(L"DPI와 일반 감도를 함께 계산하기 때문에 DPI가 다른 사람과도 같은 기준으로 비교할 수 있습니다.")+L"\n\n"
+            +i18n::text(L"일반은 조준하지 않고 둘러볼 때, 조준은 우클릭을 누른 채 어깨 너머로 볼 때, 조준경은 아이언사이트·레드닷 같은 1배율로 정조준할 때입니다. 2배 이상 배율은 배그 설정에서 배율마다 따로 정합니다. 수직 배율은 위아래 움직임만 몇 배로 할지입니다.")+L"\n\n"
+            +i18n::text(L"흰 점은 내 위치입니다. 배그 회전값을 가정한 추정이라 실제와 조금 다를 수 있습니다.");}
     title=i18n::text(L"게임 알림");
-    return std::wstring(i18n::text(L"타르코프 · 배치 카운트다운 1초 전에 소리로 알려 줍니다."))+L"\n\n"
+    return std::wstring(i18n::text(L"타르코프 · 배치 카운트다운 몇 초 전(1~10초)에 소리로 알려 줍니다."))+L"\n\n"
         +i18n::text(L"배그 · 비행기 탑승 카운트다운이 끝나면 알려 줍니다. 배그 창을 보고 있을 때는 울리지 않습니다.")+L"\n\n"
         +i18n::text(L"자리 비움 알림 · 게임이 시작됐는데 PC 앞에 없으면 휴대폰으로 알려 줍니다.");
 }
@@ -24,17 +29,19 @@ LRESULT CALLBACK helpProc(HWND h,UINT m,WPARAM w,LPARAM l){
     case WM_ERASEBKGND:return 1;
     case WM_ACTIVATE:if(LOWORD(w)==WA_INACTIVE)DestroyWindow(h);return 0;
     case WM_LBUTTONDOWN:case WM_KEYDOWN:DestroyWindow(h);return 0;
-    case WM_DESTROY:if(helpCard==h){helpCard=nullptr;helpClosedAt=GetTickCount64();for(int id:{75,76})InvalidateRect(GetDlgItem(win,id),nullptr,TRUE);}return 0;
+    case WM_DESTROY:if(helpCard==h){helpCard=nullptr;helpClosedAt=GetTickCount64();for(int id:{75,76})InvalidateRect(GetDlgItem(win,id),nullptr,TRUE);if(helpClosed)helpClosed(helpFor);}return 0;
     }return DefWindowProcW(h,m,w,l);
 }
-void showHelp(int id){
+void showHelpAt(int id,RECT b);
+void showHelp(int id){RECT b;GetWindowRect(GetDlgItem(win,id),&b);showHelpAt(id,b);}
+void showHelpAt(int id,RECT b){
     // Clicking the same "?" again closes the card: the click itself already took activation away and closed it.
     if(helpCard){bool same=helpFor==id;DestroyWindow(helpCard);if(same)return;}else if(helpFor==id&&GetTickCount64()-helpClosedAt<400){helpFor=0;return;}
     static bool registered=false;if(!registered){WNDCLASSW wc={};wc.style=CS_DROPSHADOW;wc.lpfnWndProc=helpProc;wc.hInstance=GetModuleHandleW(nullptr);wc.lpszClassName=L"BlueAshHelp";wc.hCursor=LoadCursor(nullptr,IDC_ARROW);RegisterClassW(&wc);registered=true;}
     helpBody=helpText(id,helpTitle);helpFor=id;
     // Height from the wrapped text; the card's right edge lines up with the button, just below it.
     const int width=380;HDC dc=dpi::getDC(win);RECT calc={0,0,width-40,0};auto old=SelectObject(dc,smallFont);DrawTextW(dc,helpBody.c_str(),-1,&calc,DT_CALCRECT|DT_WORDBREAK|DT_NOPREFIX);SelectObject(dc,old);ReleaseDC(win,dc);
-    RECT b;GetWindowRect(GetDlgItem(win,id),&b);int height=calc.bottom+66;int x=b.right-width,y=b.bottom+8;
+    int height=calc.bottom+66;int x=b.right-width,y=b.bottom+8;
     helpCard=CreateWindowExW(WS_EX_TOOLWINDOW,L"BlueAshHelp",L"",WS_POPUP,x,y,width,height,win,nullptr,GetModuleHandleW(nullptr),nullptr);if(!helpCard)return;
     int round=2;DwmSetWindowAttribute(helpCard,33,&round,sizeof(round));COLORREF edge=line;DwmSetWindowAttribute(helpCard,34,&edge,sizeof(edge));
     ShowWindow(helpCard,SW_SHOW);SetForegroundWindow(helpCard);

@@ -6,10 +6,23 @@
 // Pretendard 1.3.9 (SIL Open Font License 1.1, assets/fonts/Pretendard-OFL.txt): the UI font, loaded privately at start.
 401 RCDATA "assets/fonts/Pretendard-Regular.otf"
 402 RCDATA "assets/fonts/Pretendard-Bold.otf"
+451 RCDATA "assets/attachment-drafts-20261116/grip-vertical.png"
+452 RCDATA "assets/attachment-drafts-20261116/grip-half.png"
+453 RCDATA "assets/attachment-drafts-20261116/grip-tilted.png"
+454 RCDATA "assets/attachment-drafts-20261116/grip-thumb.png"
+455 RCDATA "assets/attachment-drafts-20261116/muzzle-comp.png"
+461 RCDATA "assets/attachment-user-20261116/grip-vertical.png"
+462 RCDATA "assets/attachment-user-20261116/grip-half.png"
+463 RCDATA "assets/attachment-user-20261116/grip-tilted.png"
+464 RCDATA "assets/attachment-user-20261116/grip-thumb.png"
+465 RCDATA "assets/attachment-user-20261116/muzzle-comp.png"
+466 RCDATA "assets/attachment-user-20261116/muzzle-brake.png"
+467 RCDATA "assets/attachment-user-20261116/muzzle-flash.png"
+470 RCDATA "pubg_weapons.tsv"
 1 RT_MANIFEST "app.manifest"
 1 VERSIONINFO
-FILEVERSION 2,30,0,0
-PRODUCTVERSION 2,30,0,0
+FILEVERSION 2,31,0,0
+PRODUCTVERSION 2,31,0,0
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0x0L
 FILEOS VOS_NT_WINDOWS32
@@ -21,11 +34,11 @@ BEGIN
     BLOCK "040904B0"
     BEGIN
       VALUE "FileDescription", "BlueAsh - Display and browser audio controller\0"
-      VALUE "FileVersion", "2.30.0\0"
+      VALUE "FileVersion", "2.31.0\0"
       VALUE "InternalName", "ModeSwitch\0"
       VALUE "OriginalFilename", "BlueAsh.exe\0"
       VALUE "ProductName", "BlueAsh\0"
-      VALUE "ProductVersion", "2.30.0\0"
+      VALUE "ProductVersion", "2.31.0\0"
       VALUE "LegalCopyright", "GPL-3.0-or-later. See NOTICE.txt\0"
     END
   END

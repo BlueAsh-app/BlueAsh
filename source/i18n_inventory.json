@@ -1,5 +1,2976 @@
 [
   {
+    "key": "입력 진단",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "보고 %d회/초 · 이동 %ld / %ld 카운트/초 · 한 번에 최대 %ld",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "마우스를 움직여 보세요. 움직임이 들어오는지 확인합니다.",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "입력이 화면에 보일 때까지 약 %.1f ms · 화면 %.0f fps",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "DPI 재기: 클릭 → 자를 대고 마우스를 오른쪽으로 정확히 10cm 옮기기 → 다시 클릭 (두 번 이상)",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "재는 중 · %ld 카운트",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "DPI 약 %d (차이 %.1f%%) · 닫으면 저장합니다",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "한 번 더 재 주세요",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "재 때마다 차이가 큽니다 (%.1f%%) · 다시 재 주세요",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "Esc: 닫기",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "번개 같은 반응",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "프로급",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "매우 빠름",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "빠름",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "보통",
+    "files": [
+      "aim_practice.h",
+      "perf_ui.h",
+      "stability_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조금 느림",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "반응 속도 테스트",
+    "files": [
+      "aim_practice.h",
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "표적 반응 테스트",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "화면이 파랗게 바뀌는 순간 클릭하세요. 5번 재서 평균을 냅니다.",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "표적이 나타나면 조준점을 옮겨 맞히세요. 10번 재서 평균을 냅니다.",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "클릭 또는 %ls로 시작 · Esc로 닫기",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "결과",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "최고 %d ms · 빗나감 %d번",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "최고 %d ms · 가장 느림 %d ms",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "클릭해서 다시 하기 · Esc로 닫기",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "클릭!",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "너무 빨랐습니다",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "파랗게 바뀐 뒤에 클릭하세요",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "기다리세요…",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "파랗게 바뀌면 바로 클릭",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "표적 반응",
+    "files": [
+      "aim_practice.h",
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "방금 %d ms · 빗나감 %d번",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "표적이 나타나면 맞히세요",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "속도 %.1fx · 휠로 조절",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "분석 완료",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "감도 분석",
+    "files": [
+      "aim_practice.h",
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "1. 파란 표적이 나타나면 조준점을 옮겨 클릭하세요.",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "2. 빈 원이 나타나면 왼쪽 버튼을 누른 채 위로 올라가는 화면을 아래로 당겨 원에 맞추세요.",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "약 3분 걸립니다. 같은 조건에서 감도 후보를 섞어 여러 번 비교합니다.",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "약 2분 걸립니다. 같은 조건에서 감도 후보를 섞어 여러 번 비교합니다.",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "표적 전환",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수직 반동",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조준(ADS) 표적 전환",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "왼쪽 버튼을 누르고 있으세요",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "%ls 또는 Esc: 분석 종료",
+    "files": [
+      "aim_practice.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "고감도",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "중감도",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "저감도",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "표적 전환: 지난 측정과 결과가 달라 추천을 보류합니다 · 한 번 더 측정해 주세요",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수직 반동: 지난 측정과 결과가 달라 추천을 보류합니다 · 한 번 더 측정해 주세요",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조준(ADS): 지난 측정과 결과가 달라 추천을 보류합니다 · 한 번 더 측정해 주세요",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "유효한 측정이 부족합니다 · 다시 측정해 주세요",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "표적 전환: 지금 감도와 후보 사이에 뚜렷한 차이가 없었습니다",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수직 반동: 지금 감도와 후보 사이에 뚜렷한 차이가 없었습니다",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조준(ADS): 지금 감도와 후보 사이에 뚜렷한 차이가 없었습니다",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "일반 감도 %ls → %ls에서 표적 전환이 %ls%% 더 빠르게 측정됐습니다",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조준 감도 %ls → %ls에서 조준(ADS) 표적 전환이 %ls%% 더 빠르게 측정됐습니다",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수직 감도 배율 %ls → %ls에서 조준 안정성이 %ls%% 더 높게 측정됐습니다",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조준",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "1배",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "2배",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "3배",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "4배",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h",
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "6배",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "8배",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "분석 종료",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "감도 분석 시작",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "다음",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "저장",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h",
+      "dlss_ui.h",
+      "raid_alert.h",
+      "settings_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "계정 변경",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "계정 연결",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "프로게이머 설정",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "‹  뒤로",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "자세히 보기",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "설정",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h",
+      "ModeSwitch.cpp",
+      "tray_menu.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "전적 새로고침",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "감도 분석은 BlueAsh의 연습 화면에서 마우스 이동량(Raw Input)만 측정합니다.\n\n· 키보드 입력은 읽지 않습니다.\n· 화면을 캡처하지 않고, 측정한 값은 이 PC에만 저장합니다. 어디에도 업로드하지 않습니다.\n· 배그 게임 안에서는 측정하지 않습니다.\n\n시작할까요?",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "에임랩",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h",
+      "ModeSwitch.cpp"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "연습 화면을 열지 못했습니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "상승",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "하락",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "불명확",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "명중률 %ls%% → %ls%% (%ls%ls%%p · %ls%ls%%) · %ls",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "100발당 피해 %ls → %ls (%ls%ls · %ls%ls%%) · %ls",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "PUBG 계정",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "전적 연결 완료",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "전적 서버 준비 중",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "연결 안 됨",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "연결은 선택 사항입니다",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "감도 프로필",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "일반 %ls · 수직 %ls",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "DPI를 넣으면 cm/360을 계산합니다",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그 감도를 찾지 못했습니다",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "감도 프로필에서 직접 넣어 주세요",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그 반동 분석",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그 훈련장에서 %ls를 누르고 한 탄창을 쏜 뒤 다시 누르세요. 결과가 게임 화면 위에 바로 뜹니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "모르는 총",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "최근 · %ls%ls · 수직 %ls → %ls",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "총 자동 인식",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "마우스 궤적",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수직·스코프 감도",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "화면이 바뀌는 순간 클릭하는 반응 속도와, 나타나는 표적을 맞히는 표적 반응을 재미로 재 보세요.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "반응 속도 %d ms",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "표적 반응 %d ms",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "최고 기록",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "5번 평균",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "등급",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "최근 경기 분석",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "계정을 연결하면 감도를 바꾸기 전후 경기를 자동으로 비교합니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "경기를 불러오는 중 · %d / %d",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "감도 적용 후 %d / 10경기 완료 · 적용 전 %d경기",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "유효 경기 %d개 (대상 무기 %d발 이상)",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "감도를 적용하면 그 시점 전후 경기를 비교합니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "명중률 · 비교하려면 양쪽 3경기 이상이 필요합니다",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "피해량 · 비교하려면 양쪽 3경기 이상이 필요합니다",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "마우스 DPI",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "지금 손잡이 유지",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "남은 흔들림이 작습니다",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "지금도 잘 제어하고 있습니다",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수직 손잡이",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "하프 그립",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "틸티드 그립",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "세로 반동 +15%",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "가로 반동 +16% · 세로 +8% · 반동 회복 +10%",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "세로 반동 +12% · 가로 +6% · 화면 흔들림 +25%",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "위아래로 밀린 폭이 큼",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "단발은 다음 탄 전 회복이 중요",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "좌우로 흔들린 폭이 큼",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "위아래·좌우가 함께 남음",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "부착물 추천",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "엄지 손잡이",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "보정기",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "제동기",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "공식 수치 미확인",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "추천",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "남은 흔들림이 작아 손잡이를 바꾸지 않아도 됩니다",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "세로 반동",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "가로 반동",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "반동 회복",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "화면 흔들림",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "내 패턴",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "좌우 흔들림 %d%% · 위아래 밀림 %d%%",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "내 패턴에는 잘 맞아 보이지만 정답은 아닙니다 · 효과는 PUBG 공식 패치 노트 기준 · 바꾼 뒤 다시 측정해 보세요",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "반동 분석 결과",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "측정 기록",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "아직 측정이 없습니다. 배그 훈련장에서 %ls를 눌러 시작하세요.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "스코프",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "총",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "총 반동 · 내 손 (뒤집음)",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조준점 · 추천 감도",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조준점",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "마우스(손)",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "총 반동",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "추천 감도",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "반동을 %d%% 당겼습니다 · 사격 %ls초",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수직 감도 %ls → %ls 추천",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h",
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "또는 %ls 감도 %ls → %ls (가로도 함께 바뀝니다) · %ls",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "연사",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "단발",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "스코프를 고르면 그 스코프 감도도 알려 드립니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "추천 손잡이",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "내 패턴에는 잘 맞아 보이지만 정답은 아닙니다 · 바꾼 뒤 다시 측정해 보세요",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "반동 분석 설정",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "측정 키 · 배그가 앞에 있을 때만 씁니다",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "모드 전환 단축키와 같은 키면 배그 안에서는 측정 키로 씁니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "스코프별 측정 방식 · 켜면 연사, 끄면 단발",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "PUBG 계정 연결",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "게임 닉네임만 입력하면 됩니다. 비밀번호는 묻지 않습니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "플랫폼",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "닉네임",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "마우스 소프트웨어에 설정한 DPI를 입력하세요",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그 감도 · 일반 %ls · 수직 %ls (설정 파일에서 읽음)",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "일반 감도",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수직 배율",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "다시 오신 걸 환영합니다",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "저장된 계정으로 계속하거나 다른 계정으로 로그인하세요.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "감도 분석 결과",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "아직 분석하지 않았습니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "분석한 때",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그 감도 보정",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "보정됨",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "안 됨 (추정 속도)",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "표적 전환 측정",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "%d회",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "명중 (현재 감도)",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "표적까지 걸린 시간",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "지나친 정도 (오버슈트)",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수직 반동 측정",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "반동 중 평균 오차 (현재)",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조준(ADS) 측정",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "후보(0.95 / 1.00 / 1.05배)를 섞은 순서로 같은 조건에서 반복해 비교했습니다. 차이가 측정 오차보다 클 때만 추천합니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "경기 비교 (참고 통계)",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "계정을 연결하면 볼 수 있습니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "적용 %ls · 전 %d경기 / 후 %d경기",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "감도 %ls → %ls",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "명중률",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "100발당 피해",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "전체",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "데이터 부족",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "경기당 기절",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "경기당 처치",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "적용 후 따로 센 피해 (추정): 탑승자 %ls · 차량 %ls · 낙하 중 %ls",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "AR·SMG·DMR·LMG만 셉니다. 명중률은 발사 기록이 빠짐없는 경기만 씁니다. 경기마다 상대·모드·교전 거리가 달라 감도와 상관없이 달라질 수 있습니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "%d명 · 출처 prosettings.net (2026-11-16 확인)",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "내 감도",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "DPI %d · 일반 %ls · 수직 %ls · 조준 %ls",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "가장 비슷한 선수",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "선수",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "일반",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수직",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조준경",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "cm/360 (추정)",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "cm/360은 마우스를 몇 cm 움직여야 한 바퀴 도는지입니다 (배그 회전값을 가정한 추정). 흰 선은 내 위치입니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": false,
+    "exclusion": ""
+  },
+  {
+    "key": "이 감도 적용 완료",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "DPI 변경",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "연결",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "연결 없이 진행",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "이 계정으로 계속",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그 반동",
+    "files": [
+      "aim_ui-attachment-isolated.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "반응 속도",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "결과 보기",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "부착물 보기",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "다른 계정으로 로그인",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "계정을 저장했습니다. 전적은 서버가 준비되면 자동으로 불러옵니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "그 닉네임의 PUBG 계정을 찾지 못했습니다. 플랫폼과 대소문자를 확인해 주세요.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "요청이 많아 잠시 뒤에 다시 시도해 주세요.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "전적 서버가 아직 준비되지 않았습니다 (PUBG API 키 등록 대기).",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "서버에 연결하지 못했습니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "이 시점부터의 경기를 감도 적용 후로 비교합니다. 배그 설정에서 직접 바꿔 주세요.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "닉네임은 영문·숫자·_·- 2~24자입니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "찾는 중…",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "DPI는 100~32000 사이로 넣어 주세요.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "일반 감도는 1~100, 수직 배율은 0.5~2.0입니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "저장하지 못했습니다.",
+    "files": [
+      "aim_ui-attachment-isolated.h",
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "총을 알아보지 못했습니다",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "%ls 인식",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "최근 %d탄창 중간값 · 차이 ±%d%%",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "%d/5탄창 측정",
+    "files": [
+      "aim_ui.h",
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "%d/5탄창 측정 · 같은 총·부착물로 5탄창을 쏘면 추천이 정확해집니다",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "또는 %ls 감도 %ls → %ls",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "에임랩에서 총을 한 번 고르면 다음부터 알아봅니다",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "그대로",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "%ls 감도",
+    "files": [
+      "aim_ui.h",
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "스코프 감도",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "스코프를 고르면 표시",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "둘 중 하나만 바꾸세요 · 스코프 감도는 가로도 함께 바뀝니다",
+    "files": [
+      "aim_ui.h",
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "자동 기록 끄기",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "자동 기록 켜기",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그 훈련장에서 %ls를 누르고 5탄창을 쏘세요 · 탄창마다 따로 계산합니다",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수직 감도 추천",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "아직 측정이 없습니다",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "반동 분석 결과에서 감도를 적용하면 그 시점 전후 경기를 비교합니다.",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "세로 반동을 가장 크게 줄입니다. 쏠 때 위로 크게 튀는 총에 맞습니다.",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수직 반동 제어",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "가로 반동을 크게 줄이고 단발 반동 회복이 빨라집니다. 좌우로 흔들릴 때 맞습니다.",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수평 반동 제어",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "단발 반동 회복",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "호흡 흔들림 제어",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "세로·가로 반동을 고르게 줄이고 사격 중 화면 흔들림을 잡아 줍니다.",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "사격 시 화면 흔들림 제어",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조준이 빨라지고 호흡 흔들림이 줄어듭니다. 반동은 세로만 조금 줄입니다.",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조준 속도",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "세로·가로 반동과 반동 패턴을 함께 줄입니다. 반동만 보면 총구 중 가장 강합니다.",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "반동 패턴",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "탄 퍼짐",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "사격 중 화면 흔들림을 크게 줄입니다. 반동 감소는 보정기보다 작습니다.",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "소염기",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "총구 화염을 가리고 반동도 조금 줄입니다.",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "총구 화염",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "감소",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "손잡이",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "녹색 칸이 내 패턴에 맞는 추천입니다 · 누르면 설명",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "남은 흔들림이 작아 지금 손잡이를 유지해도 됩니다 · 누르면 설명",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "총구",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "내 패턴과 맞는 정도 %d%%",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "정답은 아닙니다 · 바꾼 뒤 다시 측정해 보세요 · 수치: 나무위키 총기 부착물 (2026-10-18 판, 돌격소총 기준)",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수직 감도",
+    "files": [
+      "aim_ui.h",
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "둘 중 하나만 바꾸세요",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "위에서 스코프를 고르면 표시",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "자세한 분석",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "내 배그 설정",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그 설정 파일에서 불러옴",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그 설정 파일을 찾지 못했습니다 · 배그를 한 번 켠 뒤 다시 열어 주세요",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "15배",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "측정할 때 수직 %ls",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "탄착 오차",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "스프레이 궤적",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "이 기록에는 탄창별 자료가 없습니다 · 새로 측정하면 보입니다",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "위 = 덜 당김 · 원 = 오차 3%",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수직 당김 부족",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수직 감도 %ls → %ls",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "수직 당김 과다",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "좌우 과잉 보정",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "좌우로 덜 움직이기",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "오른쪽으로 흐름",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "왼쪽으로 흐름",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "왼쪽으로 조금 더 당기기",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "오른쪽으로 조금 더 당기기",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "좌우 반응 실수",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "튀는 반대쪽으로 잡기",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "첫 당김 늦음",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "%ls초",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "쏘자마자 당기기",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "탄이 일찍 흐트러짐",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "%d번째 탄",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "그때부터 조금 더 당기기",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "후반 힘 빠짐",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "끝까지 당기기",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "후반 과하게 당김",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "끝에서 힘 빼기",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "초반 덜 당김",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "처음부터 당기기",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "탄창마다 차이 큼",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "몇 번 더 측정하기",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "개선할 점",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "잘 잡고 있습니다",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "새로 측정하면 개선할 점을 알려 드립니다",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "눈에 띄는 문제가 없습니다 · 감도는 지금 그대로 두세요",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그 훈련장에서 Insert를 누르고 쏘세요",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "평균 오차",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "탄창별 차이",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "좌우 보정",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "첫 당김",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "구간별 당김",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "탄창당 탄 수",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "%d발",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "흐트러지는 탄",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "끝까지 유지",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "연사 속도",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "실전 기록",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그에서 쏘면 자동으로 기록합니다",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "자동 기록이 꺼져 있습니다",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "경기",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "아직 기록이 없습니다. 배그에서 총을 쏘면 총·탄 수·긴 연사의 반동이 경기별로 쌓입니다.",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "연습 · 기타",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "%d발 · 사격 %d번",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "총 %d발 · 사격 %d번 · 연사 분석 %d번",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "탄 수",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "사격",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "연사 분석",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "평균 오차 · 좌우 실수",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "탄 수는 누른 시간과 연사 속도로 계산한 추정입니다 · 연사 분석은 0.7초 이상 누른 사격만",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "실전은 적을 따라가며 쏜 것도 섞여 참고용입니다 · 감도 추천은 훈련장 측정을 기준으로 하세요",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조준 cm/360",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조준경 cm/360",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "DPI %d · 일반 %ls · 수직 %ls · 조준 %ls · 조준경 %ls",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "이 감도 적용",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "감도 적용 완료 · %ls",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
     "key": "내장 파일이 바뀌어 있어 원본으로 되돌리지 못했습니다. BlueAsh를 다시 실행하세요.",
     "files": [
       "bundle.h"
@@ -2244,16 +5215,6 @@
     "exclusion": ""
   },
   {
-    "key": "저장",
-    "files": [
-      "dlss_ui.h",
-      "raid_alert.h",
-      "settings_ui.h"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
     "key": "적용했습니다. 게임을 켜고, 멈추거나 이상하면 '원본 복구'를 누르세요.",
     "files": [
       "dlss_ui.h"
@@ -2575,6 +5536,38 @@
     "exclusion": ""
   },
   {
+    "key": "마우스를 몇 cm 움직이면 배그 안에서 한 바퀴(360°) 도는지입니다. 숫자가 클수록 감도가 낮아 크게 움직여야 하고, 작을수록 조금만 움직여도 많이 돕니다.",
+    "files": [
+      "help_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "DPI와 일반 감도를 함께 계산하기 때문에 DPI가 다른 사람과도 같은 기준으로 비교할 수 있습니다.",
+    "files": [
+      "help_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "일반은 조준하지 않고 둘러볼 때, 조준은 우클릭을 누른 채 어깨 너머로 볼 때, 조준경은 아이언사이트·레드닷 같은 1배율로 정조준할 때입니다. 2배 이상 배율은 배그 설정에서 배율마다 따로 정합니다. 수직 배율은 위아래 움직임만 몇 배로 할지입니다.",
+    "files": [
+      "help_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "흰 점은 내 위치입니다. 배그 회전값을 가정한 추정이라 실제와 조금 다를 수 있습니다.",
+    "files": [
+      "help_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
     "key": "게임 알림",
     "files": [
       "help_ui.h",
@@ -2584,7 +5577,7 @@
     "exclusion": ""
   },
   {
-    "key": "타르코프 · 배치 카운트다운 1초 전에 소리로 알려 줍니다.",
+    "key": "타르코프 · 배치 카운트다운 몇 초 전(1~10초)에 소리로 알려 줍니다.",
     "files": [
       "help_ui.h",
       "ModeSwitch.cpp"
@@ -2703,14 +5696,6 @@
     "exclusion": ""
   },
   {
-    "key": "타르코프 서버 정상",
-    "files": [
-      "maintenance_ui.h"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
     "key": "일부 불안정",
     "files": [
       "maintenance_ui.h"
@@ -2720,14 +5705,6 @@
   },
   {
     "key": "접속 불가",
-    "files": [
-      "maintenance_ui.h"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
-    "key": "지금은 상태를 가져오지 못했어요. 잠시 뒤 다시 확인합니다.",
     "files": [
       "maintenance_ui.h"
     ],
@@ -2783,11 +5760,11 @@
     "exclusion": ""
   },
   {
-    "key": "NVIDIA 초기화에 실패했습니다.",
+    "key": "현재 디스플레이 컬러 설정을 확인할 수 없습니다.",
     "files": [
       "ModeSwitch.cpp"
     ],
-    "localized": true,
+    "localized": false,
     "exclusion": ""
   },
   {
@@ -2799,7 +5776,15 @@
     "exclusion": ""
   },
   {
-    "key": "NVIDIA 컬러 설정을 찾지 못했습니다. NVIDIA 앱에서 감마를 한 번 변경 후 1로 되돌리고 다시 시도하세요.",
+    "key": "현재 NVIDIA 컬러 설정을 읽지 못했습니다.",
+    "files": [
+      "ModeSwitch.cpp"
+    ],
+    "localized": false,
+    "exclusion": ""
+  },
+  {
+    "key": "NVIDIA 컬러 값이 예상 범위를 벗어났습니다.",
     "files": [
       "ModeSwitch.cpp"
     ],
@@ -2807,7 +5792,23 @@
     "exclusion": ""
   },
   {
-    "key": "NVIDIA 컬러 값이 예상 범위를 벗어났습니다.",
+    "key": "드라이버의 컬러 범위를 확인하지 못했습니다.",
+    "files": [
+      "ModeSwitch.cpp"
+    ],
+    "localized": false,
+    "exclusion": ""
+  },
+  {
+    "key": "NVIDIA 초기화에 실패했습니다.",
+    "files": [
+      "ModeSwitch.cpp"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "NVIDIA 컬러 설정을 찾지 못했습니다. NVIDIA 앱에서 감마를 한 번 변경 후 1로 되돌리고 다시 시도하세요.",
     "files": [
       "ModeSwitch.cpp"
     ],
@@ -3031,6 +6032,14 @@
     "exclusion": ""
   },
   {
+    "key": "브라우저 볼륨 복원에 실패했습니다.",
+    "files": [
+      "ModeSwitch.cpp"
+    ],
+    "localized": false,
+    "exclusion": ""
+  },
+  {
     "key": "지금: ",
     "files": [
       "ModeSwitch.cpp"
@@ -3123,14 +6132,6 @@
   },
   {
     "key": "트레이 아이콘을 만들지 못해 창을 유지합니다. 잠시 후 다시 시도하세요.",
-    "files": [
-      "ModeSwitch.cpp"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
-    "key": "볼륨 복귀에 일부 실패했습니다. 일반 모드를 다시 눌러 확인하세요.",
     "files": [
       "ModeSwitch.cpp"
     ],
@@ -3243,7 +6244,7 @@
     "exclusion": ""
   },
   {
-    "key": "배치 카운트다운 1초 전에 소리로 알려 줍니다",
+    "key": "배치 카운트다운 몇 초 전에 소리로 알려 줍니다",
     "files": [
       "ModeSwitch.cpp"
     ],
@@ -3299,7 +6300,7 @@
     "exclusion": ""
   },
   {
-    "key": "커피 한 잔 후원",
+    "key": "내 감도를 분석하고, 감도를 바꾸기 전후 경기 명중률을 비교합니다",
     "files": [
       "ModeSwitch.cpp"
     ],
@@ -3307,10 +6308,9 @@
     "exclusion": ""
   },
   {
-    "key": "설정",
+    "key": "커피 한 잔 후원",
     "files": [
-      "ModeSwitch.cpp",
-      "tray_menu.h"
+      "ModeSwitch.cpp"
     ],
     "localized": true,
     "exclusion": ""
@@ -3657,6 +6657,14 @@
   },
   {
     "key": "갑자기 꺼짐·블루스크린·그래픽 오류·게임 충돌 기록을 찾아 원인과 해결 방법을 알려 줍니다.",
+    "files": [
+      "ModeSwitch.cpp"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그 · 반동을 분석해 감도를 추천하고, 반응 속도와 프로 설정을 비교합니다.",
     "files": [
       "ModeSwitch.cpp"
     ],
@@ -4719,15 +7727,6 @@
   },
   {
     "key": "높음",
-    "files": [
-      "perf_ui.h",
-      "stability_ui.h"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
-    "key": "보통",
     "files": [
       "perf_ui.h",
       "stability_ui.h"
@@ -5888,7 +8887,7 @@
     "exclusion": ""
   },
   {
-    "key": "마우스 가속 끄기",
+    "key": "Xbox Game Bar 오버레이 끄기",
     "files": [
       "perf_ui.h"
     ],
@@ -6885,7 +9884,7 @@
     "exclusion": ""
   },
   {
-    "key": "BlueAsh 2.28.0\r\n알림: ",
+    "key": "BlueAsh 2.31.0\r\n알림: ",
     "files": [
       "raid_alert.h"
     ],
@@ -6949,7 +9948,7 @@
     "exclusion": ""
   },
   {
-    "key": "출격 1초 전 · 카운트다운 확인",
+    "key": "출격 %d초 전 · 카운트다운 확인",
     "files": [
       "raid_alert.h"
     ],
@@ -7029,7 +10028,7 @@
     "exclusion": ""
   },
   {
-    "key": "로그로 감시를 시작하고 배치 화면의 카운트다운이 1초 남으면 알립니다.",
+    "key": "로그로 감시를 시작하고 배치 화면의 카운트다운이 정한 시간만큼 남으면 알립니다.",
     "files": [
       "raid_alert.h"
     ],
@@ -7046,6 +10045,30 @@
   },
   {
     "key": "직접 선택",
+    "files": [
+      "raid_alert.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "알림 시점",
+    "files": [
+      "raid_alert.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "출격 %d초 전",
+    "files": [
+      "raid_alert.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "게임이 배치 카운트다운을 그보다 짧게 보여 주면 보이는 즉시 울립니다.",
     "files": [
       "raid_alert.h"
     ],
@@ -7181,11 +10204,203 @@
     "exclusion": ""
   },
   {
+    "key": "배치 화면 확인 중 · %d초 전에 알림",
+    "files": [
+      "raid_deploy_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
     "key": "배치 화면 확인 중 · 1초 전에 알림",
     "files": [
       "raid_deploy_capture.h"
     ],
     "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "반동 패턴 캡처 중",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "같은 총·부착물로 5탄창을 쏘세요 · 탄창마다 따로 계산 · 다시 %ls: 끝내기",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "마우스 움직임을 읽지 못했습니다",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그가 관리자 권한으로 실행 중입니다 · BlueAsh 설정 > 문제 해결에서 관리자 권한으로 다시 실행해 주세요",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "BlueAsh를 다시 켠 뒤 한 번 더 해 주세요",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "화면을 캡처하지 못했습니다",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그를 테두리 없는 창 모드로 켜 주세요",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "분석하지 못했습니다",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "처음 한 번만 쏘기 전에 조준을 좌우로 움직여 주세요 · 다음부터는 이 값을 씁니다",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "사격이 없었습니다 · 왼쪽 버튼으로 쏘세요",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "아래로 당기지 않았습니다 · 반동을 당기며 쏘세요",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "반동이 보이지 않았습니다 · 벽을 보고 쏘세요",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "너무 짧습니다 · 한 탄창을 쏘세요",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "지난 측정의 마우스 값으로 계산했습니다 · 감도를 바꿨다면 좌우로 한 번 움직여 주세요",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "좌우로 살짝 움직인 뒤 같은 총·부착물로 5탄창을 쏘세요 · 탄창마다 따로 계산 · 다시 %ls: 끝내기",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "에임랩에서 스코프를 고르면 스코프 감도도 보여 줍니다",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "보안 검사 안내",
+    "files": [
+      "security_notice.h"
+    ],
+    "localized": false,
+    "exclusion": ""
+  },
+  {
+    "key": "안녕하세요, BlueAsh입니다. 2.29.0 설치 파일을 바이러스로 탐지한 백신이 4곳에서 3곳으로 줄었습니다. 나머지 업체에도 재검토를 요청했으며 결과가 확인되는 대로 안내드리겠습니다.",
+    "files": [
+      "security_notice.h"
+    ],
+    "localized": false,
+    "exclusion": ""
+  },
+  {
+    "key": "새로운 알림이 없습니다.",
+    "files": [
+      "security_notice.h"
+    ],
+    "localized": false,
+    "exclusion": ""
+  },
+  {
+    "key": "검사 결과 보기 ↗",
+    "files": [
+      "security_notice.h"
+    ],
+    "localized": false,
+    "exclusion": ""
+  },
+  {
+    "key": "2.29.0 설치 파일에 대한 백신 재검토를 요청했습니다. 최신 결과는 검사 결과 보기에서 확인해 주세요.",
+    "files": [
+      "security_notice.h"
+    ],
+    "localized": false,
+    "exclusion": ""
+  },
+  {
+    "key": "BlueAsh 2.29.0 설치 파일을 바이러스로 탐지하는 업체는 현재 {n}곳입니다. 재검토를 요청했으며 결과를 확인하는 대로 안내드리겠습니다.",
+    "files": [
+      "security_notice.h"
+    ],
+    "localized": false,
+    "exclusion": ""
+  },
+  {
+    "key": "2.29.0 설치 파일을 탐지하던 4곳에 재검토를 요청한 후, VirusTotal 최신 검사에서 탐지가 0곳이 되었습니다. 다른 백신에서 탐지되면 버그 제보로 알려주시면 감사하겠습니다.",
+    "files": [
+      "security_notice.h"
+    ],
+    "localized": false,
     "exclusion": ""
   },
   {
@@ -7365,7 +10580,7 @@
     "exclusion": ""
   },
   {
-    "key": "밝기·대비는 0~199, 감마는 0.50~3.00 사이로 넣어 주세요.",
+    "key": "밝기 30~150, 대비 60~150, 감마 0.70~2.50 사이로 넣어 주세요.",
     "files": [
       "settings_ui.h"
     ],
@@ -7389,7 +10604,7 @@
     "exclusion": ""
   },
   {
-    "key": "저장했습니다. 지금 모드에도 바로 적용했습니다.",
+    "key": "저장했습니다. 이 프로필을 쓰는 모드에서 적용됩니다.",
     "files": [
       "settings_ui.h"
     ],
@@ -7397,7 +10612,7 @@
     "exclusion": ""
   },
   {
-    "key": "저장했습니다. 모드를 바꿀 때 적용됩니다.",
+    "key": "저장했습니다. 지금 모드에도 바로 적용했습니다.",
     "files": [
       "settings_ui.h"
     ],
@@ -7574,6 +10789,14 @@
   },
   {
     "key": "기본값으로 되돌렸습니다. 저장을 눌러야 반영됩니다.",
+    "files": [
+      "settings_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "화면에 미리 적용 중 · 저장을 누르면 저장되고, 닫으면 원래대로 돌아갑니다.",
     "files": [
       "settings_ui.h"
     ],
@@ -9845,7 +13068,7 @@
     "exclusion": ""
   },
   {
-    "key": "30분마다 새 버전을 확인하고, 새 버전이 나오면 알림과 함께 왼쪽 메뉴의 업데이트에 ! 가 표시됩니다.",
+    "key": "30분마다 새 버전을 확인하고, 새 버전이 나오면 알림과 함께 오른쪽 위 업데이트 아이콘에 ! 가 표시됩니다.",
     "files": [
       "update_ui.h"
     ],

@@ -5,7 +5,7 @@
 // Updates come from the BlueAsh relay (relay/worker.js): /update/check answers in plain text (version, date, size,
 // one "note=" line per change) and counts installs by a random id; the updater (updater/Update.ps1) downloads
 // /update/manifest.json's ZIP, checks its SHA-256 and swaps the files.
-const wchar_t* appVersion=L"2.30.0";
+const wchar_t* appVersion=L"2.31.0";
 const wchar_t* updateHost=L"modepulse-relay.modepulse.workers.dev";
 HANDLE updaterProcess=nullptr;
 struct UpdateInfo{std::wstring version,date,error;std::vector<std::wstring> notes;long long size=0;};
@@ -276,7 +276,7 @@ void paintUpdate(HDC dc){historyLink={};
  if(showHistory){paintHistory(dc);return;}
  titleRow(dc,a?i18n::text(L"바뀐 점"):i18n::text(L"업데이트는 이렇게 됩니다"),i18n::text(L"패치 내역 ›"));
 roundBox(dc,historyBox(),well,line,16);
- std::vector<std::wstring> lines=a?w.info.notes:std::vector<std::wstring>{i18n::text(L"30분마다 새 버전을 확인하고, 새 버전이 나오면 알림과 함께 왼쪽 메뉴의 업데이트에 ! 가 표시됩니다."),i18n::text(L"지금 업데이트를 누르면 이 화면에서 받고 확인한 뒤, 잠깐 꺼졌다가 새 버전으로 다시 켜집니다."),i18n::text(L"설정은 그대로 남고, 바꾸다 실패하면 이전 파일로 되돌립니다.")};
+ std::vector<std::wstring> lines=a?w.info.notes:std::vector<std::wstring>{i18n::text(L"30분마다 새 버전을 확인하고, 새 버전이 나오면 알림과 함께 오른쪽 위 업데이트 아이콘에 ! 가 표시됩니다."),i18n::text(L"지금 업데이트를 누르면 이 화면에서 받고 확인한 뒤, 잠깐 꺼졌다가 새 버전으로 다시 켜집니다."),i18n::text(L"설정은 그대로 남고, 바꾸다 실패하면 이전 파일로 되돌립니다.")};
  if(a&&lines.empty())lines.push_back(i18n::text(L"이번 버전의 바뀐 점 설명이 없습니다."));
  int y=232;for(auto& source:lines){auto line=i18n::text(source);RECT t={78,y,796,530};RECT m=t;auto old=SelectObject(dc,smallFont);DrawTextW(dc,line.c_str(),-1,&m,DT_CALCRECT|DT_WORDBREAK);SelectObject(dc,old);
   if(y+(m.bottom-m.top)>530){break;}if(!painting::circle(dc,{59,y+7,67,y+15},blue,CLR_NONE)){HBRUSH b=CreateSolidBrush(blue);RECT dot={60,y+8,66,y+14};FillRect(dc,&dot,b);DeleteObject(b);}

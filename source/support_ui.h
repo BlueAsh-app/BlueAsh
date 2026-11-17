@@ -44,8 +44,13 @@ bool elevateWithPrompt(bool hidden,const wchar_t* extra=L""){
     return ShellExecuteExW(&s)!=FALSE; // FALSE: declined at the prompt, keep running as is
 }
 void restartAsAdmin(const wchar_t* extra=L""){elevateWithPrompt(false,extra);}
+std::wstring fileTail(const std::wstring& path,size_t limit);
+bool updateChecking(){wchar_t local[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local)))return false;
+    for(const wchar_t* sub:{L"\\ModeSwitch",L"\\BlueAsh"}){std::wstring p=std::wstring(local)+sub+L"\\update-progress.txt";WIN32_FILE_ATTRIBUTE_DATA a={};if(!GetFileAttributesExW(p.c_str(),GetFileExInfoStandard,&a))continue;
+        FILETIME now;GetSystemTimeAsFileTime(&now);ULONGLONG t=((ULONGLONG)a.ftLastWriteTime.dwHighDateTime<<32)|a.ftLastWriteTime.dwLowDateTime,n=((ULONGLONG)now.dwHighDateTime<<32)|now.dwLowDateTime;
+        if(n>t&&n-t<60ULL*10000000&&fileTail(p,512).find(L"state=working")!=std::wstring::npos)return true;}return false;}
 void pollAdmin(){
-    static DWORD tried=0;if(!adminMismatch()||tried==tarkovPid)return;tried=tarkovPid;reportProblem(L"tarkov-admin");
+    static DWORD tried=0;if(!adminMismatch()||tried==tarkovPid)return;if(updateChecking())return; /* asked again once the updater is done */tried=tarkovPid;reportProblem(L"tarkov-admin");
     if(elevateWithPrompt(true))return;
     balloonAdminAt=GetTickCount64();reportProblem(L"admin-cancel");
     balloon::show(i18n::text(L"관리자 권한 전환이 취소됐습니다"),i18n::text(L"타르코프가 관리자 권한으로 실행 중이라 지도와 시세가 동작하지 않습니다. 이 알림을 누르면 다시 시도합니다."),L"");

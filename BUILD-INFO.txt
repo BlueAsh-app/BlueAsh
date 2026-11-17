@@ -1,2 +1,2 @@
-﻿BlueAsh 2.30.0 — 보안 검사 재검토 공지 (2026-11-13)
+﻿BlueAsh 2.31.0 — 에임랩·배그 반동 분석 (2026-11-17)
 Built to a scratch path (the repository BlueAsh.exe is the running copy and was not replaced).

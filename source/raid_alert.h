@@ -44,7 +44,7 @@ struct RaidWatch {
     ULONGLONG bytesRead=0,lastAlert=0;
     unsigned readFailures=0;
     HWND dialog=nullptr;
-    unsigned loudness=70;
+    unsigned loudness=70,lead=1; // lead: seconds before the deployment the alert sounds (1..10, RaidLead)
     std::vector<unsigned char> wav;
     ULONGLONG soundUntil=0,nextDiscovery=0,nextSessionScan=0;std::wstring session;
     void discoverMissing(){
@@ -64,7 +64,7 @@ struct RaidWatch {
     void reset(){capture.stop();unsigned token=deployment.token+1;deployment={};deployment.token=token;captureRetry=0;auto pmc=context.pmc;context=raid::Context{};context.pmc=pmc;publishRaidContext(context);file.clear();offset=0;baseline=true;streams.clear();bytesRead=0;readFailures=0;lastAlert=0;lastRead=i18n::text(L"아직 없음");lastEvent=i18n::text(L"아직 없음");FILETIME t;GetSystemTimeAsFileTime(&t);startedAt=number(t);}
     static std::wstring clock(){SYSTEMTIME t;GetLocalTime(&t);wchar_t b[32];swprintf(b,32,L"%02u:%02u:%02u",t.wHour,t.wMinute,t.wSecond);return b;}
     std::wstring diagnostics(){
-        std::wstring d=i18n::text(L"BlueAsh 2.30.0\r\n알림: ")+std::wstring(enabled?L"ON":L"OFF")+i18n::text(L" / 볼륨: ")+std::to_wstring(loudness)+L"\r\nLogs: "+folder+
+        std::wstring d=i18n::text(L"BlueAsh 2.31.0\r\n알림: ")+std::wstring(enabled?L"ON":L"OFF")+i18n::text(L" / 볼륨: ")+std::to_wstring(loudness)+L"\r\nLogs: "+folder+
             i18n::text(L"\r\n상태: ")+status+i18n::text(L"\r\n최근 읽기: ")+lastRead+i18n::text(L" / 신규 읽은 바이트: ")+std::to_wstring(bytesRead)+i18n::text(L" / 읽기 오류: ")+std::to_wstring(readFailures)+
             i18n::text(L"\r\n최근 알림: ")+lastEvent+i18n::text(L"\r\n감시 파일 수: ")+std::to_wstring(streams.size());
         for(const auto& entry:streams)d+=L"\r\n"+entry.first+L" ["+std::to_wstring(entry.second.offset)+L" / "+std::to_wstring(entry.second.size)+L"]";
@@ -98,15 +98,16 @@ struct RaidWatch {
         if(ok)soundUntil=GetTickCount64()+1300;
         return ok!=FALSE;
     }
-    void deployed(unsigned token){
+    void deployed(unsigned token,int left){
         if(!enabled||!deployment.armed||token!=deployment.token)return;
         deployment.finish();capture.stop();lastAlert=GetTickCount64();
         SYSTEMTIME t;GetLocalTime(&t);wchar_t clock[32];swprintf(clock,32,L"%02u:%02u:%02u",t.wHour,t.wMinute,t.wSecond);
-        status=std::wstring(clock)+L" · "+i18n::text(L"출격 1초 전 · 카운트다운 확인");
+        int sec=std::max(1,(left+999)/1000);wchar_t what[160];swprintf(what,160,i18n::text(L"출격 %d초 전 · 카운트다운 확인"),sec);
+        status=std::wstring(clock)+L" · "+what;
         if(!sound())status+=i18n::text(L" / 소리 재생 실패");
         lastEvent=status;
         showStatus();
-        balloon::show(i18n::text(L"타르코프 시작 알림"),i18n::text(L"출격 1초 전 · 카운트다운 확인"),L"EscapeFromTarkov.exe");
+        balloon::show(i18n::text(L"타르코프 시작 알림"),what,L"EscapeFromTarkov.exe");
     }
     void pollDeployment(){
         ULONGLONG now=GetTickCount64();
@@ -180,10 +181,11 @@ struct RaidWatch {
     void load(){
         folder=regString(configPath,L"RaidLogs");enabled=regString(configPath,L"RaidEnabled")==L"1";
         unsigned v=70;if(settings::parseVolume(regString(configPath,L"RaidVolume"),v))loudness=v;
+        {int l=_wtoi(regString(configPath,L"RaidLead").c_str());lead=(unsigned)std::clamp(l?l:1,1,10);capture.leadMs=(int)lead*1000;}
         loadProfiles();reset();discoverMissing();nextDiscovery=GetTickCount64()+10000;
         if(!enabled&&raidpaths::directory(folder))status=i18n::text(L"알림이 꺼져 있습니다 · 게임 도우미에서 켜세요.");
     }
-    bool save(){return saveString(configPath,L"RaidLogs",folder)&&saveString(configPath,L"RaidEnabled",enabled?L"1":L"0")&&saveString(configPath,L"RaidVolume",std::to_wstring(loudness));}
+    bool save(){return saveString(configPath,L"RaidLogs",folder)&&saveString(configPath,L"RaidEnabled",enabled?L"1":L"0")&&saveString(configPath,L"RaidVolume",std::to_wstring(loudness))&&saveString(configPath,L"RaidLead",std::to_wstring(lead));}
 } raidWatch;
 LRESULT CALLBACK raidProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
     switch(msg){
@@ -191,18 +193,22 @@ LRESULT CALLBACK raidProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         raidWatch.dialog=h;
         // On/off is the switch on 게임별 기능; this page holds where the logs are and how loud the alert is.
         pageLabel(h,i18n::text(L"게임 로그 폴더"),24,28,688,28,2);
-        pageLabel(h,i18n::text(L"로그로 감시를 시작하고 배치 화면의 카운트다운이 1초 남으면 알립니다."),24,60,688,24,1);
+        pageLabel(h,i18n::text(L"로그로 감시를 시작하고 배치 화면의 카운트다운이 정한 시간만큼 남으면 알립니다."),24,60,688,24,1);
         addSetting(h,L"EDIT",raidWatch.folder.c_str(),WS_BORDER|ES_READONLY|ES_AUTOHSCROLL,24,94,420,34,71);
         pageButton(h,i18n::text(L"자동 찾기"),456,91,120,77);
         pageButton(h,i18n::text(L"직접 선택"),588,91,124,72);
-        pageLabel(h,i18n::text(L"알림 볼륨"),24,160,688,28,2);
+        // When: how many seconds before the deployment (the countdown on the deployment screen) the alert sounds.
+        pageLabel(h,i18n::text(L"알림 시점"),24,144,688,28,2);
+        {HWND cb=addSetting(h,L"COMBOBOX",L"",CBS_DROPDOWNLIST|WS_VSCROLL|WS_TABSTOP,24,174,200,320,82);for(int i=1;i<=10;i++){wchar_t t[64];swprintf(t,64,i18n::text(L"출격 %d초 전"),i);SendMessageW(cb,CB_ADDSTRING,0,(LPARAM)t);}SendMessageW(cb,CB_SETCURSEL,raidWatch.lead-1,0);}
+        pageLabel(h,i18n::text(L"게임이 배치 카운트다운을 그보다 짧게 보여 주면 보이는 즉시 울립니다."),240,178,472,28,1);
+        pageLabel(h,i18n::text(L"알림 볼륨"),24,220,688,28,2);
         // Volume: speaker icon and a slider (the number shows while it moves), then a sound test.
-        addSetting(h,L"BlueAshLevel",L"",WS_TABSTOP,24,184,500,46,73);levelSet(h,73,(int)raidWatch.loudness);
-        pageButton(h,i18n::text(L"소리 테스트"),562,194,150,74);
-        pageLabel(h,i18n::text(L"브라우저 볼륨과 따로 정합니다. Windows나 BlueAsh가 음소거돼 있으면 들리지 않습니다."),24,238,688,40,1);
-        pageLabel(h,i18n::text(L"상태"),24,288,688,28,2);
-        pageLabel(h,raidWatch.status.c_str(),24,320,688,44,0,76);
-        HWND detail=addSetting(h,L"EDIT",raidWatch.diagnostics().c_str(),WS_BORDER|ES_READONLY|ES_MULTILINE|ES_AUTOVSCROLL|WS_VSCROLL,24,372,688,116,78);
+        addSetting(h,L"BlueAshLevel",L"",WS_TABSTOP,24,244,500,46,73);levelSet(h,73,(int)raidWatch.loudness);
+        pageButton(h,i18n::text(L"소리 테스트"),562,254,150,74);
+        pageLabel(h,i18n::text(L"브라우저 볼륨과 따로 정합니다. Windows나 BlueAsh가 음소거돼 있으면 들리지 않습니다."),24,296,688,28,1);
+        pageLabel(h,i18n::text(L"상태"),24,334,688,28,2);
+        pageLabel(h,raidWatch.status.c_str(),24,362,688,36,0,76);
+        HWND detail=addSetting(h,L"EDIT",raidWatch.diagnostics().c_str(),WS_BORDER|ES_READONLY|ES_MULTILINE|ES_AUTOVSCROLL|WS_VSCROLL,24,402,688,90,78);
         SendMessageW(detail,WM_SETFONT,(WPARAM)smallFont,TRUE);
         // Not part of the alert: the matched server badge reads the same log lines (saved at once).
         pageSwitch(h,i18n::text(L"매칭 서버 나라 표시 (PvP·시즌 매칭 때 게임 화면 오른쪽 위)"),24,504,688,30,81);checkBox(h,81,serverBadgeOn);
@@ -231,7 +237,7 @@ LRESULT CALLBACK raidProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
             DWORD attrs=GetFileAttributesW(path);
             if(on&&*path&&(attrs==INVALID_FILE_ATTRIBUTES||!(attrs&FILE_ATTRIBUTE_DIRECTORY))){SetDlgItemTextW(h,76,i18n::text(L"로그 폴더가 아닙니다. 자동 찾기나 직접 선택으로 다시 골라 주세요."));return 0;}
             bool reset=raidWatch.folder!=path;
-            raidWatch.folder=path;raidWatch.loudness=v;
+            raidWatch.folder=path;raidWatch.loudness=v;{int sel=(int)SendMessageW(GetDlgItem(h,82),CB_GETCURSEL,0,0);if(sel>=0&&sel<10){raidWatch.lead=(unsigned)sel+1;raidWatch.capture.leadMs=sel*1000+1000;}}
             if(reset)raidWatch.reset();
             if(!raidWatch.save()){SetDlgItemTextW(h,76,i18n::text(L"설정 저장 실패. 현재 실행에는 적용되지만 재실행 시 유지되지 않을 수 있습니다."));return 0;}
             raidWatch.status=on?(*path?i18n::text(L"저장했습니다 · 출격 신호를 기다립니다."):i18n::text(L"저장했습니다 · 타르코프를 실행하면 로그 폴더를 찾습니다.")):i18n::text(L"저장했습니다 · 알림은 꺼져 있습니다 (게임 도우미에서 켜기).");raidWatch.nextDiscovery=0;raidWatch.showStatus();

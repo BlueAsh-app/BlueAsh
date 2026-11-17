@@ -15,15 +15,16 @@ inline int milliseconds(std::wstring text){
  int fraction=0;for(size_t i=6;i<text.size();i++)fraction=fraction*10+text[i]-L'0';
  return seconds*1000+fraction*(text.size()==8?10:1);
 }
+// lead: fire once the countdown is at or under this many ms (the player picks 1..10 s); left: what it read then.
 struct Tracker {
- double previousAt=0;int previous=-1;bool fired=false;
+ double previousAt=0;int previous=-1,lead=1000,left=-1;bool fired=false;
  bool feed(double at,int ms,bool ready){
   if(fired)return false;
   if(!ready){previous=-1;return false;}
   if(ms<0)return false;
   double dt=at-previousAt;bool descending=previous>=0&&ms<previous&&dt>=0.04&&dt<=1.5&&std::abs((previous-ms)/1000.0-dt)<=0.35;
   previous=ms;previousAt=at;
-  if(descending&&ms<=1000){fired=true;return true;}return false;
+  if(descending&&ms<=lead){fired=true;left=ms;return true;}return false;
  }
 };
 struct Gate {

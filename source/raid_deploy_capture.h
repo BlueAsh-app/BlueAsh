@@ -3,6 +3,9 @@
 #include "raid_deploy_read.h"
 // Only armed after a new match log. WGC runs off the UI thread and copies just the deployment panel.
 class RaidDeployCapture {
+public:
+ int leadMs=1000; // set by raidWatch from 알림 시점 (RaidLead)
+private:
  std::thread worker;HANDLE stopEvent=nullptr;std::atomic<bool> active{false};HWND targetWindow=nullptr;std::mutex mutex;std::wstring note;raiddeploy::Reading latest;
  void status(const std::wstring& s){std::lock_guard<std::mutex> l(mutex);note=s;}
  void run(HWND hwnd,HWND owner,unsigned token){
@@ -19,7 +22,7 @@ class RaidDeployCapture {
    Ptr<PoolFactory> pf;factory(L"Windows.Graphics.Capture.Direct3D11CaptureFramePool",iidPoolFactory,(void**)pf.out());require(pf->FreeThreaded(rt.p,87,2,size,pool.out()));require(pool->CreateSession(item.p,session.out()));
    Ptr<Session2> s2;if(SUCCEEDED(session->QueryInterface(iidSession2,(void**)s2.out())))s2->SetCursor(false);
    Ptr<Session5> s5;if(SUCCEEDED(session->QueryInterface(iidSession5,(void**)s5.out())))s5->SetInterval({1000000});noBorder(session.p);require(session->Start());
-   Ptr<ID3D11Texture2D> staging;auto b=raiddeploy::box(size.width,size.height);raiddeploy::Tracker tracker;INT64 lastFrame=-1;
+   Ptr<ID3D11Texture2D> staging;auto b=raiddeploy::box(size.width,size.height);raiddeploy::Tracker tracker;tracker.lead=leadMs;INT64 lastFrame=-1;
    while(WaitForSingleObject(stopEvent,100)==WAIT_TIMEOUT){
     if(!IsWindow(hwnd))break;
     if(IsIconic(hwnd)){tracker={};status(i18n::text(L"게임이 최소화되어 카운트다운을 읽을 수 없습니다."));continue;}
@@ -33,9 +36,9 @@ class RaidDeployCapture {
     D3D11_BOX crop={(UINT)b.x,(UINT)b.y,0,(UINT)(b.x+b.w),(UINT)(b.y+b.h),1};context->CopySubresourceRegion(staging.p,0,0,0,0,texture.p,0,&crop);
     D3D11_MAPPED_SUBRESOURCE map={};require(context->Map(staging.p,0,D3D11_MAP_READ,0,&map));
     raiddeploy::Reading r;try{r=raiddeploy::read(ocr,(const unsigned char*)map.pData,map.RowPitch,b,size.height);}catch(...){context->Unmap(staging.p,0);throw;}context->Unmap(staging.p,0);
-    {std::lock_guard<std::mutex> l(mutex);latest=r;note=i18n::text(L"배치 화면 확인 중 · 1초 전에 알림");}
+    {std::lock_guard<std::mutex> l(mutex);latest=r;wchar_t nb[160];swprintf(nb,160,i18n::text(L"배치 화면 확인 중 · %d초 전에 알림"),leadMs/1000);note=nb;}
     // Timestamp belongs to this frame, so OCR duration cannot make a frozen or old frame count twice.
-    if(tracker.feed(stamp.value/10000000.0,r.ms,r.ready)){if(WaitForSingleObject(stopEvent,0)==WAIT_TIMEOUT)PostMessageW(owner,WM_APP+182,token,0);break;}
+    if(tracker.feed(stamp.value/10000000.0,r.ms,r.ready)){if(WaitForSingleObject(stopEvent,0)==WAIT_TIMEOUT)PostMessageW(owner,WM_APP+182,token,(LPARAM)tracker.left);break;}
    }
   }catch(const std::wstring& e){status(e);}catch(...){status(i18n::text(L"화면 읽기 실패"));}
   close(session.p);close(pool.p);}

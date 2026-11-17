@@ -297,7 +297,7 @@ COLORREF bg=RGB(7,12,27),panel=RGB(13,22,44),ink=RGB(247,249,255),muted=RGB(158,
 bool active=false,fps=false,gammaTouched=false,ready=false,trayPresent=false,hotkeyEnabled=true,hotkeyRegistered=false,startHidden=false,closeToTray=true;
 int dashLabelRight=414; // dashboard: where the 디스플레이 / 브라우저 볼륨 labels end (sized to the longest translation)
 bool languageRestart=false,languageToSettings=true;HWND languageBox=nullptr; // languageToSettings: reopen on 설정 (its drop-down) or on the dashboard (top-right pill)
-MaintenanceState maintenance;HWND maintenanceMenu=nullptr;bool securityNotice=false;
+MaintenanceState maintenance;HWND maintenanceMenu=nullptr;bool securityNotice=false;ULONGLONG noticeBellAt=0;
 int mainPage=0,selectedGame=0;bool pubgJoinOn=true,pubgMapOn=true;
 // Set by the update check (update_ui.h): a newer version exists; the sidebar and tray show it. balloonUpdateAt = when the "new version" notice went up.
 bool updateReady=false;ULONGLONG balloonUpdateAt=0,balloonStabilityAt=0;std::wstring updateVersion;
@@ -368,6 +368,12 @@ bool saveSettings(){
     if(!ok)problem(i18n::text(L"설정을 저장하지 못했습니다. 다음 실행에 유지되지 않을 수 있습니다."));
     return ok;
 }
+// The normal profile's volume starts as this PC's own browser volume: read once from the browser's sessions (nothing is
+// changed) the first time one plays outside game mode, unless the player already set a normal volume.
+void seedNormalVolume(){if(fps||!regString(configPath,L"NormalVolumeSeeded").empty())return;if(profiles[0].volume!=100){saveString(configPath,L"NormalVolumeSeeded",L"1");return;}
+    int b=(int)SendMessageW(browserBox,CB_GETCURSEL,0,0);if(b<0||b>=4)return;AudioSnapshot seen,none;try{volume(browsers[b],0,&seen,&none);}catch(...){return;}if(seen.empty())return;
+    float v=0;for(auto& kv:seen)v=std::max(v,kv.second);auto before=profiles[0];profiles[0].volume=(unsigned)std::clamp((int)std::lround(v*100),0,100);
+    if(!saveString(configPath,L"ProfilesV2",settings::encodeV2(profiles,autoGame))){profiles[0]=before;return;}saveString(configPath,L"NormalVolumeSeeded",L"1");if(win)InvalidateRect(win,nullptr,FALSE);}
 void audioUpdate() {
     if(!active)return;
     if(!fps&&normalRestored)return;
@@ -400,10 +406,10 @@ bool changeMode(bool targetFps,int pinnedProfile=-1) {
         auto gamma=effective.gamma;auto vol=effective.volume;
         effective=normalSnapshotValid?normalSnapshot.profile:profiles[0];effective.extended=true;settings::allGamma(effective,gamma);effective.volume=vol;
     }
-    if(!restoring)for(auto& v:effective.brightness)v=std::clamp(v,30u,150u); /* also profiles saved before the limit */
+    if(!restoring)settings::readable(effective); /* also profiles saved before the limits */
     try{nv.apply(display,effective,restoring?&normalSnapshot:nullptr);}catch(const std::wstring& e){problem(e);return false;}
     if(targetFps&&!fps){normalSnapshot=candidate;normalAudio.clear();normalSnapshotValid=true;normalRestored=false;}
-    if(restoring){try{auto a=volume(activeBrowser,0,nullptr,&normalAudio);if(a.failed){problem(i18n::text(L"브라우저 볼륨 복원에 실패했습니다."));return false;}}catch(const std::wstring& e){problem(e);return false;}}
+    if(restoring){try{auto a=volume(activeBrowser,profiles[0].volume/100.f);if(a.failed){problem(i18n::text(L"브라우저 볼륨 복원에 실패했습니다."));return false;}}catch(const std::wstring& e){problem(e);return false;}effective.volume=profiles[0].volume;} /* the saved normal value: what the player set in normal mode, or the PC's own at first run */
     appliedProfile=effective;appliedProfileIndex=profileIndex;
     if(restoring){normalSnapshotValid=false;normalRestored=true;}else if(!targetFps)normalRestored=false;
     active=true;fps=targetFps;gammaTouched=true;activeDisplay=display;activeBrowser=browsers[b];lastProblem.clear();statusNotice.clear();
@@ -413,6 +419,15 @@ bool changeMode(bool targetFps,int pinnedProfile=-1) {
     for(int id:{1,2,61,62}){InvalidateRect(GetDlgItem(win,id),nullptr,TRUE);}
     audioUpdate();trayUpdate();saveSettings();refreshStatus();return true;
 }
+// 프로필 미리보기: the values being edited go to the display and the browser at once; leaving the page without 저장
+// puts back exactly what was there before the first change (the NVIDIA snapshot and the browser sessions).
+bool previewOn=false;Nvidia::Snapshot previewSnap;AudioSnapshot previewAudio;std::wstring previewDisplay,previewBrowser;
+bool previewProfile(settings::Profile p){if(!ready)return false;int d=(int)SendMessageW(monitorBox,CB_GETCURSEL,0,0),b=(int)SendMessageW(browserBox,CB_GETCURSEL,0,0);if(d<0||d>=(int)displays.size()||b<0||b>=4)return false;
+    const std::wstring display=displays[d].name;settings::readable(p);
+    try{if(!previewOn){previewSnap=nv.capture(display);previewDisplay=display;previewBrowser=browsers[b];previewAudio.clear();}
+        if(!p.extended){auto g=p.gamma,gg=p.greenGamma,gb=p.blueGamma,vol=p.volume;p=previewSnap.profile;p.gamma=g;p.greenGamma=gg;p.blueGamma=gb;p.volume=vol;p.extended=true;} /* gamma only: the rest stays as it was */
+        nv.apply(display,p);previewOn=true;volume(browsers[b],p.volume/100.f,previewAudio.empty()?&previewAudio:nullptr);return true;}catch(const std::wstring&){return false;}}
+void endPreview(){if(!previewOn)return;previewOn=false;try{nv.apply(previewDisplay,previewSnap.profile,&previewSnap);}catch(const std::wstring&){}if(!previewAudio.empty()){try{volume(previewBrowser,0,nullptr,&previewAudio);}catch(const std::wstring&){}}previewAudio.clear();}
 // The dashboard footer's second line: which key switches modes (the dashboard no longer has its own shortcut row).
 std::wstring footerHint(){return hotkeyRegistered?std::wstring(i18n::text(L"모드 전환 단축키 · "))+hotkeyName():std::wstring(i18n::text(L"모드 전환 단축키를 등록하지 못했습니다 · 프로필 > 단축키에서 다른 키를 고르세요"));}
 void registerShortcut() {
@@ -450,12 +465,12 @@ bool featureOn(int id);
 // One name (and one-line description) per feature, shared by the game page rows and the tray menu.
 const wchar_t* featureTitle(int id){
     switch(id){case 33:return i18n::text(L"레이드 시작 알림");case 37:return i18n::text(L"아이템 시세");case 39:return i18n::text(L"인게임 지도");case 46:return i18n::text(L"은신처 진행도");case 45:return i18n::text(L"관련 사이트");
-    case 47:return i18n::text(L"비행기 탑승 알림");case 48:return i18n::text(L"지도 표시");case 20:return i18n::text(L"Windows 시작 시 자동 실행");case 21:return i18n::text(L"창을 닫으면 트레이로");case 34:return i18n::text(L"모드 변경 단축키");case 198:return i18n::text(L"전체창모드 자동 맞춤");case 217:return i18n::text(L"익명 사용 통계 보내기 · 임의 번호·버전·문제 종류만 (사용자 수·오류 파악용)");case 242:return i18n::text(L"진단 정보 같이 보내기");}return L"";
+    case 47:return i18n::text(L"비행기 탑승 알림");case 48:return i18n::text(L"지도 표시");case 79:return i18n::text(L"에임랩");case 20:return i18n::text(L"Windows 시작 시 자동 실행");case 21:return i18n::text(L"창을 닫으면 트레이로");case 34:return i18n::text(L"모드 변경 단축키");case 198:return i18n::text(L"전체창모드 자동 맞춤");case 217:return i18n::text(L"익명 사용 통계 보내기 · 임의 번호·버전·문제 종류만 (사용자 수·오류 파악용)");case 242:return i18n::text(L"진단 정보 같이 보내기");}return L"";
 }
 const wchar_t* featureNote(int id){
-    switch(id){case 33:return i18n::text(L"배치 카운트다운 1초 전에 소리로 알려 줍니다");case 37:return i18n::text(L"아이템을 조사하면 플리마켓 시세·필요한 퀘스트·은신처 재료를 띄웁니다");
+    switch(id){case 33:return i18n::text(L"배치 카운트다운 몇 초 전에 소리로 알려 줍니다");case 37:return i18n::text(L"아이템을 조사하면 플리마켓 시세·필요한 퀘스트·은신처 재료를 띄웁니다");
     case 39:return i18n::text(L"게임 중 지도 키로 지도를 열어 탈출구·퀘스트 위치를 봅니다");case 46:return i18n::text(L"지은 시설 레벨을 넣으면 시세 창에 남은 재료만 보여 줍니다");case 45:return i18n::text(L"기본 브라우저로 열립니다");
-    case 47:return i18n::text(L"출발 카운트다운이 끝나 비행기에 타면 소리로 알려 줍니다");case 48:return i18n::text(L"M 지도 위에 비밀의 방·고정 차·고정 보트 표시 (톱니바퀴에서 종류·켜고 끄는 키 설정)");}return nullptr;
+    case 47:return i18n::text(L"출발 카운트다운이 끝나 비행기에 타면 소리로 알려 줍니다");case 48:return i18n::text(L"M 지도 위에 비밀의 방·고정 차·고정 보트 표시 (톱니바퀴에서 종류·켜고 끄는 키 설정)");case 79:return i18n::text(L"내 감도를 분석하고, 감도를 바꾸기 전후 경기 명중률을 비교합니다");}return nullptr;
 }
 void darkControl(HWND c,const wchar_t* cls); // drop-downs drawn in the app's own style (after glyph below)
 HWND control(const wchar_t* cls,const wchar_t* text,DWORD style,int x,int y,int w,int h,int id=0){
@@ -558,8 +573,10 @@ bool featureOn(int id);
 int modeTab=0;
 // One icon from Segoe Fluent Icons (Windows 11) or Segoe MDL2 Assets (Windows 10), centred in r.
 void glyph(HDC dc,wchar_t g,RECT r,HFONT f,COLORREF c){wchar_t s[2]={g,0};textAt(dc,s,r,f,c,DT_CENTER|DT_VCENTER|DT_SINGLELINE);}
+// Vector strokes stay antialiased while the bell rotates; the halo fades to transparent at its edge.
+void noticeBell(HDC dc,RECT r,COLORREF c,double deg,bool alert){if(!painting::token){glyph(dc,0xEA8F,r,footFont,c);return;}Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);float cx=(r.left+r.right)/2.f,cy=(r.top+r.bottom)/2.f;auto state=g.Save();g.TranslateTransform(cx,cy-7.f);g.RotateTransform((float)deg);Gdiplus::Pen pen(painting::color(c),1.7f);painting::roundCaps(pen);Gdiplus::GraphicsPath bell;bell.AddBezier(-7.f,13.f,-5.8f,11.f,-5.8f,10.f,-5.8f,6.f);bell.AddBezier(-5.8f,6.f,-5.8f,1.8f,-3.4f,0.f,0.f,0.f);bell.AddBezier(0.f,0.f,3.4f,0.f,5.8f,1.8f,5.8f,6.f);bell.AddBezier(5.8f,6.f,5.8f,10.f,5.8f,11.f,7.f,13.f);bell.AddLine(7.f,13.f,-7.f,13.f);g.DrawPath(&pen,&bell);g.DrawArc(&pen,-2.2f,13.f,4.4f,3.f,0.f,180.f);g.Restore(state);if(alert){double p=(1.0+std::sin(GetTickCount64()*6.283185307179586/1250.0))/2.0;float x=r.right-8.f,y=r.top+8.f,rad=6.5f+(float)p*2.f;Gdiplus::GraphicsPath halo;halo.AddEllipse(x-rad,y-rad,rad*2,rad*2);Gdiplus::PathGradientBrush glow(&halo);glow.SetCenterColor(Gdiplus::Color((BYTE)(150+105*p),255,45,55));Gdiplus::Color edge(0,255,45,55);INT count=1;glow.SetSurroundColors(&edge,&count);g.FillPath(&glow,&halo);Gdiplus::SolidBrush core(Gdiplus::Color((BYTE)(170+85*p),255,(BYTE)(45+40*p),(BYTE)(55+35*p)));float size=3.f+(float)p;g.FillEllipse(&core,x-size,y-size,size*2,size*2);}}
 // Sidebar icons per menu id: home, sliders, gamepad, bell, download, power.
-wchar_t navGlyph(int id){return id==89?0xE9D9:id==88?0xE945:id==86?0xE7F4:id==40?0xE80F:id==32?0xE9E9:id==41?0xE7FC:id==44?0xEA8F:id==38?0xE896:id==31?0xE7E8:id==50?0xE713:0;}
+wchar_t navGlyph(int id){return id==79?0xE7B7:id==89?0xE9D9:id==88?0xE945:id==86?0xE7F4:id==40?0xE80F:id==32?0xE9E9:id==41?0xE7FC:id==44?0xEA8F:id==38?0xE896:id==31?0xE7E8:id==50?0xE713:0;}
 HWND tips=nullptr; // one dark tooltip for the footer icons and the icon buttons (iconButton)
 void footerTooltips(){
  INITCOMMONCONTROLSEX init={sizeof(init),ICC_WIN95_CLASSES};if(!InitCommonControlsEx(&init))return;
@@ -581,7 +598,7 @@ HBRUSH buttonSurface(HWND child){
  // panel colour showed as dark squares sticking out around it.
  HWND parent=GetParent(child);if(parent!=win)return GetPropW(child,L"BlueAsh.OnRow")?rowBrush:panelBrush;POINT p={};MapWindowPoints(child,win,&p,1);
  if(p.x<220)return sidebarBrush;
- int cid=GetDlgCtrlID(child);if((cid>=82&&cid<=85)||cid==87)return backgroundBrush; // window controls sit on the bare background on every page
+ int cid=GetDlgCtrlID(child);if((cid>=82&&cid<=85)||cid==87||cid==38)return backgroundBrush; // window controls sit on the bare background on every page
  int id=GetDlgCtrlID(child);if(mainPage==0&&(id==63||id==64||id==65||id==66||id==69))return rowBrush; // game rows sit on their own cards
  if(mainPage==9||(mainPage==0&&(id==271||id==272||id==273||id==274||id==34||id==63||id==64||id==65||id==66||id==69||id==75||id==76||id==67||id==68||id==70||id==10||id==11||id==61||id==62))||(id>=95&&id<=97))return panelBrush;
  return backgroundBrush;
@@ -636,7 +653,7 @@ LRESULT CALLBACK buttonProc(HWND h,UINT m,WPARAM w,LPARAM l){
  // click, hover and switch.
  if(m==WM_ERASEBKGND){return 1;}
  if(m==WM_LBUTTONDBLCLK)m=WM_LBUTTONDOWN;
- if(m==WM_SETCURSOR&&GetParent(h)==win){int id=GetDlgCtrlID(h);if(id==81||id==82||id==83||id==84||id==85||id==50||id==74||id==31||id==75||id==76){SetCursor(LoadCursorW(nullptr,IDC_HAND));return TRUE;}}
+ if(m==WM_SETCURSOR&&GetParent(h)==win){int id=GetDlgCtrlID(h);if(id==81||id==82||id==83||id==84||id==85||id==38||id==87||id==50||id==74||id==31||id==75||id==76){SetCursor(LoadCursorW(nullptr,IDC_HAND));return TRUE;}}
  if(m==WM_MOUSEMOVE&&IsWindowEnabled(h)&&hoverControl!=h){HWND previous=hoverControl;hoverControl=h;if(previous)InvalidateRect(previous,nullptr,FALSE);TRACKMOUSEEVENT track={sizeof(track),TME_LEAVE,h,0};TrackMouseEvent(&track);InvalidateRect(h,nullptr,FALSE);}
  if(m==WM_MOUSELEAVE&&hoverControl==h){hoverControl=nullptr;InvalidateRect(h,nullptr,FALSE);}
  if(m==WM_NCDESTROY&&hoverControl==h)hoverControl=nullptr;
@@ -721,6 +738,10 @@ void drawRow(HDC dc,RECT r,int id,const std::wstring& value,int pill){
     if(dashboardRow){RECT tile={r.left+10,mid-28,r.left+66,mid+28};int game=id==63?0:1;
         if(!painting::art(dc,tile,gameart::get(game),16,gameart::anchor[game])){roundBox(dc,tile,tint,tint,14);RECT pad=tile;InflateRect(&pad,-12,-12);if(!painting::gamepad(dc,pad,blue,2.f))glyph(dc,0xE7FC,tile,tileFont,blue);}t.left=r.left+82;}
     if(id==34)t.left=r.left+4;
+    // 게임 도우미 features: an icon tile per kind of tool - the same picture and colour in every game (alert, price, map, hideout, aim)
+    {int kind=-1;COLORREF col=0;switch(id){case 33:kind=0;col=RGB(255,186,82);break;case 37:kind=1;col=RGB(70,208,146);break;case 39:kind=2;col=RGB(92,170,255);break;case 46:kind=3;col=RGB(172,138,255);break;
+        case 47:kind=0;col=RGB(255,186,82);break;case 48:kind=2;col=RGB(92,170,255);break;case 79:kind=4;col=RGB(255,104,134);break;}
+     if(kind>=0&&painting::token){RECT tile={r.left+14,mid-20,r.left+54,mid+20};painting::feature(dc,tile,kind,col,rowFill);t.left=r.left+70;}}
     if(note&&r.bottom-r.top>=50){RECT a=t;a.top=dashboardRow?mid-26:a.top+9;a.bottom=a.top+24;textAt(dc,title,a,dashboardRow?sectionFont:boldFont,ink);a.top=a.bottom+2;a.bottom=dashboardRow?a.top+26:r.bottom-8;textAt(dc,note,a,smallFont,muted,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);}
     else textAt(dc,title,t,smallFont,ink);
     int cy=(r.top+r.bottom)/2;
@@ -749,7 +770,7 @@ void drawButtonTo(DRAWITEMSTRUCT* ds){
     int navPage=id==40?0:id==41?1:id==32?2:id==38?4:id==44?5:id==50?9:id==74?10:id==81?12:id==86?14:id==88?15:id==89?17:-1;bool tab=!home&&(id==90||id==91);
     // GWLP_USERDATA 1 marks a page's main action (저장): filled cobalt.
     bool nav=(home&&navPage>=0)||tab,primary=!home&&GetWindowLongPtrW(ds->hwndItem,GWLP_USERDATA)==1;
-    bool selected=tab?modeTab==id-90:gameCard?(id==45?mainPage==16:selectedGame==(id==43?1:0)&&mainPage!=16):(nav?(mainPage==navPage||(navPage==1&&((mainPage>=6&&mainPage<=8)||mainPage==11||mainPage==13||mainPage==16))):(card&&(active?(id==2)==fps:id==1)));COLORREF accent=blue;
+    bool selected=tab?modeTab==id-90:gameCard?(id==45?mainPage==16:selectedGame==(id==43?1:0)&&mainPage!=16):(nav?(mainPage==navPage||(navPage==1&&((mainPage>=6&&mainPage<=8)||mainPage==11||mainPage==13||mainPage==16||mainPage==18))):(card&&(active?(id==2)==fps:id==1)));COLORREF accent=blue;
     bool pressed=(ds->itemState&ODS_SELECTED)!=0,hover=hoverControl==ds->hwndItem;Motion mo=motionOf(ds->hwndItem,hover,pressed);double mh=mo.hover,mp=mo.press;
     if(home&&(id==75||id==76)){ // "?" help: a thin ring that lights up on hover
         bool on=hover||pressed||(helpCard&&helpFor==id);int cx=(r.left+r.right)/2,cy=(r.top+r.bottom)/2;RECT ring={cx-10,cy-10,cx+10,cy+10};COLORREF c=on?ink:muted;
@@ -758,7 +779,13 @@ void drawButtonTo(DRAWITEMSTRUCT* ds){
         if(on)painting::iconGlow(dc,r,RGB(120,160,255),3,1.6,[&](HDC d,RECT q){mark(d,q,RGB(255,255,255));});
         mark(dc,r,c);return;
     }
-    if(home&&id==87){bool on=hover||pressed||maintenanceMenu;if(on)roundBox(dc,r,well,line,12);glyph(dc,0xEA8F,r,footFont,on?ink:muted);if(maintenance.current==1||securityNotice)painting::circle(dc,{r.right-12,r.top+3,r.right-3,r.top+12},maintenance.current==1?RGB(224,66,78):RGB(94,143,255),CLR_NONE);return;}
+    if(home&&id==38){bool open=mainPage==4,on=hover||pressed;if(open)roundBox(dc,r,RGB(23,43,83),RGB(63,111,214),12);else if(on)roundBox(dc,r,well,line,12);{COLORREF k=open?RGB(164,199,255):on?ink:updateReady?RGB(196,214,255):muted;if(painting::token){Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);float cx=(r.left+r.right)/2.f,cy=(r.top+r.bottom)/2.f;
+            float dy=updateReady?(float)(1.6*std::sin(GetTickCount64()/1000.0*3.14159265*1.25)):0.f;Gdiplus::Pen pen(painting::color(k),1.7f);painting::roundCaps(pen);pen.SetLineJoin(Gdiplus::LineJoinRound);
+            g.DrawLine(&pen,cx,cy-7.5f+dy,cx,cy+2.5f+dy);Gdiplus::PointF head[]={{cx-4.2f,cy-1.6f+dy},{cx,cy+2.8f+dy},{cx+4.2f,cy-1.6f+dy}};g.DrawLines(&pen,head,3);
+            Gdiplus::GraphicsPath tray;tray.AddLine(cx-8.f,cy+2.f,cx-8.f,cy+5.5f);tray.AddArc(cx-8.f,cy+3.5f,4.f,4.f,180.f,-90.f);tray.AddLine(cx-6.f,cy+7.5f,cx+6.f,cy+7.5f);tray.AddArc(cx+4.f,cy+3.5f,4.f,4.f,90.f,-90.f);tray.AddLine(cx+8.f,cy+5.5f,cx+8.f,cy+2.f);g.DrawPath(&pen,&tray);}
+         else glyph(dc,0xE896,r,iconFont,k);}
+        if(updateReady){RECT disc={r.right-15,r.top+3,r.right-1,r.top+17};if(!painting::circle(dc,disc,blue,CLR_NONE)||!painting::exclaim(dc,disc,RGB(255,255,255))){textAt(dc,L"!",disc,smallBold,RGB(255,255,255),DT_CENTER|DT_VCENTER|DT_SINGLELINE);}}return;}
+    if(home&&id==87){bool on=hover||pressed||maintenanceMenu,alert=maintenance.current==1||securityNotice;if(maintenanceMenu)roundBox(dc,r,RGB(23,43,83),RGB(63,111,214),12);else if(hover||pressed)roundBox(dc,r,well,line,12);COLORREF color=alert?RGB(164,199,255):on?ink:muted;ULONGLONG elapsed=noticeBellAt?GetTickCount64()-noticeBellAt:9999;double deg=elapsed<1050?28.0*std::sin(elapsed*3.14159265358979/150.0)*std::pow(1.0-elapsed/1050.0,1.35):0;noticeBell(dc,r,color,deg,alert);return;}
     if(home&&(id>=82&&id<=85)){
         // Window controls drawn by BlueAsh (no Windows title bar): language pill "KO ⌄", minimize, close.
         bool on=hover||pressed||(id==82&&languageMenu);COLORREF k=on?RGB(242,246,255):RGB(170,178,196);
@@ -781,7 +808,7 @@ void drawButtonTo(DRAWITEMSTRUCT* ds){
         int cx=(r.left+r.right)/2,cy=(r.top+r.bottom)/2;RECT symbol={cx-12,cy-12,cx+12,cy+12};
         // The bug and the power sign drew larger than the gear and the cup: drawn a little smaller to match them.
         RECT small={symbol.left+1,symbol.top+1,symbol.right-1,symbol.bottom-1};
-        auto icon=[&](HDC d,RECT q,COLORREF k){if(id==74)painting::bug(d,small,k);else if(id==81)painting::coffee(d,symbol,k);else glyph(d,navGlyph(id),q,id==31?footSmall:footFont,k);};
+        auto icon=[&](HDC d,RECT q,COLORREF k){if(id==74)painting::bug(d,small,k);else if(id==81)painting::coffee(d,symbol,k,GetTickCount64()/1000.0);else glyph(d,navGlyph(id),q,id==31?footSmall:footFont,k);};
         // The icon itself gives off light: its own shape, blurred, in its glow colour under the crisp icon.
         // The open page (설정, 문제·건의, 후원) keeps the same glow as hover, no tile or focus box around it.
         double lv=selected?1.0:std::max(mh,mp);(void)on;
@@ -866,7 +893,7 @@ void drawButtonTo(DRAWITEMSTRUCT* ds){
     }else if(home&&id==65){glyph(dc,0xEA8F,{r.left+10,r.top,r.left+58,r.bottom},tileFont,blue);textAt(dc,i18n::text(L"자리 비움 알림"),{r.left+78,r.top,r.right-38,r.bottom},boldFont,ink);glyph(dc,0xE76C,{r.right-32,r.top,r.right-8,r.bottom},iconFont,muted);
     }else if(id==20||id==21||id==47||id==48||id==33||id==37||id==39||id==198||id==217||id==242){
         drawRow(dc,r,id,L"",(id==20?startupOn():id==21?closeToTray:id==47?pubgJoinOn:id==48?pubgMapOn:featureOn(id))?1:0);
-    }else if(home&&(id==34||id==46)){
+    }else if(home&&(id==34||id==46||id==79)){
         wchar_t value[128]={};GetWindowTextW(ds->hwndItem,value,128);drawRow(dc,r,id,value,-1);
     }else{
         // Sidebar items read left-aligned like a menu, after their icon; every other button centres its label.
@@ -923,6 +950,9 @@ void reportProblem(const wchar_t* kind); // update_ui.h: anonymous problem count
 #include "dlss_ui.h"
 #include "mod_page.h"
 #include "stability_ui.h"
+#include "recoil_capture.h"
+#include "recoil_live.h"
+#include "aim_ui.h"
 bool tarkovMapOn(){return regString(configPath,L"MapEnabled")!=L"0";}
 bool featureOn(int id){return id==33?raidWatch.enabled:id==37?priceWatch.autoMode:id==39?tarkovMapOn():id==198?tarkovScreen.enabled():id==217?usageStats():id==242?feedbackDiag:false;}
 // The dashboard's 현재 상태 tiles and status line: redrawn when what they show changes (checked every second and after
@@ -944,12 +974,12 @@ void closePage();
 // mainPage: 0 컨트롤 센터, 1 게임별 기능, 2 모드 설정 (탭: 컬러 & 사운드 / 단축키), 4 업데이트, 5 디스코드 알림,
 // 6~8 타르코프 도구 설정 (레이드 시작 알림 / 아이템 시세 / 인게임 지도, opened by the gears; 닫기 returns to 게임별 기능).
 // Every page shares the header box drawn by the main window: a title and one line saying what the page is for.
-const wchar_t* pageTitle(){const wchar_t* t[]={i18n::text(L"게임에 집중하세요."),i18n::text(L"게임 도우미"),i18n::text(L"프로필"),L"",i18n::text(L"업데이트"),i18n::text(L"자리 비움 알림"),i18n::text(L"레이드 시작 알림"),i18n::text(L"아이템 시세"),i18n::text(L"인게임 지도"),i18n::text(L"설정"),i18n::text(L"문제·건의 보내기"),i18n::text(L"비행기 탑승 알림"),i18n::text(L"커피 한 잔 후원"),i18n::text(L"지도 표시"),i18n::text(L"그래픽 설정"),i18n::text(L"윈도우 최적화"),i18n::text(L"모드 번역"),i18n::text(L"PC 안정성")};return t[mainPage];}
+const wchar_t* pageTitle(){const wchar_t* t[]={i18n::text(L"게임에 집중하세요."),i18n::text(L"게임 도우미"),i18n::text(L"프로필"),L"",i18n::text(L"업데이트"),i18n::text(L"자리 비움 알림"),i18n::text(L"레이드 시작 알림"),i18n::text(L"아이템 시세"),i18n::text(L"인게임 지도"),i18n::text(L"설정"),i18n::text(L"문제·건의 보내기"),i18n::text(L"비행기 탑승 알림"),i18n::text(L"커피 한 잔 후원"),i18n::text(L"지도 표시"),i18n::text(L"그래픽 설정"),i18n::text(L"윈도우 최적화"),i18n::text(L"모드 번역"),i18n::text(L"PC 안정성"),i18n::text(L"에임랩")};return t[mainPage];}
 const wchar_t* pageNote(){
     switch(mainPage){case 0:return i18n::text(L"화면과 소리, 게임 알림을 한곳에서 관리하세요.");case 1:return i18n::text(L"게임을 고르고, 쓰고 싶은 도구를 켜세요.");
     case 2:return modeTab?i18n::text(L"일반 ↔ 게임 모드를 바꾸는 단축키를 정합니다."):i18n::text(L"모드마다 화면 색감과 브라우저 볼륨을 정합니다.");case 4:return i18n::text(L"새 버전으로 바꿔도 설정은 그대로 남습니다.");
-    case 5:return i18n::text(L"게임이 시작될 때 자리에 없으면 휴대폰으로 알려 줍니다.");case 6:return i18n::text(L"타르코프 · 배치 카운트다운 1초 전에 소리로 알려 줍니다.");
-    case 7:return i18n::text(L"타르코프 · 아이템을 조사하면 시세·필요한 퀘스트·은신처 재료를 띄웁니다.");case 8:return i18n::text(L"타르코프 · 지도 키로 지도를 열어 탈출구와 퀘스트 위치를 봅니다.");case 9:return i18n::text(L"언어와 프로그램 실행 방식을 설정합니다.");case 15:return i18n::text(L"게임하기 전에 PC 상태를 점검하고, 병목과 업그레이드할 곳을 확인합니다.");case 10:return i18n::text(L"버그나 바라는 점을 개발자에게 바로 보냅니다.");case 11:return i18n::text(L"배그 · 탑승 카운트다운이 끝나면 소리로 알려 줍니다.");case 12:return i18n::text(L"BlueAsh가 도움이 됐다면 커피 한 잔으로 응원해 주세요.");case 13:return i18n::text(L"배그 · M 지도에 띄울 표시와 표시를 켜고 끄는 키를 정합니다.");case 14:return i18n::text(L"화질 향상(DLSS 5), 프레임 설정, 성능 분석을 게임별로 합니다.");case 16:return i18n::text(L"설치한 게임의 모드에서 영어 글을 찾아 지금 언어로 번역합니다.");case 17:return i18n::text(L"갑자기 꺼짐·블루스크린·그래픽 오류·게임 충돌 기록을 찾아 원인과 해결 방법을 알려 줍니다.");}return L"";
+    case 5:return i18n::text(L"게임이 시작될 때 자리에 없으면 휴대폰으로 알려 줍니다.");case 6:return i18n::text(L"타르코프 · 배치 카운트다운 몇 초 전(1~10초)에 소리로 알려 줍니다.");
+    case 7:return i18n::text(L"타르코프 · 아이템을 조사하면 시세·필요한 퀘스트·은신처 재료를 띄웁니다.");case 8:return i18n::text(L"타르코프 · 지도 키로 지도를 열어 탈출구와 퀘스트 위치를 봅니다.");case 9:return i18n::text(L"언어와 프로그램 실행 방식을 설정합니다.");case 15:return i18n::text(L"게임하기 전에 PC 상태를 점검하고, 병목과 업그레이드할 곳을 확인합니다.");case 10:return i18n::text(L"버그나 바라는 점을 개발자에게 바로 보냅니다.");case 11:return i18n::text(L"배그 · 탑승 카운트다운이 끝나면 소리로 알려 줍니다.");case 12:return i18n::text(L"BlueAsh가 도움이 됐다면 커피 한 잔으로 응원해 주세요.");case 13:return i18n::text(L"배그 · M 지도에 띄울 표시와 표시를 켜고 끄는 키를 정합니다.");case 14:return i18n::text(L"화질 향상(DLSS 5), 프레임 설정, 성능 분석을 게임별로 합니다.");case 16:return i18n::text(L"설치한 게임의 모드에서 영어 글을 찾아 지금 언어로 번역합니다.");case 17:return i18n::text(L"갑자기 꺼짐·블루스크린·그래픽 오류·게임 충돌 기록을 찾아 원인과 해결 방법을 알려 줍니다.");case 18:return i18n::text(L"배그 · 반동을 분석해 감도를 추천하고, 반응 속도와 프로 설정을 비교합니다.");}return L"";
 }
 HWND pageWindow=nullptr;bool embedSeen=false;extern HWND embedHost;void placeEmbedHost();
 RECT pageBox(){return {260,118,1112,740};}
@@ -978,8 +1008,8 @@ void selectMainPage(int page,int game=-1){
     for(HWND c:{modeLabel,gammaLabel,audioLabel,hotkeyLabel})if(c)ShowWindow(c,SW_HIDE);
     for(int id:{42,43,45})ShowWindow(GetDlgItem(win,id),page==1?SW_SHOW:SW_HIDE);
     for(int id:{33,37,39,46,95,96,97,133,137,139})ShowWindow(GetDlgItem(win,id),page==1&&selectedGame==0?SW_SHOW:SW_HIDE);
-    for(int id:{47,48,147,148})ShowWindow(GetDlgItem(win,id),page==1&&selectedGame==1?SW_SHOW:SW_HIDE);
-    ShowWindow(GetDlgItem(win,49),(page>=6&&page<=8)||page==11||page==13?SW_SHOW:SW_HIDE);
+    for(int id:{47,48,147,148,79})ShowWindow(GetDlgItem(win,id),page==1&&selectedGame==1?SW_SHOW:SW_HIDE);
+    ShowWindow(GetDlgItem(win,49),(page>=6&&page<=8)||page==11||page==13||page==18?SW_SHOW:SW_HIDE);
     // The embedded pages (5, 8) close inside the helper (it only hides its form): watch for that every 100 ms so 닫기 feels instant.
     if(page==5||page==8){SetTimer(win,78,100,nullptr);SetTimer(win,80,30,nullptr);}else{KillTimer(win,78);KillTimer(win,80);}
     placeContent();
@@ -1096,8 +1126,8 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         // Alerts are shared by every game, so they sit in the sidebar rather than under one game.
         control(L"BUTTON",i18n::text(L"알림"),BS_OWNERDRAW|WS_TABSTOP,12,224,196,48,44);
         control(L"BUTTON",i18n::text(L"프로필"),BS_OWNERDRAW|WS_TABSTOP,12,280,196,48,32);
-        control(L"BUTTON",i18n::text(L"업데이트"),BS_OWNERDRAW|WS_TABSTOP,12,336,196,48,38);
-        control(L"BUTTON",i18n::text(L"그래픽 설정"),BS_OWNERDRAW|WS_TABSTOP,12,392,196,48,86);control(L"BUTTON",i18n::text(L"윈도우 최적화"),BS_OWNERDRAW|WS_TABSTOP,12,448,196,48,88);control(L"BUTTON",i18n::text(L"PC 안정성"),BS_OWNERDRAW|WS_TABSTOP,12,504,196,48,89);
+        // 업데이트 is an icon at the top right beside the alerts (the sidebar keeps the features only)
+        control(L"BUTTON",i18n::text(L"그래픽 설정"),BS_OWNERDRAW|WS_TABSTOP,12,336,196,48,86);control(L"BUTTON",i18n::text(L"윈도우 최적화"),BS_OWNERDRAW|WS_TABSTOP,12,392,196,48,88);control(L"BUTTON",i18n::text(L"PC 안정성"),BS_OWNERDRAW|WS_TABSTOP,12,448,196,48,89);
         control(L"BUTTON",i18n::text(L"타르코프"),BS_OWNERDRAW|WS_TABSTOP,246,128,286,124,42);
         control(L"BUTTON",i18n::text(L"배그"),BS_OWNERDRAW|WS_TABSTOP,544,128,286,124,43);
         control(L"BUTTON",i18n::text(L"모드 번역"),BS_OWNERDRAW|WS_TABSTOP,842,128,286,124,45);
@@ -1113,12 +1143,13 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         control(L"BUTTON",(std::wstring(featureTitle(47))+i18n::text(L" 설정")).c_str(),BS_OWNERDRAW|WS_TABSTOP,1070,282,50,58,147);
         control(L"BUTTON",featureTitle(48),BS_OWNERDRAW|WS_TABSTOP,252,348,806,58,48);
         control(L"BUTTON",(std::wstring(featureTitle(48))+i18n::text(L" 설정")).c_str(),BS_OWNERDRAW|WS_TABSTOP,1070,348,50,58,148);
+        control(L"BUTTON",i18n::text(L"열기"),BS_OWNERDRAW|WS_TABSTOP,252,414,868,58,79); // 에임랩 (page 18)
         // Tool settings pages (6~8) lead back to 게임별 기능 from the header.
         control(L"BUTTON",i18n::text(L"‹  게임 도우미"),BS_OWNERDRAW|WS_TABSTOP,906,56,214,40,49);
         // Top right, in place of the Windows title bar: language, minimize, close.
         {std::wstring code=i18n::languageCode();for(auto& c:code)c=towupper(c);HDC sdc=dpi::getDC(h);auto of=SelectObject(sdc,boldFont);SIZE ts={};GetTextExtentPoint32W(sdc,code.c_str(),(int)code.size(),&ts);SelectObject(sdc,of);ReleaseDC(h,sdc);
-            int w=std::max(88,(int)ts.cx+56);control(L"BUTTON",i18n::text(L"언어"),BS_OWNERDRAW|WS_TABSTOP,1054-w,12,w,34,82);control(L"BUTTON",i18n::text(L"알림"),BS_OWNERDRAW|WS_TABSTOP,1008-w,12,40,34,87);} // as wide as its code (ZH-CN, PT-BR), right edge fixed
-        control(L"BUTTON",L"",BS_OWNERDRAW,1064,12,40,34,83);control(L"BUTTON",L"",BS_OWNERDRAW,1108,12,40,34,84);
+            int w=std::max(88,(int)ts.cx+56);control(L"BUTTON",i18n::text(L"언어"),BS_OWNERDRAW|WS_TABSTOP,1054-w,12,w,34,82);control(L"BUTTON",i18n::text(L"알림"),BS_OWNERDRAW|WS_TABSTOP,1008-w,12,40,34,87);control(L"BUTTON",i18n::text(L"업데이트"),BS_OWNERDRAW|WS_TABSTOP,962-w,12,40,34,38);} // as wide as its code (ZH-CN, PT-BR), right edge fixed
+        control(L"BUTTON",L"",BS_OWNERDRAW,1064,12,40,34,83);control(L"BUTTON",L"",BS_OWNERDRAW,1108,12,40,34,84);SetTimer(h,0xB21,33,nullptr); /* the cup's steam and the waiting update arrow */
         // Sidebar footer, always the same four: 커피 한 잔 후원 · 설정 · 버그 제보 · 완전 종료. (The coffee icon used to appear a few
         // seconds after start and shift the others, which left half-drawn icons behind.)
         control(L"BUTTON",i18n::text(L"커피 한 잔 후원"),BS_OWNERDRAW|WS_TABSTOP,8,724,48,48,81);
@@ -1203,9 +1234,9 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
             roundBox(mem,{252,578,1120,680},panel,line,18);
             textAt(mem,featureTitle(45),{278,582,1094,612},boldFont,ink);
         }else if(mainPage==1){
-            roundBox(mem,{252,426,1120,522},panel,line,18);glyph(mem,0xE946,{276,444,304,472},iconFont,RGB(120,160,255));
-            textAt(mem,i18n::text(L"게임 창은 다른 창 뒤에 두세요."),{314,442,1094,474},boldFont,ink);
-            textAt(mem,i18n::text(L"탑승 알림은 카운트다운을 읽습니다. 배그를 최소화하면 화면을 읽을 수 없습니다."),{314,478,1094,514},font,muted,DT_LEFT|DT_WORDBREAK);
+            roundBox(mem,{252,492,1120,588},panel,line,18);glyph(mem,0xE946,{276,510,304,538},iconFont,RGB(120,160,255));
+            textAt(mem,i18n::text(L"게임 창은 다른 창 뒤에 두세요."),{314,508,1094,540},boldFont,ink);
+            textAt(mem,i18n::text(L"탑승 알림은 카운트다운을 읽습니다. 배그를 최소화하면 화면을 읽을 수 없습니다."),{314,544,1094,580},font,muted,DT_LEFT|DT_WORDBREAK);
         }else if(mainPage==9){
             roundBox(mem,{252,148,1120,318},panel,line,18);
             textAt(mem,i18n::text(L"언어"),{278,168,1094,202},boldFont,ink);
@@ -1248,9 +1279,9 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         if(HIWORD(wp)==BN_CLICKED){
             if(id==1||id==2){if(!changeMode(id==2))showWindow();}
             else if(id==50){selectMainPage(9);showWindow();}
-            else if(id==72)writeDiagnostics();else if(id==73)restartAsAdmin();else if(id==74)openPage(feedbackProc,L"BlueAshFeedback",10);else if(id==81)openPage(donateProc,L"BlueAshDonate",12);else if(id==86)openPage(dlssui::proc,L"BlueAshDlss",14);else if(id==88)openPage(dlssui::proc,L"BlueAshOpt",15);else if(id==89)openPage(stabui::proc,L"BlueAshStability",17);
+            else if(id==72)writeDiagnostics();else if(id==73)restartAsAdmin();else if(id==74)openPage(feedbackProc,L"BlueAshFeedback",10);else if(id==81)openPage(donateProc,L"BlueAshDonate",12);else if(id==86)openPage(dlssui::proc,L"BlueAshDlss",14);else if(id==88)openPage(dlssui::proc,L"BlueAshOpt",15);else if(id==89)openPage(stabui::proc,L"BlueAshStability",17);else if(id==79){selectedGame=1;openPage(aimui::proc,L"BlueAshAimLab",18);}
             else if(id==83)ShowWindow(h,SW_MINIMIZE);else if(id==85)ShowWindow(h,IsZoomed(h)?SW_RESTORE:SW_MAXIMIZE);else if(id==84)PostMessageW(h,WM_CLOSE,0,0);
-            else if(id==82)showLanguageMenu();else if(id==87)showMaintenanceMenu();
+            else if(id==82)showLanguageMenu();else if(id==87){noticeBellAt=GetTickCount64();SetTimer(h,0xB1E,16,nullptr);InvalidateRect(GetDlgItem(h,87),nullptr,FALSE);showMaintenanceMenu();}
             else if(id==63){toggleFeature(33);InvalidateRect(GetDlgItem(win,63),nullptr,TRUE);}
             else if(id==64){pubgJoin.toggle();InvalidateRect(GetDlgItem(win,64),nullptr,TRUE);}
             else if(id==65)openEmbeddedPage(5);
@@ -1277,7 +1308,7 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         languageRestart=true;quit();if(IsWindow(h)){languageRestart=false;bool restored=saveString(configPath,L"Language",previous);if(restored)resetChoice();problem(i18n::text(restored?L"프로그램을 종료하지 못해 언어 변경을 취소했습니다.":L"이전 언어 설정을 복원하지 못했습니다. 다음 실행에서는 새로 선택한 언어가 적용됩니다."));}return 0;
         return 0;}
     case WM_APP+177:if(editor)DestroyWindow(editor);quit();return 0;
-    case WM_HOTKEY:if(wp==2){if(GetTickCount64()>=priceWatch.ignoreUntil)priceWatch.toggle();return 0;}if(wp==1&&!editor){if(!changeMode(!fps))showWindow();}return 0;
+    case WM_HOTKEY:if(wp==4){recoilcap::toggle();return 0;}if(wp==2){if(GetTickCount64()>=priceWatch.ignoreUntil)priceWatch.toggle();return 0;}if(wp==1&&!editor){if(recoilcap::takes()||aimui::takeHotkey())return 0;if(!changeMode(!fps))showWindow();}return 0;
     case trayMessage:
         if(lp==WM_LBUTTONDBLCLK)showWindow();
         else if(lp==NIN_BALLOONUSERCLICK&&balloonAdminAt&&GetTickCount64()-balloonAdminAt<60000){balloonAdminAt=0;elevateWithPrompt(true);}
@@ -1286,18 +1317,18 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         else if(lp==NIN_BALLOONUSERCLICK&&balloonStabilityAt&&GetTickCount64()-balloonStabilityAt<120000){balloonStabilityAt=0;ShowWindow(win,SW_SHOW);SetForegroundWindow(win);openPage(stabui::proc,L"BlueAshStability",17);}
         else if(lp==WM_RBUTTONUP||lp==WM_CONTEXTMENU)trayMenu();
         return 0;
-    case WM_PARENTNOTIFY:if(LOWORD(wp)==WM_DESTROY&&pageWindow&&(HWND)lp==pageWindow){pageWindow=nullptr;selectMainPage(mainPage==10?9:mainPage==12||mainPage==14||mainPage==15||mainPage==17?0:mainPage>=6?1:0);}return 0;
+    case WM_PARENTNOTIFY:if(LOWORD(wp)==WM_DESTROY&&pageWindow&&(HWND)lp==pageWindow){pageWindow=nullptr;selectMainPage(mainPage==10?9:mainPage==12||mainPage==14||mainPage==15||mainPage==17||mainPage==18?0:mainPage>=6?1:0);}return 0;
     // Stability Guard: a power loss / blue screen found at start (230) or a crash Windows just recorded (232) -> the warning window.
     case WM_APP+230:{std::unique_ptr<stability::Incident> c((stability::Incident*)lp);stabui::showAlert(*c);return 0;}
     case WM_APP+233:gameart::arrived((int)wp);return 0; // a game cover finished downloading
     case WM_APP+232:stabui::recorded((stability::Event*)lp);return 0;
-    case WM_APP+182:raidWatch.deployed((unsigned)wp);return 0;
+    case WM_APP+182:raidWatch.deployed((unsigned)wp,(int)lp);return 0;
     case WM_APP+183:donateWatch.remember(wp);return 0;
-    case WM_APP+184:maintenanceDone((int)wp,(int)lp);return 0;
+    case WM_APP+184:maintenanceDone((int)(wp&255)-1,(int)lp,(int)(wp>>8)-1);return 0;
     case WM_APP+185:{std::unique_ptr<std::vector<gameswitch::Row>> r((std::vector<gameswitch::Row>*)lp);gameswitch::rows=*r;gameswitch::scanned=true;gameswitch::scanning=false;
         if(IsWindow(gameswitch::notify)&&GetDlgItem(gameswitch::notify,60)){addGameRows(gameswitch::notify);}return 0;}
     case WM_APP+186:{std::unique_ptr<std::wstring> id((std::wstring*)lp);gameswitch::changed(*id);return 0;}
-    case WM_TIMER:if(wp==77){pubgMap.fast();return 0;}if(wp==76){if(raidWatch.context.phase=="loading")raidWatch.poll();else KillTimer(h,76);return 0;}if(wp==0xB1C){switchTick();return 0;}if(wp==0xB1D){motionTick();return 0;}if(wp==80){if(embedSeen||(mainPage!=5&&mainPage!=8)){KillTimer(h,80);}else{RECT sk=skeletonArea();InvalidateRect(h,&sk,FALSE);}return 0;}if(wp==79){updateWatch.tick();return 0;}if(wp==78){if(mainPage==5||mainPage==8){HWND d=embeddedWindow(mainPage);if(d&&IsWindowVisible(d)){embedSeen=true;if(GetParent(d)==embedHost){RECT hc;(GetClientRect)(embedHost,&hc);(SetWindowPos)(d,nullptr,0,0,hc.right,hc.bottom,SWP_NOZORDER|SWP_NOACTIVATE);}else{moveChild(d,embedBox(mainPage),win);}}else if(embedSeen)selectMainPage(mainPage==8?1:0);}return 0;}pollCompanion();updateWatch.poll();maintenancePoll();tarkovScreen.poll();tarkovKeys.poll();priceWatch.poll();pollAdmin();pubgJoin.poll();boardWatch.poll();phoneGame.poll();donateWatch.poll();pubgMap.poll();raidWatch.poll();if(raidWatch.context.phase=="loading")SetTimer(h,76,150,nullptr); /* raid loading: read the log every 0.15 s so GameStarted (and the exit-list read it starts) is not up to 1 s late */serverBadge.poll(raidWatch.context);refreshStatus();{static unsigned tick=0;if(++tick%3==0)audioUpdate();}if(!trayPresent)trayUpdate(true);return 0;
+    case WM_TIMER:if(wp==0xB1F){if(IsWindowVisible(h))InvalidateRect(GetDlgItem(h,87),nullptr,FALSE);return 0;}if(wp==0xB21){if(IsWindowVisible(h)&&!IsIconic(h)){InvalidateRect(GetDlgItem(h,81),nullptr,FALSE);if(updateReady)InvalidateRect(GetDlgItem(h,38),nullptr,FALSE);}return 0;}if(wp==0xB1E){if(GetTickCount64()-noticeBellAt>=1050){KillTimer(h,0xB1E);noticeBellAt=0;}InvalidateRect(GetDlgItem(h,87),nullptr,FALSE);return 0;}if(wp==77){pubgMap.fast();return 0;}if(wp==76){if(raidWatch.context.phase=="loading")raidWatch.poll();else KillTimer(h,76);return 0;}if(wp==0xB1C){switchTick();return 0;}if(wp==0xB1D){motionTick();return 0;}if(wp==80){if(embedSeen||(mainPage!=5&&mainPage!=8)){KillTimer(h,80);}else{RECT sk=skeletonArea();InvalidateRect(h,&sk,FALSE);}return 0;}if(wp==79){updateWatch.tick();return 0;}if(wp==78){if(mainPage==5||mainPage==8){HWND d=embeddedWindow(mainPage);if(d&&IsWindowVisible(d)){embedSeen=true;if(GetParent(d)==embedHost){RECT hc;(GetClientRect)(embedHost,&hc);(SetWindowPos)(d,nullptr,0,0,hc.right,hc.bottom,SWP_NOZORDER|SWP_NOACTIVATE);}else{moveChild(d,embedBox(mainPage),win);}}else if(embedSeen)selectMainPage(mainPage==8?1:0);}return 0;}pollCompanion();recoilcap::poll(h);livecap::poll();updateWatch.poll();maintenancePoll();tarkovScreen.poll();tarkovKeys.poll();priceWatch.poll();pollAdmin();pubgJoin.poll();boardWatch.poll();phoneGame.poll();donateWatch.poll();pubgMap.poll();raidWatch.poll();if(raidWatch.context.phase=="loading")SetTimer(h,76,150,nullptr); /* raid loading: read the log every 0.15 s so GameStarted (and the exit-list read it starts) is not up to 1 s late */serverBadge.poll(raidWatch.context);refreshStatus();{static unsigned tick=0;if(++tick%3==0){seedNormalVolume();audioUpdate();}}if(!trayPresent)trayUpdate(true);return 0;
     case WM_CLOSE:if(closeToTray)hideToTray();else quit();return 0;
     // Minimize goes to the taskbar like any window; only X (WM_CLOSE) hides to the tray.
     case WM_SIZE:if(wp!=SIZE_MINIMIZED){placeContent();if(HWND m=GetDlgItem(h,85))InvalidateRect(m,nullptr,FALSE);}return 0;
@@ -1313,7 +1344,7 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         if(fps&&gammaTouched)changeMode(false);
         return TRUE;
     case WM_DESTROY:{stabui::unwatch();stabcollect::recorder.stop();dlssui::optQuit(); /* 최적화 모드: every changed Windows setting goes back when BlueAsh closes */
-        raidWatch.capture.stop();stopCompanion();priceWatch.stop();UnregisterHotKey(h,2);boardWatch.capture.stop();pubgMap.close();pubgMap.overlay.destroy();KillTimer(h,77);KillTimer(h,78);KillTimer(h,79);PlaySoundW(nullptr,nullptr,0);KillTimer(h,1);UnregisterHotKey(h,1);NOTIFYICONDATAW data={};data.cbSize=sizeof(data);data.hWnd=h;data.uID=1;Shell_NotifyIconW(NIM_DELETE,&data);
+        if(recoilcap::state==recoilcap::Recording){recoilcap::finish();}livecap::stop();raidWatch.capture.stop();stopCompanion();priceWatch.stop();UnregisterHotKey(h,2);boardWatch.capture.stop();pubgMap.close();pubgMap.overlay.destroy();KillTimer(h,77);KillTimer(h,78);KillTimer(h,79);PlaySoundW(nullptr,nullptr,0);KillTimer(h,1);UnregisterHotKey(h,1);NOTIFYICONDATAW data={};data.cbSize=sizeof(data);data.hWnd=h;data.uID=1;Shell_NotifyIconW(NIM_DELETE,&data);
         if(updaterProcess){CloseHandle(updaterProcess);updaterProcess=nullptr;}PostQuitMessage(0);return 0;
     }
     }return DefWindowProcW(h,msg,wp,lp);
@@ -1346,7 +1377,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,LPWSTR command,int show){dpi::i
         HWND existing=FindWindowW(L"ModeSwitch",nullptr);
         if(existing&&!startHidden){
             wchar_t title[128]={};GetWindowTextW(existing,title,128);
-            if(std::wstring(title)!=L"BlueAsh 2.30.0")MessageBoxW(nullptr,i18n::text(L"이전 버전이 트레이에서 실행 중입니다. 이전 프로그램을 완전 종료한 뒤 BlueAsh.exe를 다시 실행하세요."),i18n::text(L"BlueAsh · 이전 버전 실행 중"),MB_OK|MB_ICONINFORMATION);
+            if(std::wstring(title)!=L"BlueAsh 2.31.0")MessageBoxW(nullptr,i18n::text(L"이전 버전이 트레이에서 실행 중입니다. 이전 프로그램을 완전 종료한 뒤 BlueAsh.exe를 다시 실행하세요."),i18n::text(L"BlueAsh · 이전 버전 실행 중"),MB_OK|MB_ICONINFORMATION);
             else{ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);}
         }
         CloseHandle(mutex);return 0;
@@ -1361,7 +1392,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,LPWSTR command,int show){dpi::i
     RegisterClassW(&wc);
     DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_THICKFRAME|WS_CLIPCHILDREN;
     RECT bounds={0,0,1160,780}; // the client is the whole window (WM_NCCALCSIZE)
-    HWND h=CreateWindowW(wc.lpszClassName,L"BlueAsh 2.30.0",style,CW_USEDEFAULT,CW_USEDEFAULT,bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,instance,nullptr);
+    HWND h=CreateWindowW(wc.lpszClassName,L"BlueAsh 2.31.0",style,CW_USEDEFAULT,CW_USEDEFAULT,bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,instance,nullptr);
     if(!h){painting::shutdown();CoUninitialize();CloseHandle(mutex);return 1;}
     ChangeWindowMessageFilterEx(h,WM_APP+177,MSGFLT_ALLOW,nullptr); // the updater runs as the normal user even when BlueAsh is elevated: let its "please close" through
     {MARGINS shadow={0,0,0,1};DwmExtendFrameIntoClientArea(h,&shadow);SetWindowPos(h,nullptr,0,0,0,0,SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);} // keep the shadow without a frame

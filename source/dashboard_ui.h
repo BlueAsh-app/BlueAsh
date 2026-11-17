@@ -2,7 +2,7 @@
 // Dashboard controls edit the same profiles as the profile page; a drag commits once on release.
 namespace dashboard {
 inline int profileIndex(){return active?appliedProfileIndex:0;}
-inline int low(int id){return id==62?50:0;}inline int high(int id){return id==62?300:100;}
+inline int low(int id){return id==62?(int)settings::gammaLow:0;}inline int high(int id){return id==62?(int)settings::gammaHigh:100;}
 inline int value(int id){const auto& p=active&&!fps&&normalRestored?appliedProfile:profiles[profileIndex()];return id==62?(int)p.gamma:(int)p.volume;}
 // The track runs from x 40 (after the icon) to 64 px before the right edge, where the value is written.
 constexpr int trackLeft=40,valueWidth=64;

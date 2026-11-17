@@ -20,6 +20,7 @@ int main(){
  t={};assert(!t.feed(1,900,true));assert(!t.feed(1.2,900,true)); // Frozen timer.
  t={};assert(!t.feed(1,1300,true));assert(!t.feed(1.2,900,false)); // Deployment screen disappeared.
  assert(!t.feed(1.4,700,true));assert(t.feed(1.6,500,true));
+ t={};t.lead=5000;assert(!t.feed(1,7200,true));assert(!t.feed(1.2,7000,true));assert(!t.feed(2.2,6000,true));assert(t.feed(3.2,5000,true)&&t.left==5000); // a 5 s lead fires at the first descending reading at or under 5 s
  t={};assert(!t.feed(1,7200,true));assert(!t.feed(1.2,900,true)); // Implausible OCR jump.
  assert(t.feed(1.4,700,true));
  t={};assert(!t.feed(1,1300,true));assert(!t.feed(1.2,-1,true));assert(t.feed(1.4,900,true)); // One missed OCR frame.

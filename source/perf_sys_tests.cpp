@@ -39,7 +39,7 @@ int main(){
      assert(optmode::restore(j)); // nothing recorded
      // An older version recorded the DirectX entry: apply puts it back and drops it from the journal.
      j.v["windowed"]=hadDx?L"="+dx:L"-";assert(j.save());
-     assert(optmode::apply(j)==0&&j.exists()&&!j.v.count("windowed"));auto n=optmode::now();assert(n.gameMode&&n.dvr&&n.visual&&n.mouse);
+     assert(optmode::apply(j)==0&&j.exists()&&!j.v.count("windowed"));auto n=optmode::now();assert(n.gameMode&&n.dvr&&n.visual&&n.bar);
      assert(optmode::apply(j)==0);optmode::Journal k;k.path=j.path;assert(k.load()&&k.v["gamemode"]==optmode::dwordText(gm)&&k.v["dvr"]==optmode::dwordText(dv));
      assert(optmode::restore(k)&&!k.exists());
      assert(optmode::readDword(optmode::gameBar,L"AutoGameModeEnabled")==gm&&optmode::readDword(optmode::gameConfig,L"GameDVR_Enabled")==dv&&optmode::readDword(optmode::gameDvr,L"AppCaptureEnabled")==cp);
