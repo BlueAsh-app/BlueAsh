@@ -731,6 +731,10 @@ void darkControl(HWND c,const wchar_t* cls){if(!c)return;
 namespace gameart{Gdiplus::Bitmap* get(int game);extern float anchor[2];void release();} // game_art.h
 HWND helpCard=nullptr;int helpFor=0; // help_ui.h: the open "?" card and its button
 HWND languageMenu=nullptr; // lang_menu.h: the open language list under button 82
+// Aim Lab is new: a NEW pill on its row, on PUBG's game card and on 게임 도우미 in the sidebar until Aim Lab has been opened once (AimLabSeen).
+int aimLabSeen=-1;bool aimLabNew(){if(aimLabSeen<0)aimLabSeen=regString(configPath,L"AimLabSeen")==L"1";return !aimLabSeen;}
+int textWidth(HDC dc,HFONT f,const wchar_t* s){SIZE z={};HGDIOBJ o=SelectObject(dc,f);GetTextExtentPoint32W(dc,s,lstrlenW(s),&z);SelectObject(dc,o);return z.cx;}
+void newBadge(HDC dc,int x,int cy){RECT b={x,cy-9,x+38,cy+9};roundBox(dc,b,RGB(255,86,118),RGB(255,120,146),9);textAt(dc,L"NEW",b,smallerFont(smallBold,2),RGB(255,255,255),DT_CENTER|DT_VCENTER|DT_SINGLELINE);}
 void drawRow(HDC dc,RECT r,int id,const std::wstring& value,int pill){
     bool dashboardRow=id==63||id==64;const wchar_t* title=dashboardRow?i18n::text(id==63?L"타르코프":L"배그"):featureTitle(id);
     const wchar_t* note=dashboardRow?featureTitle(id==63?33:47):featureNote(id);RECT t={r.left+18,r.top,r.right-(pill>=0?84:96),r.bottom};
@@ -742,7 +746,7 @@ void drawRow(HDC dc,RECT r,int id,const std::wstring& value,int pill){
     {int kind=-1;COLORREF col=0;switch(id){case 33:kind=0;col=RGB(255,186,82);break;case 37:kind=1;col=RGB(70,208,146);break;case 39:kind=2;col=RGB(92,170,255);break;case 46:kind=3;col=RGB(172,138,255);break;
         case 47:kind=0;col=RGB(255,186,82);break;case 48:kind=2;col=RGB(92,170,255);break;case 79:kind=4;col=RGB(255,104,134);break;}
      if(kind>=0&&painting::token){RECT tile={r.left+14,mid-20,r.left+54,mid+20};painting::feature(dc,tile,kind,col,rowFill);t.left=r.left+70;}}
-    if(note&&r.bottom-r.top>=50){RECT a=t;a.top=dashboardRow?mid-26:a.top+9;a.bottom=a.top+24;textAt(dc,title,a,dashboardRow?sectionFont:boldFont,ink);a.top=a.bottom+2;a.bottom=dashboardRow?a.top+26:r.bottom-8;textAt(dc,note,a,smallFont,muted,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);}
+    if(note&&r.bottom-r.top>=50){RECT a=t;a.top=dashboardRow?mid-26:a.top+9;a.bottom=a.top+24;textAt(dc,title,a,dashboardRow?sectionFont:boldFont,ink);if(id==79&&aimLabNew())newBadge(dc,a.left+std::min(textWidth(dc,boldFont,title),(int)(a.right-a.left)-46)+10,(a.top+a.bottom)/2);a.top=a.bottom+2;a.bottom=dashboardRow?a.top+26:r.bottom-8;textAt(dc,note,a,smallFont,muted,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);}
     else textAt(dc,title,t,smallFont,ink);
     int cy=(r.top+r.bottom)/2;
     // Toggles are a switch (cobalt track, knob right when on); rows that open something end in "value  >".
@@ -883,6 +887,7 @@ void drawButtonTo(DRAWITEMSTRUCT* ds){
             if(!drawn){glyph(dc,id==1?0xE7F6:0xE7FC,art,iconBig,ic);}left=r.left+110;}
         RECT t={left,r.top+(gameCard?24:32),r.right-50,r.top+(gameCard?57:64)};
         textAt(dc,gameCard?(id==42?i18n::text(L"타르코프"):id==45?i18n::text(L"모드 번역"):i18n::text(L"배그")):(id==1?i18n::text(L"일반 모드"):i18n::text(L"게임 모드")),t,cardFont,ink);
+        if(id==43&&aimLabNew())newBadge(dc,t.left+textWidth(dc,cardFont,i18n::text(L"배그"))+10,(t.top+t.bottom)/2);
         t.top=r.top+(gameCard?62:76);t.bottom=r.bottom-16;if(gameCard)t.right=r.right-16;
         textAt(dc,gameCard?(id==42?i18n::text(L"레이드 알림 · 시세 · 지도 · 은신처"):id==45?i18n::text(L"모드의 영어 메뉴·설명을 번역"):i18n::text(L"탑승 알림 · 지도 표시")):profileText(active&&id==2&&fps?appliedProfile:profiles[id-1]),t,gameCard?smallFont:font,muted,DT_LEFT|DT_WORDBREAK);
         int cx=r.right-30,cy=r.top+30;painting::circle(dc,{cx-11,cy-11,cx+11,cy+11},selected?blue:CLR_NONE,selected?blue:muted,2.f);
@@ -900,7 +905,7 @@ void drawButtonTo(DRAWITEMSTRUCT* ds){
         wchar_t label[256];GetWindowTextW(ds->hwndItem,label,256);RECT t=r;t.left+=16;t.right-=16;
         if(side){COLORREF c=selected?ink:id==31?muted:RGB(196,202,214);int my=(r.top+r.bottom)/2;
             // 게임 도우미 uses the same controller as the game-mode card; the other entries are icon-font glyphs.
-            if(id!=41||!painting::gamepad(dc,{r.left+13,my-9,r.left+35,my+9},selected?blue:c,1.7f)){glyph(dc,navGlyph(id),{r.left+10,r.top,r.left+38,r.bottom},iconFont,selected?blue:c);}t.left=r.left+44;t.right=r.right-4;textAt(dc,label,t,selected?navBold:navFont,c,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);}
+            if(id!=41||!painting::gamepad(dc,{r.left+13,my-9,r.left+35,my+9},selected?blue:c,1.7f)){glyph(dc,navGlyph(id),{r.left+10,r.top,r.left+38,r.bottom},iconFont,selected?blue:c);}t.left=r.left+44;t.right=r.right-4;if(id==41&&aimLabNew()){t.right=r.right-50;newBadge(dc,r.right-46,my);}textAt(dc,label,t,selected?navBold:navFont,c,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);}
         else if(home&&id==70){COLORREF k=hover||pressed?RGB(150,184,255):RGB(96,146,255);RECT link=r;link.right-=22;textAt(dc,label,link,smallFont,k,DT_RIGHT|DT_VCENTER|DT_SINGLELINE);glyph(dc,0xE76C,{r.right-22,r.top,r.right-2,r.bottom},iconFont,k);} // 세부 설정: text against the "?" beside it
         else if(wchar_t ic=(wchar_t)(UINT_PTR)GetPropW(ds->hwndItem,L"BlueAsh.Icon")){SIZE s={};auto of=SelectObject(dc,smallFont);GetTextExtentPoint32W(dc,label,lstrlenW(label),&s);SelectObject(dc,of);
             int need=20+8+s.cx,mid=(r.left+r.right)/2;bool words=need<=r.right-r.left-16;int x=words?mid-need/2:mid-10;COLORREF k=IsWindowEnabled(ds->hwndItem)?ink:muted;
@@ -1279,7 +1284,7 @@ LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
         if(HIWORD(wp)==BN_CLICKED){
             if(id==1||id==2){if(!changeMode(id==2))showWindow();}
             else if(id==50){selectMainPage(9);showWindow();}
-            else if(id==72)writeDiagnostics();else if(id==73)restartAsAdmin();else if(id==74)openPage(feedbackProc,L"BlueAshFeedback",10);else if(id==81)openPage(donateProc,L"BlueAshDonate",12);else if(id==86)openPage(dlssui::proc,L"BlueAshDlss",14);else if(id==88)openPage(dlssui::proc,L"BlueAshOpt",15);else if(id==89)openPage(stabui::proc,L"BlueAshStability",17);else if(id==79){selectedGame=1;openPage(aimui::proc,L"BlueAshAimLab",18);}
+            else if(id==72)writeDiagnostics();else if(id==73)restartAsAdmin();else if(id==74)openPage(feedbackProc,L"BlueAshFeedback",10);else if(id==81)openPage(donateProc,L"BlueAshDonate",12);else if(id==86)openPage(dlssui::proc,L"BlueAshDlss",14);else if(id==88)openPage(dlssui::proc,L"BlueAshOpt",15);else if(id==89)openPage(stabui::proc,L"BlueAshStability",17);else if(id==79){selectedGame=1;if(aimLabNew()){saveString(configPath,L"AimLabSeen",L"1");aimLabSeen=1;for(int b:{41,43,79})InvalidateRect(GetDlgItem(h,b),nullptr,FALSE);}openPage(aimui::proc,L"BlueAshAimLab",18);}
             else if(id==83)ShowWindow(h,SW_MINIMIZE);else if(id==85)ShowWindow(h,IsZoomed(h)?SW_RESTORE:SW_MAXIMIZE);else if(id==84)PostMessageW(h,WM_CLOSE,0,0);
             else if(id==82)showLanguageMenu();else if(id==87){noticeBellAt=GetTickCount64();SetTimer(h,0xB1E,16,nullptr);InvalidateRect(GetDlgItem(h,87),nullptr,FALSE);showMaintenanceMenu();}
             else if(id==63){toggleFeature(33);InvalidateRect(GetDlgItem(win,63),nullptr,TRUE);}
@@ -1377,7 +1382,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,LPWSTR command,int show){dpi::i
         HWND existing=FindWindowW(L"ModeSwitch",nullptr);
         if(existing&&!startHidden){
             wchar_t title[128]={};GetWindowTextW(existing,title,128);
-            if(std::wstring(title)!=L"BlueAsh 2.31.1")MessageBoxW(nullptr,i18n::text(L"이전 버전이 트레이에서 실행 중입니다. 이전 프로그램을 완전 종료한 뒤 BlueAsh.exe를 다시 실행하세요."),i18n::text(L"BlueAsh · 이전 버전 실행 중"),MB_OK|MB_ICONINFORMATION);
+            if(std::wstring(title)!=L"BlueAsh 2.31.2")MessageBoxW(nullptr,i18n::text(L"이전 버전이 트레이에서 실행 중입니다. 이전 프로그램을 완전 종료한 뒤 BlueAsh.exe를 다시 실행하세요."),i18n::text(L"BlueAsh · 이전 버전 실행 중"),MB_OK|MB_ICONINFORMATION);
             else{ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);}
         }
         CloseHandle(mutex);return 0;
@@ -1392,7 +1397,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,LPWSTR command,int show){dpi::i
     RegisterClassW(&wc);
     DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_THICKFRAME|WS_CLIPCHILDREN;
     RECT bounds={0,0,1160,780}; // the client is the whole window (WM_NCCALCSIZE)
-    HWND h=CreateWindowW(wc.lpszClassName,L"BlueAsh 2.31.1",style,CW_USEDEFAULT,CW_USEDEFAULT,bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,instance,nullptr);
+    HWND h=CreateWindowW(wc.lpszClassName,L"BlueAsh 2.31.2",style,CW_USEDEFAULT,CW_USEDEFAULT,bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,instance,nullptr);
     if(!h){painting::shutdown();CoUninitialize();CloseHandle(mutex);return 1;}
     ChangeWindowMessageFilterEx(h,WM_APP+177,MSGFLT_ALLOW,nullptr); // the updater runs as the normal user even when BlueAsh is elevated: let its "please close" through
     {MARGINS shadow={0,0,0,1};DwmExtendFrameIntoClientArea(h,&shadow);SetWindowPos(h,nullptr,0,0,0,0,SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);} // keep the shadow without a frame
