@@ -5686,15 +5686,6 @@
     "exclusion": ""
   },
   {
-    "key": "알림",
-    "files": [
-      "maintenance_ui.h",
-      "ModeSwitch.cpp"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
     "key": "일부 불안정",
     "files": [
       "maintenance_ui.h"
@@ -5706,6 +5697,23 @@
     "key": "접속 불가",
     "files": [
       "maintenance_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "자세히 보기 ↗",
+    "files": [
+      "maintenance_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "알림",
+    "files": [
+      "maintenance_ui.h",
+      "ModeSwitch.cpp"
     ],
     "localized": true,
     "exclusion": ""
@@ -9892,7 +9900,7 @@
     "exclusion": ""
   },
   {
-    "key": "BlueAsh 2.31.3\r\n알림: ",
+    "key": "BlueAsh 2.31.4\r\n알림: ",
     "files": [
       "raid_alert.h"
     ],

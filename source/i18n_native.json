@@ -3464,20 +3464,20 @@
     "tr": " (yol kaydedilemedi)",
     "zh-TW": " （無法儲存路徑）"
   },
-  "BlueAsh 2.31.3\r\n알림: ": {
-    "ko": "BlueAsh 2.31.3\r\n알림: ",
-    "en": "BlueAsh 2.31.3\r\nAlerts: ",
-    "zh-CN": "BlueAsh 2.31.3\r\n提醒：",
-    "ja": "BlueAsh 2.31.3\r\n通知: ",
-    "ru": "BlueAsh 2.31.3\r\nУведомления: ",
-    "es": "BlueAsh 2.31.3\r\nAlertas: ",
-    "pt-BR": "BlueAsh 2.31.3\r\nAlertas: ",
-    "de": "BlueAsh 2.31.3\r\nAlarme: ",
-    "fr": "BlueAsh 2.31.3\r\nAlertes : ",
-    "it": "BlueAsh 2.31.3\r\nAvvisi: ",
-    "pl": "BlueAsh 2.31.3\r\nAlerty: ",
-    "tr": "BlueAsh 2.31.3\r\nUyarılar: ",
-    "zh-TW": "BlueAsh 2.31.3\r\n提醒："
+  "BlueAsh 2.31.4\r\n알림: ": {
+    "ko": "BlueAsh 2.31.4\r\n알림: ",
+    "en": "BlueAsh 2.31.4\r\nAlerts: ",
+    "zh-CN": "BlueAsh 2.31.4\r\n提醒：",
+    "ja": "BlueAsh 2.31.4\r\n通知: ",
+    "ru": "BlueAsh 2.31.4\r\nУведомления: ",
+    "es": "BlueAsh 2.31.4\r\nAlertas: ",
+    "pt-BR": "BlueAsh 2.31.4\r\nAlertas: ",
+    "de": "BlueAsh 2.31.4\r\nAlarme: ",
+    "fr": "BlueAsh 2.31.4\r\nAlertes : ",
+    "it": "BlueAsh 2.31.4\r\nAvvisi: ",
+    "pl": "BlueAsh 2.31.4\r\nAlerty: ",
+    "tr": "BlueAsh 2.31.4\r\nUyarılar: ",
+    "zh-TW": "BlueAsh 2.31.4\r\n提醒："
   },
   " / 볼륨: ": {
     "ko": " / 볼륨: ",
@@ -28168,5 +28168,20 @@
     "pl": "Pobierz instalator",
     "tr": "Kurulumu indir",
     "zh-TW": "下載安裝程式"
+  },
+  "자세히 보기 ↗": {
+    "ko": "자세히 보기 ↗",
+    "en": "Learn more ↗",
+    "zh-CN": "了解详情 ↗",
+    "ja": "詳しく見る ↗",
+    "ru": "Подробнее ↗",
+    "es": "Más información ↗",
+    "pt-BR": "Saiba mais ↗",
+    "de": "Mehr erfahren ↗",
+    "fr": "En savoir plus ↗",
+    "it": "Scopri di più ↗",
+    "pl": "Więcej ↗",
+    "tr": "Daha fazla ↗",
+    "zh-TW": "了解詳情 ↗"
   }
 }
