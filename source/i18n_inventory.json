@@ -9892,7 +9892,7 @@
     "exclusion": ""
   },
   {
-    "key": "BlueAsh 2.31.2\r\n알림: ",
+    "key": "BlueAsh 2.31.3\r\n알림: ",
     "files": [
       "raid_alert.h"
     ],
@@ -13117,6 +13117,14 @@
   },
   {
     "key": "지금 업데이트",
+    "files": [
+      "update_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "설치 파일로 받기",
     "files": [
       "update_ui.h"
     ],

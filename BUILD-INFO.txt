@@ -1,2 +1,2 @@
-﻿BlueAsh 2.31.2 — 에임랩 NEW 표시 (2026-11-17)
+﻿BlueAsh 2.31.3 — 업데이트 실패 수정 (2026-11-18)
 Built to a scratch path (the repository BlueAsh.exe is the running copy and was not replaced).

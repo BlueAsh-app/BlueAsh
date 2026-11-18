@@ -41,6 +41,8 @@ function Apply-UpdatePlan($Plan,[string]$Install,[string]$Backup) {
    }
    if((Test-Path -LiteralPath $dest) -and ((Get-Item -LiteralPath $dest -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)){throw (U '대상 파일이 링크입니다.')}
    $existed=Test-Path -LiteralPath $dest
+   # The setup program hides README/NOTICE/LICENSE: File.Copy will not overwrite a hidden or read-only file ("access denied").
+   if($existed){$fa=[IO.File]::GetAttributes($dest);if($fa -band ([IO.FileAttributes]::Hidden -bor [IO.FileAttributes]::ReadOnly)){[IO.File]::SetAttributes($dest,($fa -band -bnot ([IO.FileAttributes]::Hidden -bor [IO.FileAttributes]::ReadOnly)))}}
    if($existed){[void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($old));[IO.File]::Copy($dest,$old,$true)}
    [void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($dest))
    $changed.Add([pscustomobject]@{Path=$dest;Old=$old;Existed=$existed})

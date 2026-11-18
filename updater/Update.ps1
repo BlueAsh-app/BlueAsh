@@ -12,7 +12,7 @@ $progressFile=Join-Path $store 'update-progress.txt'
 $guard=New-Object Threading.Mutex($false,'Local\ModeSwitch-Updater')
 $locked=$false;$temp=$null;$http=$null;$closed=$false;$newVersion=''
 function Report([string]$State,[string]$Step,[double]$Part=-1,[string]$Detail=''){
- $text="state=$State`nstep=$Step`npart=$([string]::Format([Globalization.CultureInfo]::InvariantCulture,'{0:0.000}',$Part))`ndetail=$Detail`nversion=$script:newVersion`nlanguage=$script:UpdateLanguage`n"
+ $text="state=$State`nstep=$Step`npart=$([string]::Format([Globalization.CultureInfo]::InvariantCulture,'{0:0.000}',$Part))`ndetail=$Detail`nversion=$script:newVersion`nlanguage=$script:UpdateLanguage`nstage=$script:stage`n"
  $tmp=$progressFile+'.tmp';[IO.File]::WriteAllText($tmp,$text,(New-Object Text.UTF8Encoding($false)))
  if(Test-Path -LiteralPath $progressFile){[IO.File]::Replace($tmp,$progressFile,[NullString]::Value)}else{[IO.File]::Move($tmp,$progressFile)}
 }
@@ -52,6 +52,8 @@ try {
  [void][IO.Directory]::CreateDirectory($temp)
  $http=New-Object Net.Http.HttpClient;$http.Timeout=[TimeSpan]::FromSeconds(120)
  $script:buf=New-Object byte[] 262144;$script:shown=-1000;$script:clock=[Diagnostics.Stopwatch]::StartNew()
+ # The step it was on goes into update-progress.txt (stage=): BlueAsh reports a failure as update-fail-<stage>.
+ $script:stage='download'
  Report 'working' (U '업데이트 정보를 확인하는 중…')
  $expectedVersion=$null
  if($Mode -eq 'online'){
@@ -73,6 +75,7 @@ try {
     foreach($p in @($m.parts)){if([string]$p -notmatch '^[0-9.]+/part\d+$'){throw (U '업데이트 정보 형식 오류')};$at+=Fetch-Into $out ($base+$p) $at ([long]$m.size) (U '새 버전을 받는 중…')}}
    else{[void](Fetch-Into $out ([string]$m.url) 0 ([long]$m.size) (U '새 버전을 받는 중…'))}
   }finally{$out.Dispose()}
+  $script:stage='hash'
   Report 'working' (U '받은 파일을 확인하는 중…') 1 ((Mb $m.size)+' · '+(U 'SHA-256 검사'))
   # .NET, not Get-FileHash: that one is a script function of the Utility module and was missing in a user's PowerShell.
   $fs=[IO.File]::OpenRead($zipFile);try{$hash=[BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash($fs)) -replace '-',''}finally{$fs.Dispose()}
@@ -82,8 +85,12 @@ try {
   if(!$Zip -or !(Test-Path -LiteralPath $Zip)){throw (U 'ZIP 파일을 찾지 못했습니다.')}
   $zipFile=Join-Path $temp 'update.zip';[IO.File]::Copy($Zip,$zipFile)
  }
+ $script:stage='extract'
  Report 'working' (U '파일을 검사하는 중…') 1
  $plan=@(Get-UpdatePlan $zipFile (Join-Path $temp 'stage'))
+ # An antivirus that quarantines the new exe right after it is unpacked leaves it missing here.
+ Start-Sleep -Milliseconds 800
+ if(!(Test-Path -LiteralPath (Join-Path $temp 'stage/BlueAsh.exe'))){$script:stage='antivirus';throw (U '백신 프로그램이 새 BlueAsh.exe를 지웠습니다. Windows 보안의 보호 기록에서 확인해 주세요.')}
  # A setup install (its uninstaller next to the exe) shows only BlueAsh.exe: price/ is only for 2.8.x layouts, so it is
  # left out unless already there, and the text files are hidden again after the copy.
  $setupInstall=Test-Path -LiteralPath (Join-Path $Install 'unins000.exe')
@@ -94,7 +101,9 @@ try {
  if($version -lt [version]$CurrentVersion){throw (U '이전 버전으로는 바꾸지 않습니다.')}
  $script:newVersion=$version.ToString()
  # Check write permission before asking BlueAsh to close.
- $probe=Join-Path $Install ('.update-test-'+[Guid]::NewGuid().ToString('N'));[IO.File]::WriteAllText($probe,'');[IO.File]::Delete($probe)
+ $script:stage='write'
+ $probe=Join-Path $Install ('.update-test-'+[Guid]::NewGuid().ToString('N'));try{[IO.File]::WriteAllText($probe,'');[IO.File]::Delete($probe)}catch{throw (U 'BlueAsh 설치 폴더에 파일을 쓸 수 없습니다. 설치 파일로 다시 설치해 주세요.')}
+ $script:stage='close'
  Report 'working' (U 'BlueAsh를 다시 시작하는 중…') 1 (U '잠시 뒤 새 버전으로 다시 켜집니다')
  if(![ModeSwitchUpdateNative]::PostMessage([IntPtr]$Window,32945,[IntPtr]::Zero,[IntPtr]::Zero)){throw (U '프로그램 종료 요청 실패')}
  $parent=Get-Process -Id $ParentId -ErrorAction SilentlyContinue
@@ -105,10 +114,12 @@ try {
  function Test-NewWindow{$h=[ModeSwitchUpdateNative]::FindWindow('ModeSwitch',[NullString]::Value);if($h -eq [IntPtr]::Zero){return $false};$id=[uint32]0;[void][ModeSwitchUpdateNative]::GetWindowThreadProcessId($h,[ref]$id)
   # QueryFullProcessImageName, not Get-Process .Path: that one needs memory access and is empty for an elevated BlueAsh
   $p=[ModeSwitchUpdateNative]::PathOf($id);return $p -and ($p -ieq (Join-Path $Install 'BlueAsh.exe'))}
+ $script:stage='apply'
  $changed=Apply-UpdatePlan $plan $Install $backup
  if($setupInstall){foreach($t in 'README.txt','NOTICE.txt','LICENSE.txt'){$p=Join-Path $Install $t;if(Test-Path -LiteralPath $p){try{$i=Get-Item -LiteralPath $p -Force;$i.Attributes=$i.Attributes -bor [IO.FileAttributes]::Hidden}catch{}}}}
  # The new BlueAsh must open its window (class ModeSwitch) within 30 s and still have it 5 s later; if it never does,
  # the replaced files go back and the previous version starts again (backup kept under update-backups).
+ $script:stage='launch'
  Report 'working' (U '새 버전이 잘 켜지는지 확인하는 중…') 1
  $new=Start-Process -FilePath (Join-Path $Install 'BlueAsh.exe') -WorkingDirectory $Install -PassThru
  $alive=$false;$until=[DateTime]::UtcNow.AddSeconds(30)
@@ -117,6 +128,7 @@ try {
  if(!$alive){
   try{if(!$new.HasExited){$new.Kill();[void]$new.WaitForExit(5000)}}catch{}
   foreach($p in Get-Process BlueAsh -ErrorAction SilentlyContinue){try{if($p.Path -and $p.Path -ieq (Join-Path $Install 'BlueAsh.exe')){$p.Kill();[void]$p.WaitForExit(5000)}}catch{}}
+  if(!(Test-Path -LiteralPath (Join-Path $Install 'BlueAsh.exe'))){$script:stage='antivirus'}
   $restored=Restore-UpdatePlan $changed
   throw (U $(if($restored){'새 버전이 정상적으로 켜지지 않아 이전 버전으로 되돌렸습니다.'}else{'새 버전이 켜지지 않았고 이전 버전 복구도 일부 실패했습니다. 백업 위치: {0}'}) @($backup))
  }

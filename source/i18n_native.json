@@ -3464,20 +3464,20 @@
     "tr": " (yol kaydedilemedi)",
     "zh-TW": " （無法儲存路徑）"
   },
-  "BlueAsh 2.31.2\r\n알림: ": {
-    "ko": "BlueAsh 2.31.2\r\n알림: ",
-    "en": "BlueAsh 2.31.2\r\nAlerts: ",
-    "zh-CN": "BlueAsh 2.31.2\r\n提醒：",
-    "ja": "BlueAsh 2.31.2\r\n通知: ",
-    "ru": "BlueAsh 2.31.2\r\nУведомления: ",
-    "es": "BlueAsh 2.31.2\r\nAlertas: ",
-    "pt-BR": "BlueAsh 2.31.2\r\nAlertas: ",
-    "de": "BlueAsh 2.31.2\r\nAlarme: ",
-    "fr": "BlueAsh 2.31.2\r\nAlertes : ",
-    "it": "BlueAsh 2.31.2\r\nAvvisi: ",
-    "pl": "BlueAsh 2.31.2\r\nAlerty: ",
-    "tr": "BlueAsh 2.31.2\r\nUyarılar: ",
-    "zh-TW": "BlueAsh 2.31.2\r\n提醒："
+  "BlueAsh 2.31.3\r\n알림: ": {
+    "ko": "BlueAsh 2.31.3\r\n알림: ",
+    "en": "BlueAsh 2.31.3\r\nAlerts: ",
+    "zh-CN": "BlueAsh 2.31.3\r\n提醒：",
+    "ja": "BlueAsh 2.31.3\r\n通知: ",
+    "ru": "BlueAsh 2.31.3\r\nУведомления: ",
+    "es": "BlueAsh 2.31.3\r\nAlertas: ",
+    "pt-BR": "BlueAsh 2.31.3\r\nAlertas: ",
+    "de": "BlueAsh 2.31.3\r\nAlarme: ",
+    "fr": "BlueAsh 2.31.3\r\nAlertes : ",
+    "it": "BlueAsh 2.31.3\r\nAvvisi: ",
+    "pl": "BlueAsh 2.31.3\r\nAlerty: ",
+    "tr": "BlueAsh 2.31.3\r\nUyarılar: ",
+    "zh-TW": "BlueAsh 2.31.3\r\n提醒："
   },
   " / 볼륨: ": {
     "ko": " / 볼륨: ",
@@ -28153,5 +28153,20 @@
     "pl": "Alerty na telefon",
     "tr": "Telefon uyarıları",
     "zh-TW": "手機提醒"
+  },
+  "설치 파일로 받기": {
+    "ko": "설치 파일로 받기",
+    "en": "Get the installer",
+    "zh-CN": "下载安装程序",
+    "ja": "インストーラーを入手",
+    "ru": "Скачать установщик",
+    "es": "Descargar instalador",
+    "pt-BR": "Baixar instalador",
+    "de": "Installer laden",
+    "fr": "Télécharger l’installeur",
+    "it": "Scarica installer",
+    "pl": "Pobierz instalator",
+    "tr": "Kurulumu indir",
+    "zh-TW": "下載安裝程式"
   }
 }

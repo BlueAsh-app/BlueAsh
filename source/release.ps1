@@ -72,7 +72,9 @@ $zipPath=Join-Path ([IO.Path]::GetTempPath()) "BlueAsh-$version-$([Guid]::NewGui
 # Entries are written by hand: BlueAsh/<path> with forward slashes (2.24.2+; every updater since 2.9.0 takes it and
 # needs only BlueAsh.exe). Until 2.24.1 the ZIP kept the pre-rename ModePulse/ModePulse.exe layout plus price/ files for
 # 2.8.x updaters; those installs now have to download BlueAsh again. The exe carries everything else.
-$files='BlueAsh.exe','README.txt','NOTICE.txt','LICENSE.txt'
+# Only the exe: the setup program hides README/NOTICE/LICENSE and updaters before 2.31.3 fail on a hidden file ('access denied'),
+# so the text files stay as the installer left them (the exe carries everything it needs; the source link is on the site).
+$files=@('BlueAsh.exe')
 $zip=[IO.Compression.ZipFile]::Open($zipPath,'Create')
 try{foreach($f in $files){$src=$(if($f -eq 'BlueAsh.exe'){$exe}else{Join-Path $root $f});if(!(Test-Path -LiteralPath $src)){throw "$f 없음"};[void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,$src,'BlueAsh/'+$f,'Optimal')}}finally{$zip.Dispose()}
 $bytes=[IO.File]::ReadAllBytes($zipPath)

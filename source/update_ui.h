@@ -5,7 +5,7 @@
 // Updates come from the BlueAsh relay (relay/worker.js): /update/check answers in plain text (version, date, size,
 // one "note=" line per change) and counts installs by a random id; the updater (updater/Update.ps1) downloads
 // /update/manifest.json's ZIP, checks its SHA-256 and swaps the files.
-const wchar_t* appVersion=L"2.31.2";
+const wchar_t* appVersion=L"2.31.3";
 const wchar_t* updateHost=L"modepulse-relay.modepulse.workers.dev";
 HANDLE updaterProcess=nullptr;
 struct UpdateInfo{std::wstring version,date,error;std::vector<std::wstring> notes;long long size=0;};
@@ -60,7 +60,9 @@ UpdateInfo fetchUpdate(std::wstring path){
 }
 // The updater (updater/Update.ps1) has no window: it writes update-progress.txt (state, step, part, detail, version)
 // and the 업데이트 page draws it. state: working | done | latest | error | cancel (cancel is ours).
-struct UpdateRun{std::wstring state,step,detail,version;double part=-1;};
+struct UpdateRun{std::wstring state,step,detail,version;double part=-1;std::wstring stage;};
+// The updater's step when it failed (stage=) names the problem, so the owner's list says where updates break.
+std::wstring failKind(const UpdateRun& r){for(const wchar_t* s:{L"start",L"download",L"hash",L"extract",L"antivirus",L"write",L"close",L"apply",L"launch"})if(r.stage==s)return L"update-fail-"+r.stage;return L"update-fail";}
 std::wstring progressPath(){wchar_t local[MAX_PATH]={};if(FAILED(SHGetFolderPathW(nullptr,CSIDL_LOCAL_APPDATA,nullptr,SHGFP_TYPE_CURRENT,local)))return L"";return std::wstring(local)+dataSub()+L"\\update-progress.txt";}
 bool readRun(UpdateRun& r,std::wstring* locale=nullptr,ULONGLONG since=0){
  HANDLE f=CreateFileW(progressPath().c_str(),GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,OPEN_EXISTING,0,nullptr);if(f==INVALID_HANDLE_VALUE)return false;
@@ -68,7 +70,7 @@ bool readRun(UpdateRun& r,std::wstring* locale=nullptr,ULONGLONG since=0){
  char data[4096];DWORD n=0;BOOL ok=ReadFile(f,data,sizeof(data),&n,nullptr);CloseHandle(f);if(!ok||!n)return false;
  int wn=MultiByteToWideChar(CP_UTF8,0,data,(int)n,nullptr,0);std::wstring text(wn,0);MultiByteToWideChar(CP_UTF8,0,data,(int)n,&text[0],wn);
  UpdateRun next;size_t at=0;while(at<text.size()){size_t e=text.find(L'\n',at);if(e==std::wstring::npos){e=text.size();}auto line=text.substr(at,e-at);at=e+1;auto eq=line.find(L'=');if(eq==std::wstring::npos){continue;}
-  auto k=line.substr(0,eq),v=line.substr(eq+1);if(k==L"state")next.state=v;else if(k==L"step")next.step=v;else if(k==L"detail")next.detail=v;else if(k==L"version")next.version=v;else if(k==L"part")next.part=wcstod(v.c_str(),nullptr);else if(k==L"language"&&locale)*locale=v;}
+  auto k=line.substr(0,eq),v=line.substr(eq+1);if(k==L"state")next.state=v;else if(k==L"step")next.step=v;else if(k==L"detail")next.detail=v;else if(k==L"version")next.version=v;else if(k==L"stage")next.stage=v;else if(k==L"part")next.part=wcstod(v.c_str(),nullptr);else if(k==L"language"&&locale)*locale=v;}
  if(next.state.empty()){return false;}r=next;return true;
 }
 // Patch history: every stable release with its changes, newest first (relay/public/update/history.txt, which
@@ -120,14 +122,14 @@ struct UpdateWatch {
    if(regString(configPath,L"LastVersion")!=appVersion){if(!regString(configPath,L"LastVersion").empty())notify((std::wstring(L"BlueAsh ")+appVersion+i18n::text(L"로 업데이트했습니다")).c_str(),i18n::text(L"바뀐 점은 업데이트 화면에서 볼 수 있습니다."));saveString(configPath,L"LastVersion",appVersion);}
    UpdateRun last;std::wstring locale;WIN32_FILE_ATTRIBUTE_DATA a={};auto p=progressPath();
    if(readRun(last,&locale)&&locale==i18n::languageCode()&&last.state==L"error"&&GetFileAttributesExW(p.c_str(),GetFileExInfoStandard,&a)){FILETIME t;GetSystemTimeAsFileTime(&t);ULONGLONG age=((((ULONGLONG)t.dwHighDateTime<<32)|t.dwLowDateTime)-(((ULONGLONG)a.ftLastWriteTime.dwHighDateTime<<32)|a.ftLastWriteTime.dwLowDateTime))/10000000ULL;
-    if(age<600){run=last;reportProblem(L"update-fail");notify(i18n::text(L"업데이트하지 못했습니다"),last.step.c_str());}}
+    if(age<600){run=last;reportProblem(failKind(last).c_str());notify(i18n::text(L"업데이트하지 못했습니다"),last.step.c_str());}}
    }
   if(now>=next)check();}
  // While the updater runs: re-read its progress every 100 ms (timer 79 on the main window).
  void tick(){UpdateRun r;if(statusSince&&readRun(r,nullptr,statusSince)){bool changed=r.state!=run.state||r.step!=run.step||r.detail!=run.detail||r.part!=run.part;run=r;if(changed)repaint();}
-  if(!running()){KillTimer(win,79);if(run.state==L"working"){run.state=L"error";run.step=i18n::text(L"업데이트가 중간에 멈췄습니다.");run.detail=i18n::text(L"기존 프로그램과 설정은 그대로입니다.");}
+  if(!running()){KillTimer(win,79);if(run.state==L"working"){run.state=L"error";if(run.stage.empty())run.stage=L"start";run.step=i18n::text(L"업데이트가 중간에 멈췄습니다.");run.detail=i18n::text(L"기존 프로그램과 설정은 그대로입니다.");}
    else if(run.state==L"latest"){run={};checked=false;check();}
-   if(run.state==L"error"){reportProblem(L"update-fail");}repaint();}}
+   if(run.state==L"error"){reportProblem(failKind(run).c_str());}repaint();}}
  void notify(const wchar_t* title,const wchar_t* text){
   NOTIFYICONDATAW n={};n.cbSize=sizeof(n);n.hWnd=win;n.uID=1;n.uFlags=NIF_INFO;n.dwInfoFlags=NIIF_INFO;wcsncpy(n.szInfoTitle,title,63);wcsncpy(n.szInfo,text,255);Shell_NotifyIconW(NIM_MODIFY,&n);balloonUpdateAt=GetTickCount64();
  }
@@ -144,8 +146,9 @@ struct UpdateWatch {
  // Bottom row: [닫기][지금 업데이트] — 지금 업데이트 only when something newer exists; while updating only 취소 (219).
  // Checking runs every 30 minutes, when the window opens and when this page opens; the refresh icon on the card checks now.
  int laidOut=-1; // buttons are moved only when what they show changes, not on every progress tick
- void layout(){if(!page)return;bool a=available()&&!showingRun(),busy=running();int key=(a?1:0)|(busy?2:0);if(key==laidOut)return;laidOut=key;auto show=[&](int id,bool on){ShowWindow(GetDlgItem(page,id),on?SW_SHOW:SW_HIDE);};
-  show(212,a);show(214,!busy);show(219,busy);
+ void layout(){if(!page)return;bool a=available()&&!showingRun(),busy=running(),fb=!busy&&run.state==L"error"&&available();int key=(a?1:0)|(busy?2:0)|(fb?4:0);if(key==laidOut)return;laidOut=key;auto show=[&](int id,bool on){ShowWindow(GetDlgItem(page,id),on?SW_SHOW:SW_HIDE);};
+  // After a failed update the installer is the way round it (the site's setup replaces the files the same way a fresh install does).
+  show(212,a);show(215,fb);show(214,!busy);show(219,busy);a=a||fb;
   // The usage-stats switch shares the bottom row: it narrows to make room for 지금 업데이트.
   SetWindowPos(GetDlgItem(page,217),nullptr,0,0,a?488:644,42,SWP_NOMOVE|SWP_NOZORDER);
   SetWindowPos(GetDlgItem(page,214),nullptr,a?540:696,556,0,0,SWP_NOSIZE|SWP_NOZORDER);}
@@ -162,7 +165,7 @@ bool startAsShellUser(const std::wstring& app,std::wstring& args,const std::wstr
 void launchUpdater(){
  if(updateWatch.running())return;
  if(updaterProcess){CloseHandle(updaterProcess);updaterProcess=nullptr;}
- auto fail=[](const wchar_t* why){updateWatch.run={L"error",why,i18n::text(L"기존 프로그램과 설정은 그대로입니다."),L"",-1};updateWatch.repaint();};
+ auto fail=[](const wchar_t* why){updateWatch.run={L"error",why,i18n::text(L"기존 프로그램과 설정은 그대로입니다."),L"",-1,L""};updateWatch.repaint();};
  wchar_t exe[32768]={},temp[MAX_PATH]={},system[MAX_PATH]={};GetModuleFileNameW(nullptr,exe,32768);GetTempPathW(MAX_PATH,temp);GetSystemDirectoryW(system,MAX_PATH);
  std::wstring root=exe;root=root.substr(0,root.find_last_of(L"\\/"));auto bundle=bundleRoot();if(bundle.empty()){fail(i18n::text(L"내장 업데이트 파일을 풀지 못했습니다."));return;}
  std::wstring folder=std::wstring(temp)+L"BlueAsh-updater-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64());
@@ -170,7 +173,7 @@ void launchUpdater(){
  for(auto name:{L"Update.ps1",L"UpdateCore.ps1",L"UpdateLanguage.ps1"}){auto from=bundle+L"\\updater\\"+name,to=folder+L"\\"+name;if(!CopyFileW(from.c_str(),to.c_str(),TRUE)){fail(i18n::text(L"내장 업데이트 파일을 찾지 못했습니다."));return;}}
  std::wstring shell=std::wstring(system)+L"\\WindowsPowerShell\\v1.0\\powershell.exe";
  std::wstring args=L"\""+shell+L"\" -NoProfile -ExecutionPolicy Bypass -File \""+folder+L"\\Update.ps1\" -ParentId "+std::to_wstring(GetCurrentProcessId())+L" -Window "+std::to_wstring((LONG_PTR)win)+L" -Install \""+root+L"\" -CurrentVersion "+appVersion+L" -Mode online -Feed \"https://"+updateHost+(betaChannel()?L"/update/beta.json\"":L"/update/manifest.json\"");
- FILETIME started={};GetSystemTimeAsFileTime(&started);updateWatch.statusSince=((ULONGLONG)started.dwHighDateTime<<32)|started.dwLowDateTime;updateWatch.run={L"working",i18n::text(L"업데이트를 준비하는 중…"),L"",L"",-1};
+ FILETIME started={};GetSystemTimeAsFileTime(&started);updateWatch.statusSince=((ULONGLONG)started.dwHighDateTime<<32)|started.dwLowDateTime;updateWatch.run={L"working",i18n::text(L"업데이트를 준비하는 중…"),L"",L"",-1,L""};
  STARTUPINFOW startup={};startup.cb=sizeof(startup);PROCESS_INFORMATION p={};
  // Elevated (Tarkov runs as administrator): the updater runs with the desktop shell's normal user token, since it works in
  // the user's folders and starts the new BlueAsh, which must not inherit administrator rights from it.
@@ -179,7 +182,7 @@ void launchUpdater(){
  CloseHandle(p.hThread);updaterProcess=p.hProcess;SetTimer(win,79,100,nullptr);updateWatch.repaint();
 }
 // 취소 is offered while downloading; once BlueAsh is asked to close, the updater no longer listens to it anyway.
-void cancelUpdater(){if(!updateWatch.running())return;TerminateProcess(updaterProcess,1);updateWatch.run={L"cancel",i18n::text(L"업데이트를 취소했습니다."),i18n::text(L"기존 프로그램과 설정은 그대로입니다."),L"",-1};updateWatch.repaint();}
+void cancelUpdater(){if(!updateWatch.running())return;TerminateProcess(updaterProcess,1);updateWatch.run={L"cancel",i18n::text(L"업데이트를 취소했습니다."),i18n::text(L"기존 프로그램과 설정은 그대로입니다."),L"",-1,L""};updateWatch.repaint();}
 std::wstring megabytes(long long b){wchar_t s[32];swprintf(s,32,L"%.1f MB",b/1048576.0);return s;}
 // The page paints its version card and, below it, either the change list or the running update; controls are only the toggles and buttons.
 RECT refreshButton(){return {766,116,804,154};}
@@ -288,7 +291,7 @@ LRESULT CALLBACK updateProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
   updateWatch.page=h;
   addSetting(h,L"BUTTON",L"",BS_OWNERDRAW|WS_TABSTOP,36,556,488,42,217);
   pageButton(h,i18n::text(L"닫기"),696,556,120,214);
-  pageButton(h,i18n::text(L"지금 업데이트"),676,556,140,212,true);
+  pageButton(h,i18n::text(L"지금 업데이트"),676,556,140,212,true);pageButton(h,i18n::text(L"설치 파일로 받기"),676,556,140,215,true);ShowWindow(GetDlgItem(h,215),SW_HIDE);
   pageButton(h,i18n::text(L"취소"),696,556,120,219);
   // A failed or cancelled update is retried from 지금 업데이트 when the page opens again.
   if(!updateWatch.running()&&(updateWatch.run.state==L"error"||updateWatch.run.state==L"cancel"))updateWatch.run={};
@@ -303,7 +306,9 @@ LRESULT CALLBACK updateProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
   // Only the invalid part is drawn and copied: the list scrolling every 15 ms repaints just its card.
   IntersectClipRect(mem,ps.rcPaint.left,ps.rcPaint.top,ps.rcPaint.right,ps.rcPaint.bottom);eraseCarbon(h,mem);paintUpdate(mem);BitBlt(dc,ps.rcPaint.left,ps.rcPaint.top,ps.rcPaint.right-ps.rcPaint.left,ps.rcPaint.bottom-ps.rcPaint.top,mem,ps.rcPaint.left,ps.rcPaint.top,SRCCOPY);SelectObject(mem,old);DeleteObject(bmp);DeleteDC(mem);EndPaint(h,&ps);return 0;}
  case WM_COMMAND:if(HIWORD(wp)==BN_CLICKED){int id=LOWORD(wp);
-  if(id==212)launchUpdater();else if(id==219)cancelUpdater();else if(id==214)DestroyWindow(h);
+  if(id==215){std::wstring tag=i18n::languageCode();tag.erase(std::remove(tag.begin(),tag.end(),L'-'),tag.end());for(auto& c:tag)c=towlower(c);
+   std::wstring url=L"https://blueash.pages.dev/download/BlueAsh-Setup-"+updateWatch.info.version+L".exe?lang="+tag;ShellExecuteW(nullptr,L"open",url.c_str(),nullptr,nullptr,SW_SHOWNORMAL);}
+  else if(id==212)launchUpdater();else if(id==219)cancelUpdater();else if(id==214)DestroyWindow(h);
   else if(id==217){saveString(configPath,L"UsageStats",featureOn(id)?L"0":L"1");InvalidateRect(GetDlgItem(h,id),nullptr,TRUE);}
  }return 0;
  case WM_MOUSEMOVE:{POINT c=cursorIn(h);RECT box=historyBox();
