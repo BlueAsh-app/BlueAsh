@@ -28,6 +28,11 @@ bool tarkovProcess(){
 // The helpers run without a window: what PowerShell prints when it fails goes to %LOCALAPPDATA%\BlueAsh\<name>-error.log
 // (rewritten at every start) for the diagnostics file; standard output is dropped.
 std::wstring helperLogPath(const wchar_t* name){auto p=companionStateFile();return p.substr(0,p.find_last_of(L"\\/"))+L"\\"+name+L"-error.log";}
+// For the problem report: the exit code and the last line of the helper's error log.
+std::wstring helperLastError(const wchar_t* name,DWORD code){wchar_t c[32];swprintf(c,32,L"exit 0x%08X",(unsigned)code);std::wstring out=c;HANDLE f=CreateFileW(helperLogPath(name).c_str(),GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,OPEN_EXISTING,0,nullptr);if(f==INVALID_HANDLE_VALUE)return out;
+ LARGE_INTEGER size={};GetFileSizeEx(f,&size);LONGLONG start=std::max<LONGLONG>(0,size.QuadPart-2048);SetFilePointer(f,(LONG)start,nullptr,FILE_BEGIN);std::string b(2048,0);DWORD n=0;ReadFile(f,&b[0],2048,&n,nullptr);CloseHandle(f);b.resize(n);
+ while(!b.empty()&&(b.back()=='\n'||b.back()=='\r'||b.back()==' ')){b.pop_back();}size_t at=b.find_last_of('\n');std::string last=at==std::string::npos?b:b.substr(at+1);if(last.empty())return out;
+ int w=MultiByteToWideChar(CP_UTF8,0,last.data(),(int)last.size(),nullptr,0);std::wstring t(w,0);MultiByteToWideChar(CP_UTF8,0,last.data(),(int)last.size(),&t[0],w);return out+L" · "+t;}
 struct HelperIo {
  HANDLE err=INVALID_HANDLE_VALUE,out=INVALID_HANDLE_VALUE;
  HelperIo(const wchar_t* name,STARTUPINFOW& si){SECURITY_ATTRIBUTES sa={sizeof(sa),nullptr,TRUE};
@@ -39,7 +44,7 @@ struct HelperIo {
 void pollCompanion(){
  ULONGLONG now=GetTickCount64();if(now<nextCompanionCheck)return;nextCompanionCheck=now+3000;
  bool running=companionProcess&&WaitForSingleObject(companionProcess,0)==WAIT_TIMEOUT;
- if(!running&&companionProcess){DWORD code=0;if(GetExitCodeProcess(companionProcess,&code)&&code!=0)reportProblem(L"map-crash");}
+ if(!running&&companionProcess){DWORD code=0;if(GetExitCodeProcess(companionProcess,&code)&&code!=0)reportProblem(L"map-crash",helperLastError(L"companion",code));}
  if(companionAutoStarted&&!running&&companionProcess){companionAutoStarted=false;companionRetryAfter=now+60000;}
  if(tarkovProcess()){if(!running&&now>=companionRetryAfter&&regString(configPath,L"CompanionAuto")!=L"0"){openCompanion(true);companionAutoStarted=companionProcess!=nullptr;}}
  else if(running&&companionAutoStarted&&!companionEnabled()){stopCompanion();companionAutoStarted=false;}

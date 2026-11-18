@@ -5,7 +5,7 @@
 // Updates come from the BlueAsh relay (relay/worker.js): /update/check answers in plain text (version, date, size,
 // one "note=" line per change) and counts installs by a random id; the updater (updater/Update.ps1) downloads
 // /update/manifest.json's ZIP, checks its SHA-256 and swaps the files.
-const wchar_t* appVersion=L"2.31.4";
+const wchar_t* appVersion=L"2.31.5";
 const wchar_t* updateHost=L"modepulse-relay.modepulse.workers.dev";
 HANDLE updaterProcess=nullptr;
 struct UpdateInfo{std::wstring version,date,error;std::vector<std::wstring> notes;long long size=0;};
@@ -36,9 +36,15 @@ DWORD relayRequest(const wchar_t* verb,const std::wstring& path,const std::strin
 }
 // Anonymous problem count (relay/feedback.js PROBLEMS): only the kind, version and the random install id, once per kind
 // per run, and only with 익명 사용 통계 on. It tells the developer that something breaks before anyone writes in.
-void reportProblem(const wchar_t* kind){
+// The error the user saw goes with the problem (detail): one line, 300 characters, the user's folder hidden first.
+std::wstring problemText(std::wstring s){wchar_t home[MAX_PATH]={};DWORD n=GetEnvironmentVariableW(L"USERPROFILE",home,MAX_PATH);
+ if(n&&n<MAX_PATH){std::wstring h=home,low=s,lh=h;for(auto& c:low)c=towlower(c);for(auto& c:lh)c=towlower(c);for(size_t at;(at=low.find(lh))!=std::wstring::npos;){s.replace(at,h.size(),L"%USERPROFILE%");low.replace(at,h.size(),L"%userprofile%");}}
+ for(auto& c:s){if(c<32)c=L' ';}if(s.size()>300)s.resize(300);return s;}
+std::wstring urlPart(const std::wstring& s){std::string u;int n=WideCharToMultiByte(CP_UTF8,0,s.c_str(),(int)s.size(),nullptr,0,nullptr,nullptr);u.resize(n);WideCharToMultiByte(CP_UTF8,0,s.c_str(),(int)s.size(),&u[0],n,nullptr,nullptr);
+ std::wstring out;const char* hex="0123456789ABCDEF";for(unsigned char c:u){if(isalnum(c)||c=='-'||c=='_'||c=='.'||c=='~')out+=(wchar_t)c;else{out+=L'%';out+=(wchar_t)hex[c>>4];out+=(wchar_t)hex[c&15];}}return out;}
+void reportProblem(const wchar_t* kind,const std::wstring& detail){
  static std::set<std::wstring> sent;if(!usageStats()||!sent.insert(kind).second)return;
- auto id=installId();if(id.empty())return;auto* path=new std::wstring(std::wstring(L"/problem?id=")+id+L"&v="+appVersion+L"&k="+kind);
+ auto id=installId();if(id.empty())return;std::wstring d=problemText(detail);auto* path=new std::wstring(std::wstring(L"/problem?id=")+id+L"&v="+appVersion+L"&k="+kind+(d.empty()?L"":L"&d="+urlPart(d)));
  HANDLE t=CreateThread(nullptr,0,[](LPVOID p)->DWORD{auto* s=(std::wstring*)p;relayRequest(L"GET",*s);delete s;return 0;},path,0,nullptr);if(t)CloseHandle(t);else delete path;
 }
 // Runs on a worker thread: everything it needs is copied in, the result goes back to the main window (WM_APP+178).
@@ -122,14 +128,14 @@ struct UpdateWatch {
    if(regString(configPath,L"LastVersion")!=appVersion){if(!regString(configPath,L"LastVersion").empty())notify((std::wstring(L"BlueAsh ")+appVersion+i18n::text(L"로 업데이트했습니다")).c_str(),i18n::text(L"바뀐 점은 업데이트 화면에서 볼 수 있습니다."));saveString(configPath,L"LastVersion",appVersion);}
    UpdateRun last;std::wstring locale;WIN32_FILE_ATTRIBUTE_DATA a={};auto p=progressPath();
    if(readRun(last,&locale)&&locale==i18n::languageCode()&&last.state==L"error"&&GetFileAttributesExW(p.c_str(),GetFileExInfoStandard,&a)){FILETIME t;GetSystemTimeAsFileTime(&t);ULONGLONG age=((((ULONGLONG)t.dwHighDateTime<<32)|t.dwLowDateTime)-(((ULONGLONG)a.ftLastWriteTime.dwHighDateTime<<32)|a.ftLastWriteTime.dwLowDateTime))/10000000ULL;
-    if(age<600){run=last;reportProblem(failKind(last).c_str());notify(i18n::text(L"업데이트하지 못했습니다"),last.step.c_str());}}
+    if(age<600){run=last;reportProblem(failKind(last).c_str(),last.step);notify(i18n::text(L"업데이트하지 못했습니다"),last.step.c_str());}}
    }
   if(now>=next)check();}
  // While the updater runs: re-read its progress every 100 ms (timer 79 on the main window).
  void tick(){UpdateRun r;if(statusSince&&readRun(r,nullptr,statusSince)){bool changed=r.state!=run.state||r.step!=run.step||r.detail!=run.detail||r.part!=run.part;run=r;if(changed)repaint();}
   if(!running()){KillTimer(win,79);if(run.state==L"working"){run.state=L"error";if(run.stage.empty())run.stage=L"start";run.step=i18n::text(L"업데이트가 중간에 멈췄습니다.");run.detail=i18n::text(L"기존 프로그램과 설정은 그대로입니다.");}
    else if(run.state==L"latest"){run={};checked=false;check();}
-   if(run.state==L"error"){reportProblem(failKind(run).c_str());}repaint();}}
+   if(run.state==L"error"){reportProblem(failKind(run).c_str(),run.step);}repaint();}}
  void notify(const wchar_t* title,const wchar_t* text){
   NOTIFYICONDATAW n={};n.cbSize=sizeof(n);n.hWnd=win;n.uID=1;n.uFlags=NIF_INFO;n.dwInfoFlags=NIIF_INFO;wcsncpy(n.szInfoTitle,title,63);wcsncpy(n.szInfo,text,255);Shell_NotifyIconW(NIM_MODIFY,&n);balloonUpdateAt=GetTickCount64();
  }
@@ -188,7 +194,21 @@ std::wstring megabytes(long long b){wchar_t s[32];swprintf(s,32,L"%.1f MB",b/104
 RECT refreshButton(){return {766,116,804,154};}
 bool refreshHover=false;ULONGLONG refreshSpinAt=0; // set by a click: the icon turns once (and keeps turning while the check runs)
 // Angle of the refresh icon: one eased turn in 0.7 s; if the check is still running after that, steady turns until it ends.
-double refreshAngle(){if(!refreshSpinAt){return 0;}double t=(GetTickCount64()-refreshSpinAt)/700.0;if(t<1){double u=1-t;return 360*(1-u*u*u);}return updateWatch.checking?360*(t-1-(int)(t-1)):0;}
+// The refresh spin: speeds up gently, turns steadily while the check runs, then eases to rest exactly on a whole turn
+// (the slowing keeps the speed it had, so there is no jump). One turn at least, so a quick check still reads as a spin.
+double spinStopAt=-1,spinStopA=0,spinStopV=0,spinStopD=0;
+double refreshAngle(){if(!refreshSpinAt){spinStopAt=-1;return 0;}const double cruise=420,ramp=0.22;double t=std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count()-refreshSpinAt/1000.0;
+ auto run=[&](double u){return u<ramp?cruise*u*u/(2*ramp):cruise*ramp/2+cruise*(u-ramp);};auto speed=[&](double u){return u<ramp?cruise*u/ramp:cruise;};
+ if(spinStopAt<0&&!updateWatch.checking&&run(t)>=300){double a=run(t),v=speed(t),target=std::ceil((a+v*0.35)/360)*360;spinStopAt=t;spinStopA=a;spinStopV=v;spinStopD=target-a;}
+ if(spinStopAt<0){return std::fmod(run(t),360);}double u=t-spinStopAt,T=2*spinStopD/spinStopV;if(u>=T){refreshSpinAt=0;spinStopAt=-1;return 0;}
+ return std::fmod(spinStopA+spinStopV*u-spinStopV*spinStopV/(4*spinStopD)*u*u,360);}
+// The refresh mark drawn as vectors (an open ring with an arrowhead), so it stays smooth at any angle.
+void refreshMark(HDC dc,RECT b,COLORREF c,double deg){if(!painting::token){glyph(dc,0xE72C,b,iconFont,c);return;}Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
+ float cx=(b.left+b.right)/2.f,cy=(b.top+b.bottom)/2.f,rr=7.5f;g.TranslateTransform(cx,cy);g.RotateTransform((float)deg);Gdiplus::Pen pen(painting::color(c),1.9f);pen.SetStartCap(Gdiplus::LineCapRound);pen.SetEndCap(Gdiplus::LineCapRound);
+ g.DrawArc(&pen,-rr,-rr,rr*2,rr*2,-60.f,290.f);float e=(float)((-60.0+290.0)*3.14159265358979/180),ex=rr*std::cos(e),ey=rr*std::sin(e);
+ // arrowhead at the arc's end, along its direction of travel
+ float tx=-std::sin(e),ty=std::cos(e),nx=std::cos(e),ny=std::sin(e),L=4.6f,W=3.2f;Gdiplus::PointF tri[3]={{ex+tx*L*0.55f,ey+ty*L*0.55f},{ex-tx*L*0.45f+nx*W,ey-ty*L*0.45f+ny*W},{ex-tx*L*0.45f-nx*W,ey-ty*L*0.45f-ny*W}};
+ Gdiplus::SolidBrush head(painting::color(c));g.FillPolygon(&head,tri,3);}
 // 패치 내역: a scrolling list in the lower card — each release's version, date and changes, newest first; a newer
 // version than this one (not yet installed) leads with a 새 버전 tag, this install's own version carries 지금 버전.
 // The wheel moves a target and timer 8 eases the list toward it; rows are laid out once per width and data, and only
@@ -261,9 +281,7 @@ void paintUpdate(HDC dc){historyLink={};
  textAt(dc,when,{58,128,804,152},smallFont,muted);
  // Check now: a refresh icon in the card's bottom-right corner (blue while a check runs).
  if(!w.running()){RECT b=refreshButton();if(refreshHover&&!w.checking)roundBox(dc,b,tint,tint,10);double deg=refreshAngle();
-  if(deg!=0){double a=deg*3.14159265358979/180,c=std::cos(a),n=std::sin(a),cx=(b.left+b.right)/2.0,cy=(b.top+b.bottom)/2.0;int mode=SetGraphicsMode(dc,GM_ADVANCED);XFORM keep={};GetWorldTransform(dc,&keep); /* keep the display scale (dpi.h): rotate inside it */XFORM x={(FLOAT)c,(FLOAT)n,(FLOAT)-n,(FLOAT)c,(FLOAT)(cx-cx*c+cy*n),(FLOAT)(cy-cx*n-cy*c)};ModifyWorldTransform(dc,&x,MWT_LEFTMULTIPLY);
-   glyph(dc,0xE72C,b,iconFont,w.checking?blue:refreshHover?ink:muted);SetWorldTransform(dc,&keep);SetGraphicsMode(dc,mode);}
-  else glyph(dc,0xE72C,b,iconFont,w.checking?blue:refreshHover?ink:muted);}
+  refreshMark(dc,b,(w.checking||refreshSpinAt)?blue:refreshHover?ink:muted,deg);}
  if(r){
   bool bad=w.run.state==L"error"||w.run.state==L"cancel";
   textAt(dc,bad?(w.run.state==L"cancel"?i18n::text(L"업데이트 취소됨"):i18n::text(L"업데이트하지 못했습니다")):i18n::text(L"업데이트 중"),{36,182,816,208},boldFont,bad?danger:ink);
@@ -319,7 +337,7 @@ LRESULT CALLBACK updateProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
   if(on){TRACKMOUSEEVENT t={sizeof(t),TME_LEAVE,h,0};TrackMouseEvent(&t);}return 0;}
  case WM_MOUSELEAVE:if(linkHover||barHover){linkHover=barHover=false;InvalidateRect(h,nullptr,FALSE);}if(refreshHover){refreshHover=false;RECT b=refreshButton();InvalidateRect(h,&b,FALSE);}return 0;
  case WM_SETCURSOR:if((HWND)wp==h){POINT c=cursorIn(h);if(PtInRect(&historyLink,c)&&!updateWatch.showingRun()){SetCursor(LoadCursorW(nullptr,IDC_HAND));return TRUE;}POINT p;GetCursorPos(&p);ScreenToClient(h,&p);RECT b=refreshButton();if(PtInRect(&b,p)&&!updateWatch.running()){SetCursor(LoadCursorW(nullptr,IDC_HAND));return TRUE;}}break;
- case WM_LBUTTONUP:{if(barDrag){ReleaseCapture();return 0;}POINT p={(short)LOWORD(lp),(short)HIWORD(lp)};RECT b=refreshButton();if(PtInRect(&b,p)&&!updateWatch.running()&&!updateWatch.busy()){refreshSpinAt=GetTickCount64();SetTimer(h,7,15,nullptr);updateWatch.check();}return 0;}
+ case WM_LBUTTONUP:{if(barDrag){ReleaseCapture();return 0;}POINT p={(short)LOWORD(lp),(short)HIWORD(lp)};RECT b=refreshButton();if(PtInRect(&b,p)&&!updateWatch.running()&&!updateWatch.busy()){refreshSpinAt=(ULONGLONG)(std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count()*1000);spinStopAt=-1;SetTimer(h,7,10,nullptr);updateWatch.check();}return 0;}
  case WM_LBUTTONDOWN:{if(updateWatch.showingRun())return 0;POINT p=cursorIn(h);
   if(PtInRect(&historyLink,p)){showHistory=!showHistory;historyY=0;historyGoal=0;linkHover=false;if(showHistory)updateWatch.loadHistory();InvalidateRect(h,nullptr,FALSE);return 0;}
   if(showHistory&&barLen&&p.x>=historyThumb.left&&p.x<historyThumb.right&&p.y>=trackTop&&p.y<trackTop+trackLen){
@@ -330,7 +348,7 @@ LRESULT CALLBACK updateProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
  case WM_MOUSEWHEEL:if(showHistory&&!updateWatch.showingRun()&&!updateWatch.history.empty()){historyGoal=std::clamp(historyGoal-GET_WHEEL_DELTA_WPARAM(wp)*96/WHEEL_DELTA,0,historyMax());SetTimer(h,8,15,nullptr);}return 0;
  case WM_TIMER:if(wp==8){ // eased by elapsed time (about 90% of the way in 160 ms), so a slow frame does not slow the scroll
    static ULONGLONG last=0;ULONGLONG now=GetTickCount64();double dt=last&&now-last<100?(double)(now-last):15.0;last=now;double d=historyGoal-historyY;historyY=std::abs(d)<0.6?historyGoal:historyY+d*(1-std::exp(-dt/70.0));RECT b=historyBox();InvalidateRect(h,&b,FALSE);if(historyY==historyGoal)KillTimer(h,8);return 0;}
-  if(wp==7){RECT b=refreshButton();if(GetTickCount64()-refreshSpinAt>=700&&!updateWatch.checking){refreshSpinAt=0;KillTimer(h,7);}InvalidateRect(h,&b,FALSE);}return 0;
+  if(wp==7){RECT b=refreshButton();refreshAngle();if(!refreshSpinAt)KillTimer(h,7);InvalidateRect(h,&b,FALSE);}return 0;
  case WM_ERASEBKGND:return 1; // the background is part of WM_PAINT's off-screen frame
  case WM_CTLCOLORSTATIC:return pageStatic(wp,lp);
  case WM_DRAWITEM:drawButton((DRAWITEMSTRUCT*)lp);return TRUE;

@@ -78,7 +78,7 @@ struct PriceWatch {
    HANDLE h=CreateFileW(file.c_str(),GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,OPEN_EXISTING,0,nullptr);
    if(h!=INVALID_HANDLE_VALUE){FILETIME written={};bool fresh=GetFileTime(h,nullptr,nullptr,&written)&&(((ULONGLONG)written.dwHighDateTime<<32)|written.dwLowDateTime)>=statusSince;char data[8192];DWORD n=0;if(fresh&&ReadFile(h,data,sizeof(data),&n,nullptr)&&n){int size=MultiByteToWideChar(CP_UTF8,0,data,n,nullptr,0);if(size>0){std::wstring s(size,0);MultiByteToWideChar(CP_UTF8,0,data,n,&s[0],size);message=s;}}CloseHandle(h);}
   }
-  if(!running()){DWORD code=0;if(GetExitCodeProcess(process,&code)&&code!=0)reportProblem(L"price-crash");if(job){CloseHandle(job);job=nullptr;}CloseHandle(process);process=nullptr;message=i18n::text(L"멈춤 (1분 뒤 다시 시도) · ")+message;retryAfter=now+60000;}
+  if(!running()){DWORD code=0;if(GetExitCodeProcess(process,&code)&&code!=0)reportProblem(L"price-crash",helperLastError(L"price",code));if(job){CloseHandle(job);job=nullptr;}CloseHandle(process);process=nullptr;message=i18n::text(L"멈춤 (1분 뒤 다시 시도) · ")+message;retryAfter=now+60000;}
   render();
  }
  void render(){if(!dialog)return;setText(GetDlgItem(dialog,190),message);setText(GetDlgItem(dialog,191),running()?i18n::text(L"지금 끄기"):i18n::text(L"지금 켜기"));setText(GetDlgItem(dialog,194),i18n::text(L"단축키: ")+keyName()+(shortcut?L"":i18n::text(L" (등록 실패)")));InvalidateRect(GetDlgItem(dialog,198),nullptr,TRUE);}

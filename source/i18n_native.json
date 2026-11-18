@@ -3464,20 +3464,20 @@
     "tr": " (yol kaydedilemedi)",
     "zh-TW": " （無法儲存路徑）"
   },
-  "BlueAsh 2.31.4\r\n알림: ": {
-    "ko": "BlueAsh 2.31.4\r\n알림: ",
-    "en": "BlueAsh 2.31.4\r\nAlerts: ",
-    "zh-CN": "BlueAsh 2.31.4\r\n提醒：",
-    "ja": "BlueAsh 2.31.4\r\n通知: ",
-    "ru": "BlueAsh 2.31.4\r\nУведомления: ",
-    "es": "BlueAsh 2.31.4\r\nAlertas: ",
-    "pt-BR": "BlueAsh 2.31.4\r\nAlertas: ",
-    "de": "BlueAsh 2.31.4\r\nAlarme: ",
-    "fr": "BlueAsh 2.31.4\r\nAlertes : ",
-    "it": "BlueAsh 2.31.4\r\nAvvisi: ",
-    "pl": "BlueAsh 2.31.4\r\nAlerty: ",
-    "tr": "BlueAsh 2.31.4\r\nUyarılar: ",
-    "zh-TW": "BlueAsh 2.31.4\r\n提醒："
+  "BlueAsh 2.31.5\r\n알림: ": {
+    "ko": "BlueAsh 2.31.5\r\n알림: ",
+    "en": "BlueAsh 2.31.5\r\nAlerts: ",
+    "zh-CN": "BlueAsh 2.31.5\r\n提醒：",
+    "ja": "BlueAsh 2.31.5\r\n通知: ",
+    "ru": "BlueAsh 2.31.5\r\nУведомления: ",
+    "es": "BlueAsh 2.31.5\r\nAlertas: ",
+    "pt-BR": "BlueAsh 2.31.5\r\nAlertas: ",
+    "de": "BlueAsh 2.31.5\r\nAlarme: ",
+    "fr": "BlueAsh 2.31.5\r\nAlertes : ",
+    "it": "BlueAsh 2.31.5\r\nAvvisi: ",
+    "pl": "BlueAsh 2.31.5\r\nAlerty: ",
+    "tr": "BlueAsh 2.31.5\r\nUyarılar: ",
+    "zh-TW": "BlueAsh 2.31.5\r\n提醒："
   },
   " / 볼륨: ": {
     "ko": " / 볼륨: ",
@@ -6209,20 +6209,20 @@
     "tr": "Sunucuya ulaşılamadı. İnternet bağlantınızı kontrol edin.",
     "zh-TW": "無法連線到伺服器，請檢查網路連線。"
   },
-  "익명 사용 통계 보내기 · 임의 번호·버전·문제 종류만 (사용자 수·오류 파악용)": {
-    "ko": "익명 사용 통계 보내기 · 임의 번호·버전·문제 종류만 (사용자 수·오류 파악용)",
-    "en": "Send anonymous usage stats · random number, version and problem type only (user count, error tracking)",
-    "zh-CN": "发送匿名使用统计 · 仅随机编号、版本和问题类型（统计用户数、发现错误）",
-    "ja": "匿名の利用統計を送る · ランダム番号・バージョン・問題の種類のみ（利用者数・エラー把握用）",
-    "ru": "Анонимная статистика · только случайный номер, версия и тип проблемы (число пользователей, ошибки)",
-    "es": "Enviar estadísticas de uso anónimas · solo un número aleatorio, la versión y el tipo de problema (número de usuarios, seguimiento de errores)",
-    "pt-BR": "Enviar estatísticas de uso anônimas · apenas número aleatório, versão e tipo de problema (contagem de usuários, rastreio de erros)",
-    "de": "Anonyme Nutzungsstatistik senden · nur Zufallsnummer, Version und Problemart (Nutzerzahl, Fehlerverfolgung)",
-    "fr": "Envoyer des statistiques anonymes · numéro aléatoire, version et type de problème uniquement (nombre d'utilisateurs, suivi des erreurs)",
-    "it": "Invia statistiche d'uso anonime · solo numero casuale, versione e tipo di problema (numero di utenti, tracciamento errori)",
-    "pl": "Wysyłaj anonimowe statystyki · tylko losowy numer, wersja i rodzaj problemu (liczba użytkowników, śledzenie błędów)",
-    "tr": "Anonim kullanım istatistiği gönder · yalnızca rastgele numara, sürüm ve sorun türü (kullanıcı sayısı, hata takibi)",
-    "zh-TW": "傳送匿名使用統計 · 只有隨機編號、版本與問題類型（使用者人數、錯誤追蹤）"
+  "익명 사용 통계 보내기 · 임의 번호·버전·문제 종류·오류 문구 (사용자 이름 제외)": {
+    "ko": "익명 사용 통계 보내기 · 임의 번호·버전·문제 종류·오류 문구 (사용자 이름 제외)",
+    "en": "Send anonymous usage stats · random number, version, problem type and error text (no user name)",
+    "zh-CN": "发送匿名使用统计 · 随机编号、版本、问题类型和错误信息（不含用户名）",
+    "ja": "匿名の利用統計を送信 · ランダム番号・バージョン・問題の種類・エラー文（ユーザー名なし）",
+    "ru": "Отправлять анонимную статистику · случайный номер, версия, тип проблемы и текст ошибки (без имени пользователя)",
+    "es": "Enviar estadísticas anónimas · número aleatorio, versión, tipo de problema y texto del error (sin nombre de usuario)",
+    "pt-BR": "Enviar estatísticas anônimas · número aleatório, versão, tipo de problema e texto do erro (sem nome de usuário)",
+    "de": "Anonyme Nutzungsstatistik senden · Zufallsnummer, Version, Problemart und Fehlertext (ohne Benutzernamen)",
+    "fr": "Envoyer des statistiques anonymes · numéro aléatoire, version, type de problème et texte d’erreur (sans nom d’utilisateur)",
+    "it": "Invia statistiche anonime · numero casuale, versione, tipo di problema e testo dell’errore (senza nome utente)",
+    "pl": "Wysyłaj anonimowe statystyki · losowy numer, wersja, rodzaj problemu i treść błędu (bez nazwy użytkownika)",
+    "tr": "Anonim kullanım istatistikleri gönder · rastgele numara, sürüm, sorun türü ve hata metni (kullanıcı adı olmadan)",
+    "zh-TW": "傳送匿名使用統計 · 隨機編號、版本、問題類型與錯誤訊息（不含使用者名稱）"
   },
   "진단 정보 같이 보내기": {
     "ko": "진단 정보 같이 보내기",
