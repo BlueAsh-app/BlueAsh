@@ -1,13 +1,14 @@
 ﻿# Builds the data pack: files BlueAsh uses that are not open source and therefore not in git or in the exe (Fandom map
 # pictures, markers and text translations; PUBG reference maps and map labels). They live in data/ (git-ignored):
-#   data/maps/*.jpg, data/maps/markers.json, data/maps/pubg/**, data/companion/FandomText.tsv
+#   data/maps/*.jpg, data/maps/markers.json, data/maps/pubg/**, data/companion/FandomText.tsv,
+#   data/sound/{footstep,gunshot}/*.wav (sound boost preview: PUBG footstep and M4 recordings)
 # Output: relay/public/data/datapack-<sha12>.bin (served by the relay) and source/datapack_id.h (the file name and
 # SHA-256 the exe accepts). BlueAsh downloads the pack once and copies its files into its runtime folder at the same
 # paths (source/datapack.h). Run it after changing anything under data/, then rebuild the exe.
 # Pack format: "BAPK1\n", one "<path>\t<size>\n" line per file, an empty line, then the files' bytes in that order.
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent;$data=Join-Path $root 'data'
-$files=@(foreach($dir in 'maps','companion'){Get-ChildItem -LiteralPath (Join-Path $data $dir) -File -Recurse})|ForEach-Object{[pscustomobject]@{Path=$_.FullName.Substring($data.Length+1).Replace('\','/');File=$_}}|Sort-Object Path -CaseSensitive
+$files=@(foreach($dir in 'maps','companion','sound'){Get-ChildItem -LiteralPath (Join-Path $data $dir) -File -Recurse})|ForEach-Object{[pscustomobject]@{Path=$_.FullName.Substring($data.Length+1).Replace('\','/');File=$_}}|Sort-Object Path -CaseSensitive
 if($files.Count -lt 10){throw 'data/ 폴더에 데이터 파일이 없습니다.'}
 $ms=New-Object IO.MemoryStream;$utf8=New-Object Text.UTF8Encoding($false)
 $head='BAPK1'+"`n"+(($files|ForEach-Object{$_.Path+"`t"+$_.File.Length})-join "`n")+"`n`n";$b=$utf8.GetBytes($head);$ms.Write($b,0,$b.Length)

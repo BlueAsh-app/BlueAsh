@@ -25,11 +25,11 @@ void glyph(HDC,wchar_t,RECT,HFONT,COLORREF){}
 namespace painting {bool circle(HDC,RECT,COLORREF,COLORREF,float=1.f){return false;}void outline(HDC,RECT,COLORREF,int){}}
 #include "dashboard_ui.h"
 int main(){
- assert(dashboard::fromPoint(62,-100,376)==50);
- assert(dashboard::fromPoint(62,1000,376)==300);
+ assert(dashboard::fromPoint(62,-100,376)==(int)settings::gammaLow);
+ assert(dashboard::fromPoint(62,1000,376)==(int)settings::gammaHigh);
  assert(dashboard::fromPoint(61,-100,376)==0);
  assert(dashboard::fromPoint(61,1000,376)==100);
- assert(dashboard::fromPoint(62,10,0)==50);
+ assert(dashboard::fromPoint(62,10,0)==(int)settings::gammaLow);
  active=true;normalRestored=true;appliedProfile.gamma=123;appliedProfile.volume=37;
  assert(dashboard::value(62)==123&&dashboard::value(61)==37);normalRestored=false;
  profiles[3].extended=true;profiles[3].brightness[1]=123;profiles[3].contrast[2]=88;

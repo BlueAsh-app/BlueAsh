@@ -26,6 +26,9 @@ double qpcNow(){static LARGE_INTEGER f={};if(!f.QuadPart)QueryPerformanceFrequen
 
 enum State {Idle,Recording,Showing};
 State state=Idle;HWND badge=nullptr,game=nullptr;double startedAt=0,shownAt=0;std::wstring title,line;COLORREF tone=0;int mark=0; // mark: 0 recording dot, 1 check, 2 warning
+// The guided steps while recording: 0 = the sweep (aimed in as for the spray, up and down three times, no shots: measures
+// pixels per count in the spray's own aim state), 1 = the magazines (counted live; the fifth ends it). prog: the sweep's bar.
+int step=0,mags=0;double calEnd=0,doneAt=0,prog=-1;bool keyHeld=false,keyDown=false;void toggle();struct Sweep {size_t seen=0;double travel=0,acc=0;int dir=0,flips=0;bool down=false;double pressT=0;}sweep;
 // pre-roll: the last ~3 s the live recorder kept before the key (frames shrunk as it shrinks them, its scale and the
 // columns to skip), so the ordinary aim movement before the first shot measures pixels per count (no wiggle needed)
 bool(*preroll)(std::vector<std::pair<double,recoil::Gray>>&,std::vector<recoil::Mouse>&,int&,int&,int&)=nullptr;std::vector<std::pair<double,recoil::Gray>> pre;int preScale=1,preL=0,preR=0;
@@ -122,13 +125,16 @@ void draw(){if(!badge||!game)return;if(state==Showing&&card.on){drawCard();retur
     HDC screen=GetDC(nullptr);HDC dc=CreateCompatibleDC(screen);
     HFONT big=CreateFontW(-(int)std::lround(18*k),0,0,0,FW_BOLD,0,0,0,DEFAULT_CHARSET,0,0,ANTIALIASED_QUALITY,0,i18n::fontFamily()),small=CreateFontW(-(int)std::lround(13*k),0,0,0,FW_NORMAL,0,0,0,DEFAULT_CHARSET,0,0,ANTIALIASED_QUALITY,0,i18n::fontFamily());
     SIZE s1={},s2={};HGDIOBJ of=SelectObject(dc,big);GetTextExtentPoint32W(dc,t1.c_str(),(int)t1.size(),&s1);SelectObject(dc,small);GetTextExtentPoint32W(dc,t2.c_str(),(int)t2.size(),&s2);SelectObject(dc,of);
-    int pad=(int)std::lround(18*k),icon=(int)std::lround(22*k),gap=(int)std::lround(12*k),w=pad*2+icon+gap+std::max(s1.cx,s2.cx),h=(int)std::lround(14*k)*2+s1.cy+(t2.empty()?0:s2.cy+(int)std::lround(2*k));
+    int pad=(int)std::lround(18*k),icon=(int)std::lround(22*k),gap=(int)std::lround(12*k),w=pad*2+icon+gap+std::max(s1.cx,s2.cx),barH=(int)std::lround(6*k),h=(int)std::lround(14*k)*2+s1.cy+(t2.empty()?0:s2.cy+(int)std::lround(2*k))+(prog>=0?barH+(int)std::lround(10*k):0);
     BITMAPINFO bi={};bi.bmiHeader.biSize=sizeof(bi.bmiHeader);bi.bmiHeader.biWidth=w;bi.bmiHeader.biHeight=-h;bi.bmiHeader.biPlanes=1;bi.bmiHeader.biBitCount=32;void* bits=nullptr;HBITMAP dib=CreateDIBSection(screen,&bi,DIB_RGB_COLORS,&bits,nullptr,0);
     if(dib&&painting::token){HGDIOBJ ob=SelectObject(dc,dib);memset(bits,0,size_t(w)*h*4);
         {Gdiplus::Bitmap canvas(w,h,w*4,PixelFormat32bppPARGB,(BYTE*)bits);Gdiplus::Graphics g(&canvas);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
             Gdiplus::GraphicsPath p;painting::path(p,{0,0,w,h},std::min(h,(int)std::lround(24*k)));Gdiplus::SolidBrush fill(Gdiplus::Color(236,10,17,36));g.FillPath(&fill,&p);
             Gdiplus::Pen edge(state==Recording?Gdiplus::Color(200,255,80,90):Gdiplus::Color(170,74,112,224),(float)std::max(1.0,1.2*k));g.DrawPath(&edge,&p);
-            float cx=pad+icon/2.f,cy=h/2.f,r=icon/2.f;
+            if(prog>=0){float bx=(float)(pad+icon+gap),bw=(float)(w-pad)-bx,by=(float)(h-(int)std::lround(14*k)-barH); // the sweep's progress: a cobalt bar on a dim track
+                Gdiplus::GraphicsPath tr;painting::path(tr,{(int)bx,(int)by,(int)(bx+bw),(int)by+barH},barH/2);Gdiplus::SolidBrush tb(Gdiplus::Color(255,30,44,78));g.FillPath(&tb,&tr);
+                int fw=(int)std::lround(bw*std::clamp(prog,0.0,1.0));if(fw>=barH){Gdiplus::GraphicsPath fp;painting::path(fp,{(int)bx,(int)by,(int)bx+fw,(int)by+barH},barH/2);Gdiplus::LinearGradientBrush fb(Gdiplus::PointF(bx,by),Gdiplus::PointF(bx+bw,by),Gdiplus::Color(255,52,92,255),Gdiplus::Color(255,110,190,255));g.FillPath(&fb,&fp);}}
+            float cx=pad+icon/2.f,cy=(prog>=0?h-barH-(int)std::lround(10*k):h)/2.f,r=icon/2.f;
             if(mark==0){double pulse=(std::sin(qpcNow()*6)+1)/2;float rr=r*(.45f+.12f*(float)pulse);Gdiplus::GraphicsPath halo;halo.AddEllipse(cx-r,cy-r,r*2,r*2);Gdiplus::PathGradientBrush hb(&halo);hb.SetCenterColor(Gdiplus::Color((BYTE)(90+80*pulse),255,70,80));Gdiplus::Color he(0,255,70,80);INT n=1;hb.SetSurroundColors(&he,&n);g.FillPath(&hb,&halo);Gdiplus::SolidBrush dot(Gdiplus::Color(255,255,76,86));g.FillEllipse(&dot,cx-rr,cy-rr,rr*2,rr*2);}
             else if(mark==1){Gdiplus::SolidBrush b(Gdiplus::Color(255,52,92,255));g.FillEllipse(&b,cx-r*.8f,cy-r*.8f,r*1.6f,r*1.6f);Gdiplus::Pen c(Gdiplus::Color(255,255,255,255),(float)(2.2*k));painting::roundCaps(c);g.DrawLine(&c,cx-r*.35f,cy,cx-r*.08f,cy+r*.28f);g.DrawLine(&c,cx-r*.08f,cy+r*.28f,cx+r*.38f,cy-r*.3f);}
             else{Gdiplus::SolidBrush b(Gdiplus::Color(255,240,170,70));g.FillEllipse(&b,cx-r*.8f,cy-r*.8f,r*1.6f,r*1.6f);Gdiplus::Pen c(Gdiplus::Color(255,20,22,30),(float)(2.4*k));painting::roundCaps(c);g.DrawLine(&c,cx,cy-r*.4f,cx,cy+r*.08f);g.DrawLine(&c,cx,cy+r*.36f,cx,cy+r*.38f);}}
@@ -147,14 +153,32 @@ void draw(){if(!badge||!game)return;if(state==Showing&&card.on){drawCard();retur
     if(dib){DeleteObject(dib);}DeleteObject(big);DeleteObject(small);DeleteDC(dc);ReleaseDC(nullptr,screen);}
 void hide(){if(badge)ShowWindow(badge,SW_HIDE);state=Idle;}
 void finish();
+void show(const std::wstring& t,const std::wstring& l2,int mk,COLORREF c);std::wstring fmtw(const wchar_t* key,...);
+void guideText(){if(step==0)show(i18n::text(L"1/2 · 조준 보정"),i18n::text(L"총은 쏘지 말고, 벽을 보고 조준(우클릭)한 채 마우스를 위아래로 천천히 3번 움직이세요"),0,0);
+    else show(fmtw(L"2/2 · 벽에 쏘기 %d/5",mags),fmtw(L"한 점을 노리고 반동을 당겨 그 점을 지키세요 · 탄창마다 장전 후 반복 · %ls: 끝내기",keyName(key()).c_str()),0,0);}
+// Follows the player through the steps from the mouse alone: the sweep is done after 1.5 inches of vertical travel with
+// five turns (or at the first shot, which skips it); a magazine counts when the trigger was held 0.35 s or more.
+void guide(){double now=qpcNow();std::vector<recoil::Mouse> fresh;{std::lock_guard<std::mutex> l(mu);for(size_t i=sweep.seen;i<mice.size();i++)fresh.push_back(mice[i]);sweep.seen=mice.size();}
+    int dpi=atoi(profileValue("dpi").c_str());double need=(dpi>0?dpi:800)*1.5,chunk=need/12;
+    for(auto& q:fresh){if(q.t<startedAt)continue; /* the pre-roll's mouse */
+        if(q.button>0){sweep.down=true;sweep.pressT=q.t;if(step==0){step=1;calEnd=q.t;prog=-1;}}
+        else if(q.button<0&&sweep.down){sweep.down=false;if(step==1&&q.t-sweep.pressT>=.35&&q.t>calEnd&&++mags>=5)doneAt=now;}
+        if(step==0&&q.dy){sweep.travel+=std::fabs((double)q.dy);sweep.acc+=q.dy;if(std::fabs(sweep.acc)>=chunk){int d=sweep.acc>0?1:-1;if(sweep.dir&&d!=sweep.dir)sweep.flips++;sweep.dir=d;sweep.acc=0;}}}
+    if(step==0){prog=std::min(sweep.travel/need,sweep.flips/5.0);if(sweep.travel>=need&&sweep.flips>=5){step=1;calEnd=now;prog=-1;}}
+    guideText();}
 LRESULT CALLBACK badgeProc(HWND h,UINT m,WPARAM w,LPARAM l){
     switch(m){
     case WM_NCHITTEST:return HTTRANSPARENT;
-    case WM_INPUT:{if(state!=Recording&&!liveMouse)break;RAWINPUT ri;UINT size=sizeof(ri);if(GetRawInputData((HRAWINPUT)l,RID_INPUT,&ri,&size,sizeof(RAWINPUTHEADER))==(UINT)-1||ri.header.dwType!=RIM_TYPEMOUSE)break;const RAWMOUSE& mo=ri.data.mouse;
-        long dx=mo.usFlags&MOUSE_MOVE_ABSOLUTE?0:mo.lLastX,dy=mo.usFlags&MOUSE_MOVE_ABSOLUTE?0:mo.lLastY;int b=mo.usButtonFlags&RI_MOUSE_LEFT_BUTTON_DOWN?1:mo.usButtonFlags&RI_MOUSE_LEFT_BUTTON_UP?-1:0;
+    case WM_INPUT:{RAWINPUT ri;UINT size=sizeof(ri);if(GetRawInputData((HRAWINPUT)l,RID_INPUT,&ri,&size,sizeof(RAWINPUTHEADER))==(UINT)-1)break;
+        // the key, read (not taken) while PUBG is in front. With NumLock off the keypad's 0 / 7 / 1 also say Insert / Home / End:
+        // only the real keys (E0 prefix) count. Auto-repeat while held counts once.
+        if(ri.header.dwType==RIM_TYPEKEYBOARD){const RAWKEYBOARD& kb=ri.data.keyboard;unsigned k=key();bool nav=k==VK_INSERT||k==VK_HOME||k==VK_END||k==VK_DELETE||k==VK_PRIOR||k==VK_NEXT;
+            if(kb.VKey==k&&(!nav||(kb.Flags&RI_KEY_E0))){bool down=!(kb.Flags&RI_KEY_BREAK);if(down&&!keyDown){keyDown=true;if(keyHeld)toggle();}else if(!down)keyDown=false;}break;}
+        if(ri.header.dwType!=RIM_TYPEMOUSE||(state!=Recording&&!liveMouse)){break;}
+        const RAWMOUSE& mo=ri.data.mouse;long dx=mo.usFlags&MOUSE_MOVE_ABSOLUTE?0:mo.lLastX,dy=mo.usFlags&MOUSE_MOVE_ABSOLUTE?0:mo.lLastY;int b=mo.usButtonFlags&RI_MOUSE_LEFT_BUTTON_DOWN?1:mo.usButtonFlags&RI_MOUSE_LEFT_BUTTON_UP?-1:0;
         if(!(dx||dy||b)){break;}recoil::Mouse mm={qpcNow(),dx,dy,b};if(liveMouse)liveMouse(mm);if(state!=Recording)break;std::lock_guard<std::mutex> lk(mu);mice.push_back(mm);break;}
     case WM_TIMER:{if(state==Recording){DWORD pid=0;GetWindowThreadProcessId(GetForegroundWindow(),&pid);DWORD gp=0;GetWindowThreadProcessId(game,&gp);
-            if(!IsWindow(game)||IsIconic(game)||pid!=gp||qpcNow()-startedAt>25){finish();return 0;} /* PUBG left the front or 25 s passed: stop and analyse */draw();}
+            if(!IsWindow(game)||IsIconic(game)||pid!=gp||qpcNow()-startedAt>120||(doneAt>0&&qpcNow()-doneAt>.5)){finish();return 0;} /* PUBG left the front, 2 minutes passed, or the fifth magazine settled: stop and analyse */guide();}
         else if(state==Showing){if(qpcNow()-shownAt>7)hide();else{DWORD pid=0;GetWindowThreadProcessId(GetForegroundWindow(),&pid);DWORD gp=0;GetWindowThreadProcessId(game,&gp);if(pid!=gp)ShowWindow(badge,SW_HIDE);}}
         else{KillTimer(h,1);}return 0;}
     }return DefWindowProcW(h,m,w,l);}
@@ -169,9 +193,9 @@ void start(){if(state==Recording)return;DWORD pid=pubggame::gamePid();HWND h=pid
     {std::lock_guard<std::mutex> l(mu);shifts.clear();mice.clear();icon=recoil::Icon();failure.clear();still=recoil::StillMap();}card.on=false;
     pre.clear();{std::vector<recoil::Mouse> pm;if(preroll&&preroll(pre,pm,preScale,preL,preR)){std::lock_guard<std::mutex> l(mu);mice=pm;}else pre.clear();}
     RAWINPUTDEVICE rid={1,2,RIDEV_INPUTSINK,badge};if(!RegisterRawInputDevices(&rid,1,sizeof(rid)))return;
-    stopEvent=CreateEventW(nullptr,TRUE,FALSE,nullptr);startedAt=qpcNow();state=Recording;
+    stopEvent=CreateEventW(nullptr,TRUE,FALSE,nullptr);startedAt=qpcNow();state=Recording;step=0;mags=0;calEnd=0;doneAt=0;prog=0;sweep=Sweep();
     try{worker=std::thread(capture,h);}catch(...){state=Idle;return;}
-    show(i18n::text(L"반동 패턴 캡처 중"),fmtw(L"같은 총·부착물로 5탄창을 쏘세요 · 탄창마다 따로 계산 · 다시 %ls: 끝내기",keyName(key()).c_str()),0);SetTimer(badge,1,80,nullptr);}
+    guideText();SetTimer(badge,1,80,nullptr);}
 // The traces kept for the graph: at most 240 points each.
 std::string pts(const std::vector<recoil::Pt>& v){std::string s;size_t step=std::max<size_t>(1,v.size()/240);char b[48];for(size_t i=0;i<v.size();i+=step){snprintf(b,48,"%.1f,%.1f;",v[i].x,v[i].y);s+=b;}return s;}
 // set by the Aim Lab page: what the badge says after a saved spray (title, second line)
@@ -185,15 +209,14 @@ std::string shippedWeapons(){HMODULE m=GetModuleHandleW(nullptr);HRSRC r=FindRes
 // shortcut: the mouse DPI is not in PUBG's file; a DPI change without new settings keeps the old value until a capture moves enough.
 struct KCache {double h=0,v=0;int lag=1;};
 std::string sensPrint(const aim::Sens& s){char b[96];snprintf(b,96,"%.3f|%.3f|%.3f|%.3f",s.normal,s.targeting,s.scoping,s.vertical);std::string p=b;for(auto& sc:s.scopes){snprintf(b,96,"|%s=%.3f",sc.first.c_str(),sc.second);p+=b;}return p;}
-KCache kLookup(const std::string& fp,const std::string& scope){KCache best,any;std::istringstream in(readFile(folder()+L"\\kcache.tsv"));std::string l;
+// kcache2.tsv holds calibrated values only (the guided sweep); the old kcache.tsv and recoil.tsv guesses are no longer used
+KCache kLookup(const std::string& fp,const std::string& scope){KCache best,any;std::istringstream in(readFile(folder()+L"\\kcache2.tsv"));std::string l;
     while(std::getline(in,l)){std::stringstream ss(l);std::string f,sc,a,b,c;if(!std::getline(ss,f,'\t')||!std::getline(ss,sc,'\t')||!std::getline(ss,a,'\t')||!std::getline(ss,b,'\t')||!std::getline(ss,c,'\t')||f!=fp)continue;
         KCache k{atof(a.c_str()),atof(b.c_str()),atoi(c.c_str())};if(k.h<=0||k.v<=0)continue;any=k;if(sc==scope)best=k;}
-    if(best.h<=0&&any.h<=0&&readFile(folder()+L"\\kcache.tsv").empty()){ /* before this cache existed: the newest capture's own measurement (recoil.tsv: vm column 4, kV column 10) */
-        std::istringstream rin(readFile(folder()+L"\\recoil.tsv"));while(std::getline(rin,l)){std::vector<std::string> c;std::stringstream ss(l);std::string x;while(std::getline(ss,x,'\t')){c.push_back(x);}if(c.size()>=11){double vm=atof(c[4].c_str()),kv=atof(c[10].c_str());if(vm>0&&kv>0){any={kv/vm,kv,1};}}}}
     return best.h>0?best:any;}
-void kSave(const std::string& fp,const std::string& scope,double h,double v,int lag){if(h<=0||v<=0)return;std::istringstream in(readFile(folder()+L"\\kcache.tsv"));std::string l,body;std::vector<std::string> keep;
+void kSave(const std::string& fp,const std::string& scope,double h,double v,int lag){if(h<=0||v<=0)return;std::istringstream in(readFile(folder()+L"\\kcache2.tsv"));std::string l,body;std::vector<std::string> keep;
     while(std::getline(in,l)){if(l.empty()||l.rfind(fp+"\t"+scope+"\t",0)==0)continue;keep.push_back(l);}while(keep.size()>40)keep.erase(keep.begin());char b[96];snprintf(b,96,"\t%.5f\t%.5f\t%d",h,v,lag);keep.push_back(fp+"\t"+scope+b);
-    for(auto& k:keep){body+=k+"\n";}std::wstring path=folder()+L"\\kcache.tsv",tmp=path+L".tmp";if(FILE* f=_wfopen(tmp.c_str(),L"wb")){bool ok=fwrite(body.data(),1,body.size(),f)==body.size();ok=fclose(f)==0&&ok;if(ok)MoveFileExW(tmp.c_str(),path.c_str(),MOVEFILE_REPLACE_EXISTING);}}
+    for(auto& k:keep){body+=k+"\n";}std::wstring path=folder()+L"\\kcache2.tsv",tmp=path+L".tmp";if(FILE* f=_wfopen(tmp.c_str(),L"wb")){bool ok=fwrite(body.data(),1,body.size(),f)==body.size();ok=fclose(f)==0&&ok;if(ok)MoveFileExW(tmp.c_str(),path.c_str(),MOVEFILE_REPLACE_EXISTING);}}
 // The gun by its icon among the ones named before (the player's own weapons.tsv and the shipped ones).
 std::string weaponOf(const recoil::Icon& ic){std::string weapon;double best=0;std::istringstream in(readFile(folder()+L"\\weapons.tsv")+"\n"+shippedWeapons());std::string l;
     while(std::getline(in,l)){auto tab=l.find('\t');if(tab==std::string::npos)continue;double q=recoil::same(ic,recoil::unhex(l.substr(tab+1)));if(q>best){best=q;weapon=l.substr(0,tab);}}
@@ -211,17 +234,17 @@ void learnScope(long long at,const std::string& code){if(code.empty())return;std
 void finish(){if(state!=Recording)return;if(stopEvent)SetEvent(stopEvent);if(worker.joinable())worker.join();if(stopEvent){CloseHandle(stopEvent);stopEvent=nullptr;}
     if(!liveInput){RAWINPUTDEVICE rid={1,2,RIDEV_REMOVE,nullptr};RegisterRawInputDevices(&rid,1,sizeof(rid));} /* the live recorder keeps reading the mouse */
     std::vector<recoil::Shift> s;std::vector<recoil::Mouse> m;recoil::Icon ic;recoil::Mask sig;std::wstring fail;{std::lock_guard<std::mutex> l(mu);s=shifts;m=mice;ic=icon;fail=failure;sig=still.sig();}
-    std::string weapon=weaponOf(ic),scope=scopeOf(sig);aim::Sens sens=pubgSens();double vm=sens.found?sens.vertical:1;KCache fb=kLookup(sensPrint(sens),scope);recoil::Result r=recoil::analyse(s,m,vm,recoil::fireInterval(weapon),fb.h,fb.v,fb.lag);if(r.ok&&!r.reused)kSave(sensPrint(sens),scope,r.kH,r.kV,r.lag);
+    std::string weapon=weaponOf(ic),scope=scopeOf(sig);aim::Sens sens=pubgSens();double vm=sens.found?sens.vertical:1;KCache fb=kLookup(sensPrint(sens),scope);recoil::Result r=recoil::analyse(s,m,vm,recoil::fireInterval(weapon),fb.h,fb.v,fb.lag,startedAt,step==0?qpcNow():calEnd);prog=-1;if(r.ok&&r.calibrated)kSave(sensPrint(sens),scope,r.kH,r.kV,r.lag);
     state=Showing;shownAt=qpcNow();
     // what this clip held, for the next look when an analysis fails (counts only, no picture)
     long moves=0,clicks=0;double counts=0,pix=0;for(auto& q:m){if(q.dx||q.dy){moves++;counts+=std::fabs((double)q.dx)+std::fabs((double)q.dy);}if(q.button>0)clicks++;}for(auto& q:s)pix+=std::fabs(q.dx)+std::fabs(q.dy);
     bool gameAdmin=false;{DWORD gp=0;GetWindowThreadProcessId(game,&gp);if(HANDLE ph=OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,gp)){gameAdmin=processElevated(ph);CloseHandle(ph);}else gameAdmin=GetLastError()==ERROR_ACCESS_DENIED;}
-    if(FILE* f=_wfopen((folder()+L"\\recoil-last.txt").c_str(),L"wb")){fprintf(f,"why=%s\nframes=%zu\nshiftPixels=%.0f\nmouseMoves=%ld\nmouseCounts=%.0f\nclicks=%ld\nfitH=%.3f\nfitV=%.3f\nmovedH=%.0f\nmovedV=%.0f\nkH=%.4f\nkV=%.4f\ngameAdmin=%d\nselfAdmin=%d\n",r.ok?"ok":r.why.c_str(),s.size(),pix,moves,counts,clicks,r.fitH,r.fitV,r.movedH,r.movedV,r.kH,r.kV,gameAdmin?1:0,selfElevated()?1:0);fclose(f);}
+    if(FILE* f=_wfopen((folder()+L"\\recoil-last.txt").c_str(),L"wb")){fprintf(f,"why=%s\nframes=%zu\nshiftPixels=%.0f\nmouseMoves=%ld\nmouseCounts=%.0f\nclicks=%ld\nfitH=%.3f\nfitV=%.3f\nmovedH=%.0f\nmovedV=%.0f\nkH=%.4f\nkV=%.4f\ncalibrated=%d\nreused=%d\nsweepFlips=%d\nmags=%d\ngameAdmin=%d\nselfAdmin=%d\n",r.ok?"ok":r.why.c_str(),s.size(),pix,moves,counts,clicks,r.fitH,r.fitV,r.movedH,r.movedV,r.kH,r.kV,r.calibrated?1:0,r.reused?1:0,sweep.flips,mags,gameAdmin?1:0,selfElevated()?1:0);fclose(f);}
     // no mouse at all: Windows hides an elevated game's input from a normal BlueAsh
     if(!moves&&!clicks&&s.size()>=12){if(gameAdmin&&!selfElevated()){show(i18n::text(L"마우스 움직임을 읽지 못했습니다"),i18n::text(L"배그가 관리자 권한으로 실행 중입니다 · BlueAsh 설정 > 문제 해결에서 관리자 권한으로 다시 실행해 주세요"),2,RGB(240,180,90));}
         else{show(i18n::text(L"마우스 움직임을 읽지 못했습니다"),i18n::text(L"BlueAsh를 다시 켠 뒤 한 번 더 해 주세요"),2,RGB(240,180,90));}return;}
     if(!fail.empty()){show(i18n::text(L"화면을 캡처하지 못했습니다"),i18n::text(L"배그를 테두리 없는 창 모드로 켜 주세요"),2,RGB(240,180,90));return;}
-    if(!r.ok){const char* w=r.why.c_str();show(i18n::text(L"분석하지 못했습니다"),i18n::text(!strcmp(w,"still")?L"처음 한 번만 쏘기 전에 조준을 좌우로 움직여 주세요 · 다음부터는 이 값을 씁니다":!strcmp(w,"nofire")?L"사격이 없었습니다 · 왼쪽 버튼으로 쏘세요":!strcmp(w,"nopull")?L"아래로 당기지 않았습니다 · 반동을 당기며 쏘세요":!strcmp(w,"norecoil")?L"반동이 보이지 않았습니다 · 벽을 보고 쏘세요":L"너무 짧습니다 · 한 탄창을 쏘세요"),2,RGB(240,180,90));return;}
+    if(!r.ok){const char* w=r.why.c_str();show(i18n::text(L"분석하지 못했습니다"),i18n::text(!strcmp(w,"still")&&r.movedV>=150?L"화면 움직임을 읽지 못했습니다 · 무늬가 있는 밝은 벽을 보고 더 천천히 움직여 주세요":!strcmp(w,"still")?L"보정이 부족했습니다 · 1단계에서 조준한 채 위아래로 천천히 움직여 주세요":!strcmp(w,"nofire")?L"사격이 없었습니다 · 왼쪽 버튼으로 쏘세요":!strcmp(w,"nopull")?L"아래로 당기지 않았습니다 · 반동을 당기며 쏘세요":!strcmp(w,"norecoil")?L"반동이 보이지 않았습니다 · 벽을 보고 쏘세요":L"너무 짧습니다 · 한 탄창을 쏘세요"),2,RGB(240,180,90));return;}
     long long at=(long long)time(nullptr);char row[512];snprintf(row,512,"%lld\t%s\t%s\t%s\t%.3f\t%.4f\t%.1f\t%.1f\t%.1f\t%.2f\t%.4f\t%d\n",at,weapon.c_str(),ic.ok()?recoil::hex(ic).c_str():"",scope.c_str(),vm,r.ratio,r.recoil,r.pull,r.drift,r.fireSec,r.kV,r.burstRatios.empty()?r.bursts:(int)r.burstRatios.size());
     if(FILE* f=_wfopen((folder()+L"\\recoil.tsv").c_str(),L"ab")){fputs(row,f);fclose(f);}
     std::wstring tdir=folder()+L"\\recoil";CreateDirectoryW(tdir.c_str(),nullptr);if(FILE* f=_wfopen((tdir+L"\\"+std::to_wstring(at)+L".txt").c_str(),L"wb")){std::string body="aim="+pts(r.aim)+"\nhand="+pts(r.hand)+"\ngun="+pts(r.gun)+"\nlaser="+pts(r.laser)+"\n";
@@ -231,23 +254,24 @@ void finish(){if(state!=Recording)return;if(stopEvent)SetEvent(stopEvent);if(wor
         fputs(body.c_str(),f);fclose(f);}
     // the badge's words come from the Aim Lab page (it knows the earlier records: the steady value, the gun's scope)
     std::wstring t1,t2;if(describe)describe(at,weapon,vm,r.ratio,t1,t2);else{wchar_t a[16],b2[16];swprintf(a,16,L"%.2f",vm);swprintf(b2,16,L"%.2f",vm*r.ratio);t1=fmtw(L"수직 감도 %ls → %ls 추천",a,b2);}
-    if(r.reused&&card.on)card.hint=i18n::text(L"지난 측정의 마우스 값으로 계산했습니다 · 감도를 바꿨다면 좌우로 한 번 움직여 주세요");
+    if(r.reused&&card.on)card.hint=i18n::text(L"지난 보정값으로 계산했습니다 · 감도를 바꿨다면 1단계 보정을 해 주세요");
     show(t1,t2,1);
     if(onSaved)onSaved();}
 void toggle(){if(state==Recording)finish();else start();}
 // The key works only while PUBG is the front window (registered then, released otherwise, so Home / End / Insert stay
 // normal everywhere else). When it is the mode switch key itself, the mode hotkey hands it over (takes()).
-bool keyHeld=false;
-void poll(HWND owner){DWORD pid=pubggame::gamePid();bool front=pid&&pubggame::foreground(pid);unsigned k=key();bool shared=k==hotkeyVk&&!hotkeyMods;
-    if(front&&!shared&&!keyHeld){keyHeld=RegisterHotKey(owner,4,0,k)!=0;}else if((!front||shared)&&keyHeld){UnregisterHotKey(owner,4);keyHeld=false;}
+// Read with raw input (not RegisterHotKey, which cannot tell the keypad's NumLock-off 0 from Insert).
+void poll(HWND){DWORD pid=pubggame::gamePid();bool front=pid&&pubggame::foreground(pid);unsigned k=key();bool shared=k==hotkeyVk&&!hotkeyMods,want=front&&!shared;
+    if(want&&!keyHeld){ensureBadge();RAWINPUTDEVICE rid={1,6,RIDEV_INPUTSINK,badge};keyHeld=badge&&RegisterRawInputDevices(&rid,1,sizeof(rid));keyDown=false;}
+    else if(!want&&keyHeld){RAWINPUTDEVICE rid={1,6,RIDEV_REMOVE,nullptr};RegisterRawInputDevices(&rid,1,sizeof(rid));keyHeld=false;}
     if(!front&&state==Recording)finish();}
-void rekey(HWND owner){if(keyHeld){UnregisterHotKey(owner,4);keyHeld=false;}poll(owner);}
+void rekey(HWND owner){if(keyHeld){RAWINPUTDEVICE rid={1,6,RIDEV_REMOVE,nullptr};RegisterRawInputDevices(&rid,1,sizeof(rid));keyHeld=false;}poll(owner);}
 bool takes(){unsigned k=key();if(k!=hotkeyVk||hotkeyMods)return false;DWORD pid=pubggame::gamePid();if(!pid||!pubggame::foreground(pid))return false;toggle();return true;}
 }
 #ifdef BLUEASH_TT
 // Test builds (BLUEASH_RECOIL_DUMP=<path prefix>): the badge's three looks drawn over the main window and saved as pictures.
-namespace recoilcap{inline void demo(HWND w){if(!getenv("BLUEASH_RECOIL_DUMP"))return;game=w;ensureBadge();startedAt=qpcNow()-3;state=Recording;show(i18n::text(L"반동 패턴 캡처 중"),fmtw(L"좌우로 살짝 움직인 뒤 같은 총·부착물로 5탄창을 쏘세요 · 탄창마다 따로 계산 · 다시 %ls: 끝내기",keyName(key()).c_str()),0);
-    state=Showing;card.on=true;card.gun=L"M416";card.count=fmtw(L"%d/5탄창 측정",3);card.vFrom=L"0.90";card.vTo=L"1.06";card.vDelta=L"+18%";card.sLabel=fmtw(L"%ls 감도",i18n::text(L"4배"));card.sFrom=L"25";card.sTo=L"29";card.sDelta=L"+4";card.hint=i18n::text(L"둘 중 하나만 바꾸세요 · 스코프 감도는 가로도 함께 바뀝니다");show(L"",L"",1);card.on=false;
+namespace recoilcap{inline void demo(HWND w){if(!getenv("BLUEASH_RECOIL_DUMP"))return;game=w;ensureBadge();startedAt=qpcNow()-3;state=Recording;step=0;prog=.45;guideText();step=1;mags=2;prog=-1;guideText();
+    state=Showing;card.on=true;card.gun=L"M416";card.count=fmtw(L"%d/5탄창 측정",3);card.vFrom=L"0.90";card.vTo=L"1.06";card.vDelta=L"+18%";card.sLabel=fmtw(L"%ls 감도",i18n::text(L"4배"));card.sFrom=L"25";card.sTo=L"29";card.sDelta=L"+4";card.hint=fmtw(L"목표 %ls · 한 번에 15%%까지만 바꾸고, 익숙해지면 다시 측정하세요",L"1.21");show(L"",L"",1);card.on=false;
     state=Showing;show(L"Beryl M762  ·  "+fmtw(L"수직 감도 %ls → %ls 추천",L"0.90",L"1.18"),i18n::text(L"에임랩에서 스코프를 고르면 스코프 감도도 보여 줍니다"),1);
-    show(i18n::text(L"분석하지 못했습니다"),i18n::text(L"처음 한 번만 쏘기 전에 조준을 좌우로 움직여 주세요 · 다음부터는 이 값을 씁니다"),2,RGB(240,180,90));hide();}}
+    show(i18n::text(L"분석하지 못했습니다"),i18n::text(L"보정이 부족했습니다 · 1단계에서 조준한 채 위아래로 천천히 움직여 주세요"),2,RGB(240,180,90));hide();}}
 #endif

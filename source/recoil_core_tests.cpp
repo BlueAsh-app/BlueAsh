@@ -64,6 +64,18 @@ int main(){
             for(int i=8;i<40;i++){if(kind==0){g.p[24*48+i]=250;g.p[i*48+24]=250;}else{g.p[i*48+i]=250;g.p[i*48+(47-i)]=250;}}sm.add(g);}return sm.sig();};
      Mask a=run(0),b=run(0),c=run(1);int on=0;for(auto v:a.bits)on+=v;char msg[96];snprintf(msg,96,"still on=%d same=%.2f other=%.2f",on,same(a,b),same(a,c));
      CHECK(on>20&&on<400&&same(a,b)>.9&&same(a,c)<.3,msg);Mask rt=unhexMask(hex(a));CHECK(same(a,rt)>.99,"mask hex round trip");}
+    // 2g. a hip-fire look (1.2 px per count) before an aimed-in sweep and spray (0.8): with the sweep window kV is the
+    //     aimed one; the hand starts pulling 0.25 s late (the reaction), then pulls 80 % — the answer stays 1.25
+    {std::vector<Shift> s;std::vector<Mouse> m;double t=0,dt=1/144.0;std::vector<double> hx,hy,kk;double carry=0,calA=0,calB=0;int hip=120,sweep=300,fire=360;
+     for(int i=0;i<hip+sweep+fire+60;i++){t+=dt;long mx=0,my=0;double k=i<hip?1.2:.8;bool f=i>=hip+sweep&&i<hip+sweep+fire;
+        if(i<hip){mx=std::lround(40*std::sin(i*.12));my=std::lround(30*std::sin(i*.09));}
+        else if(i<hip+sweep){if(i==hip)calA=t;my=std::lround(14*std::sin((i-hip)*.06));calB=t;}
+        else if(f&&i-(hip+sweep)>=36){carry+=300*dt/k*.8;my=(long)carry;carry-=my;}
+        if(i==hip+sweep){m.push_back({t-dt/2,0,0,1});}if(i==hip+sweep+fire){m.push_back({t-dt/2,0,0,-1});}m.push_back({t-dt/3,mx,my,0});hx.push_back(mx);hy.push_back(my);kk.push_back(k);
+        size_t j=hx.size()>=2?hx.size()-2:0;double camX=kk[j]*hx[j],camY=kk[j]*hy[j];if(i-1>=hip+sweep&&i-1<hip+sweep+fire)camY-=300*dt;s.push_back({t,-camX,-camY});}
+     Result r=analyse(s,m,1.0,0,0,0,1,calA,calB);char msg[160];snprintf(msg,160,"sweep+reaction ok=%d cal=%d kV=%.3f ratio=%.3f",r.ok,r.calibrated,r.kV,r.ratio);
+     CHECK(r.ok&&r.calibrated&&std::fabs(r.kV-.8)<.03&&std::fabs(r.ratio-1.25)<.06,msg);
+     Result old=analyse(s,m,1.0);snprintf(msg,160,"without the sweep window cal=%d kV=%.3f ratio=%.3f",old.calibrated,old.kV,old.ratio);printf("%s\n",msg);CHECK(!old.calibrated,msg);}
     // 3. no sideways look and no move before the shots: pixels per count cannot be measured
     {std::vector<Shift> s;std::vector<Mouse> m;double t=0;for(int i=0;i<200;i++){t+=1/144.0;s.push_back({t,0,i>50?2.0:0.0});}m.push_back({.4,0,0,1});m.push_back({1.2,0,0,-1});
      Result r=analyse(s,m,1);CHECK(!r.ok&&r.why=="still","still mouse is reported");

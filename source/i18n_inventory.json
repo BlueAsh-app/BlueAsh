@@ -626,7 +626,8 @@
     "key": "자세히 보기",
     "files": [
       "aim_ui-attachment-isolated.h",
-      "aim_ui.h"
+      "aim_ui.h",
+      "sound_page.h"
     ],
     "localized": true,
     "exclusion": ""
@@ -1170,7 +1171,8 @@
     "key": "추천",
     "files": [
       "aim_ui-attachment-isolated.h",
-      "aim_ui.h"
+      "aim_ui.h",
+      "sound_page.h"
     ],
     "localized": true,
     "exclusion": ""
@@ -2145,10 +2147,26 @@
     "exclusion": ""
   },
   {
-    "key": "둘 중 하나만 바꾸세요 · 스코프 감도는 가로도 함께 바뀝니다",
+    "key": "신뢰도 낮음 · 같은 총으로 %d탄창 더 쏘면 정확해집니다",
+    "files": [
+      "aim_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "목표 %ls · 한 번에 15%%까지만 바꾸고, 익숙해지면 다시 측정하세요",
     "files": [
       "aim_ui.h",
       "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "둘 중 하나만 바꾸세요 · 스코프 감도는 가로도 함께 바뀝니다",
+    "files": [
+      "aim_ui.h"
     ],
     "localized": true,
     "exclusion": ""
@@ -2170,7 +2188,7 @@
     "exclusion": ""
   },
   {
-    "key": "배그 훈련장에서 %ls를 누르고 5탄창을 쏘세요 · 탄창마다 따로 계산합니다",
+    "key": "배그 훈련장 벽 앞에서 %ls를 누르고 화면 안내를 따르세요 · 보정 3초 후 5탄창",
     "files": [
       "aim_ui.h"
     ],
@@ -4070,7 +4088,8 @@
   {
     "key": "사용자 지정",
     "files": [
-      "dlss_ui.h"
+      "dlss_ui.h",
+      "sound_boost.h"
     ],
     "localized": true,
     "exclusion": ""
@@ -4231,6 +4250,7 @@
     "key": "적용됨",
     "files": [
       "dlss_ui.h",
+      "sound_boost.h",
       "tune_ui.h"
     ],
     "localized": true,
@@ -5190,7 +5210,8 @@
     "key": "기본값으로",
     "files": [
       "dlss_ui.h",
-      "settings_ui.h"
+      "settings_ui.h",
+      "sound_page.h"
     ],
     "localized": true,
     "exclusion": ""
@@ -5207,6 +5228,7 @@
       "pubg_page.h",
       "raid_alert.h",
       "settings_ui.h",
+      "sound_page.h",
       "stability_ui.h",
       "tune_ui.h",
       "update_ui.h"
@@ -6202,6 +6224,14 @@
     "exclusion": ""
   },
   {
+    "key": "사운드 부스트",
+    "files": [
+      "ModeSwitch.cpp"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
     "key": "Windows 시작 시 자동 실행",
     "files": [
       "ModeSwitch.cpp"
@@ -6308,6 +6338,14 @@
   },
   {
     "key": "내 감도를 분석하고, 감도를 바꾸기 전후 경기 명중률을 비교합니다",
+    "files": [
+      "ModeSwitch.cpp"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "발소리·차량음과 총성을 취향에 맞게 조절합니다.",
     "files": [
       "ModeSwitch.cpp"
     ],
@@ -6649,6 +6687,14 @@
   },
   {
     "key": "배그 · M 지도에 띄울 표시와 표시를 켜고 끄는 키를 정합니다.",
+    "files": [
+      "ModeSwitch.cpp"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그 · 배그 소리만 프리셋으로 조절합니다. 다른 앱 소리는 그대로입니다.",
     "files": [
       "ModeSwitch.cpp"
     ],
@@ -8065,6 +8111,7 @@
     "files": [
       "perf_ui.h",
       "price_ui.h",
+      "sound_boost.h",
       "tune_ui.h"
     ],
     "localized": true,
@@ -9900,7 +9947,7 @@
     "exclusion": ""
   },
   {
-    "key": "BlueAsh 2.31.5\r\n알림: ",
+    "key": "BlueAsh 2.32.0\r\n알림: ",
     "files": [
       "raid_alert.h"
     ],
@@ -10236,7 +10283,7 @@
     "exclusion": ""
   },
   {
-    "key": "반동 패턴 캡처 중",
+    "key": "1/2 · 조준 보정",
     "files": [
       "recoil_capture.h"
     ],
@@ -10244,7 +10291,23 @@
     "exclusion": ""
   },
   {
-    "key": "같은 총·부착물로 5탄창을 쏘세요 · 탄창마다 따로 계산 · 다시 %ls: 끝내기",
+    "key": "총은 쏘지 말고, 벽을 보고 조준(우클릭)한 채 마우스를 위아래로 천천히 3번 움직이세요",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "2/2 · 벽에 쏘기 %d/5",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "한 점을 노리고 반동을 당겨 그 점을 지키세요 · 탄창마다 장전 후 반복 · %ls: 끝내기",
     "files": [
       "recoil_capture.h"
     ],
@@ -10300,7 +10363,15 @@
     "exclusion": ""
   },
   {
-    "key": "처음 한 번만 쏘기 전에 조준을 좌우로 움직여 주세요 · 다음부터는 이 값을 씁니다",
+    "key": "화면 움직임을 읽지 못했습니다 · 무늬가 있는 밝은 벽을 보고 더 천천히 움직여 주세요",
+    "files": [
+      "recoil_capture.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "보정이 부족했습니다 · 1단계에서 조준한 채 위아래로 천천히 움직여 주세요",
     "files": [
       "recoil_capture.h"
     ],
@@ -10340,15 +10411,7 @@
     "exclusion": ""
   },
   {
-    "key": "지난 측정의 마우스 값으로 계산했습니다 · 감도를 바꿨다면 좌우로 한 번 움직여 주세요",
-    "files": [
-      "recoil_capture.h"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
-    "key": "좌우로 살짝 움직인 뒤 같은 총·부착물로 5탄창을 쏘세요 · 탄창마다 따로 계산 · 다시 %ls: 끝내기",
+    "key": "지난 보정값으로 계산했습니다 · 감도를 바꿨다면 1단계 보정을 해 주세요",
     "files": [
       "recoil_capture.h"
     ],
@@ -10863,6 +10926,654 @@
     "key": "이 키는 다른 프로그램이나 Windows가 쓰고 있습니다. 지금 키를 그대로 두었습니다.",
     "files": [
       "settings_ui.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "밸런스",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "발소리 집중",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "이 Windows 버전은 배그 소리만 따로 받을 수 없습니다 (Windows 10 2004 이상 필요)",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그 소리를 받지 못했습니다",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "출력 장치를 열지 못했습니다",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "이 Windows에서는 음소거한 배그 소리를 받을 수 없어 적용하지 않았습니다",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "출력 장치가 계속 바뀌어 멈췄습니다",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "바뀐 출력 장치를 열지 못했습니다",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "소리 처리 중 이상 값이 감지되어 원래 소리로 되돌렸습니다",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "출력 장치가 사라졌습니다",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그 소리 연결이 끊겼습니다",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "처리를 시작하지 못했습니다",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "\\총소리",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": false,
+    "exclusion": "Sample folder name on disk (the player sorts recordings into it)"
+  },
+  {
+    "key": "\\발소리",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": false,
+    "exclusion": "Sample folder name on disk (the player sorts recordings into it)"
+  },
+  {
+    "key": "%d초 · BlueAsh 폴더의 sound-samples에 저장했습니다",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "녹음을 시작했습니다",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "녹음을 저장했습니다",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "녹음하지 못했습니다",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "Home 키를 한 번 더 누르면 저장합니다 (최대 60초)",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "블루애쉬 사운드 부스트가 활성화되었습니다.",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그에만 적용",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그 실행 대기",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "적용 중",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "적용 실패",
+    "files": [
+      "sound_boost.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "적용 안 함",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "적용 안 함 · 배그 원래 소리로 돌아갑니다",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "나만의 프리셋을 만들었습니다 · 그래프의 점을 끌어 조절하세요",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "사운드를 바꿨습니다 · %ls · 배그에 바로 적용됐습니다",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "%ls 선택됨 · 배그를 켜면 적용됩니다",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "소리 변화",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "미리 듣기",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "접기",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조용한 소리 기준 · 큰 소리는 원래 크기를 넘지 않습니다",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "압축 %.1f:1 · 기준 %d dB · 조용한 소리 +%.1f dB",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "기본 프리셋은 바꿀 수 없습니다 · 바꾸려면 사용자 지정을 고르세요",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "압축 강도",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조용한 소리 키우기",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "방향·거리감이 거의 그대로라 오래 들어도 편합니다.",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "작은 발소리와 다가오는 차량 소리가 또렷하게 들립니다. 총소리는 원래 크기보다 커지지 않습니다.",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "게임이 내는 소리를 그대로 듣습니다.",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "발소리가 확 커지지는 않습니다.",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "중저음이 조금 줄고, 시끄러운 교전 중에는 효과가 작습니다.",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "작은 발소리나 먼 차량 소리를 놓치기 쉽습니다.",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "주의할 점",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "장점",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "앞",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "앞 오른쪽",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "오른쪽",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "뒤 오른쪽",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "뒤",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "뒤 왼쪽",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "왼쪽",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "앞 왼쪽",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "어느 방향에서 들리는지 맞혀 보세요",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "헤드셋을 쓰고 들어 보세요 · 처리하지 않은 원래 소리입니다",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "헤드셋을 쓰고 들어 보세요 · %ls 프리셋으로 처리한 소리입니다",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "발소리",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "총소리",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "가까이 · 2~8m",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "멀리 · 15~150m",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "재생 중…",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "sound-samples%ls 폴더에 WAV 파일이 없습니다",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "소리 파일을 읽지 못했습니다",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "%ls · 약 %dm",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "버튼을 누르면 무작위 방향에서 한 번 들립니다",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "레이더의 점이 소리가 난 곳입니다. 가까울수록 크고, 뒤에서 나면 먹먹하게 들립니다.",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "프리셋",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "원래 소리에 가깝게",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "발소리를 또렷하게",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "게임 원래 소리",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "그래프로 직접 조절",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "프리셋을 다시 고르거나 배그를 다시 켜면 다시 시도합니다.",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "배그 소리만 처리합니다. 디스코드·브라우저·음악 소리는 바뀌지 않습니다. 처리하는 동안 Windows 볼륨 믹서에는 배그가 음소거로 보이며(원래 소리 대신 처리한 소리를 내보내기 때문), 끄면 원래대로 돌아옵니다. 독점 전체 화면에서는 적용 알림이 보이지 않을 수 있습니다.",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "Windows 스피커 속성 > 고급 기능의 같은 체크와 연결됩니다. 큰 소리와 작은 소리의 차이를 줄여 음량을 고르게 맞춥니다.",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "음향 강도 이퀄라이제이션",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "음향 강도 이퀄라이제이션을 바꾸지 못했습니다",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "음향 강도 이퀄라이제이션을 켰습니다",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "음향 강도 이퀄라이제이션을 껐습니다",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "나만의 프리셋을 저장했습니다 · 배그에 바로 적용됐습니다",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "나만의 프리셋을 저장했습니다 · 배그를 켜면 적용됩니다",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "나만의 프리셋을 기본값으로 되돌렸습니다",
+    "files": [
+      "sound_page.h"
     ],
     "localized": true,
     "exclusion": ""

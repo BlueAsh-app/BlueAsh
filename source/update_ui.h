@@ -5,7 +5,7 @@
 // Updates come from the BlueAsh relay (relay/worker.js): /update/check answers in plain text (version, date, size,
 // one "note=" line per change) and counts installs by a random id; the updater (updater/Update.ps1) downloads
 // /update/manifest.json's ZIP, checks its SHA-256 and swaps the files.
-const wchar_t* appVersion=L"2.31.5";
+const wchar_t* appVersion=L"2.32.0";
 const wchar_t* updateHost=L"modepulse-relay.modepulse.workers.dev";
 HANDLE updaterProcess=nullptr;
 struct UpdateInfo{std::wstring version,date,error;std::vector<std::wstring> notes;long long size=0;};
@@ -21,7 +21,15 @@ std::wstring installId(){
 // Release channel: "beta" (registry UpdateChannel, the developer's PC) gets a build first through /update/beta.json;
 // everyone else follows /update/manifest.json once source/release.ps1 -Promote moves the build there.
 bool betaChannel(){return regString(configPath,L"UpdateChannel")==L"beta";}
-bool usageStats(){return regString(configPath,L"UsageStats")!=L"0";}
+// Not counted: test builds, and a BlueAsh started by an AI coding session (Claude Code sets CLAUDECODE, Codex sets CODEX_*):
+// those run with their own copy of the registry, so every session would look like a new install.
+inline bool aiStarted(){static int v=-1;if(v<0){v=0;
+#ifdef BLUEASH_TT
+    v=1;
+#endif
+    if(!v&&GetEnvironmentVariableW(L"CLAUDECODE",nullptr,0))v=1;
+    if(!v){wchar_t* env=GetEnvironmentStringsW();if(env){for(wchar_t* p=env;*p;p+=wcslen(p)+1)if(!_wcsnicmp(p,L"CODEX_",6)){v=1;break;}FreeEnvironmentStringsW(env);}}}return v==1;}
+bool usageStats(){return !aiStarted()&&regString(configPath,L"UsageStats")!=L"0";}
 // One request to the relay (blocking: call it on a worker thread). Returns the HTTP status, 0 when unreachable.
 // reply: the answer's body (up to 4 MB); wait: how long the answer may take (an AI translation takes seconds).
 DWORD relayRequest(const wchar_t* verb,const std::wstring& path,const std::string& body=std::string(),std::string* reply=nullptr,int wait=10000){

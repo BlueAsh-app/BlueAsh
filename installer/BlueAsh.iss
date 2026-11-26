@@ -271,6 +271,8 @@ begin
   if CurUninstallStep = usUninstall then begin
     if Exec(ExpandConstant('{app}\BlueAsh.exe'), '--dlss-restore-all', '', SW_HIDE, ewWaitUntilTerminated, code) and (code <> 0) and (not UninstallSilent) then
       MsgBox(CustomMessage('DlssRestoreFailed'), mbError, MB_OK);
+    // 사운드 부스트: if a crash left PUBG muted in the volume mixer, unmute it
+    Exec(ExpandConstant('{app}\BlueAsh.exe'), '--sound-restore', '', SW_HIDE, ewWaitUntilTerminated, code);
   end;
   if CurUninstallStep = usPostUninstall then begin
     // Only what points at this install: a BlueAsh kept elsewhere keeps its autostart and administrator task.

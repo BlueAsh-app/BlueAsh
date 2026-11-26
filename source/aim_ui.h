@@ -128,14 +128,14 @@ void saveRecs(const std::vector<Rec>& v){std::string body;char b[512];for(auto i
 const int scopeCount=6;const char* scopeCodes[]={"t","1","2","3","4","6"};const wchar_t* scopeNames[]={L"조준",L"1배",L"2배",L"3배",L"4배",L"6배"};
 int scopeIndex(const std::string& c){for(int i=0;i<scopeCount;i++)if(c==scopeCodes[i])return i;return -1;}
 // the steady suggestion for a spray: the sprays with the same gun and scope up to it (an unknown gun stands alone)
-recoil::Steady steadyFor(const std::vector<Rec>& all,const Rec& q){std::vector<double> t;for(auto& r:all){if(r.at>q.at)continue;if(r.at!=q.at&&(q.weapon.empty()||r.weapon!=q.weapon||r.scope!=q.scope))continue;for(int k=0;k<std::clamp(r.bursts,1,5);k++)t.push_back(r.vm*r.ratio);}return recoil::steady(t);}
+recoil::Steady steadyFor(const std::vector<Rec>& all,const Rec& q){std::vector<double> t;for(auto& r:all){if(r.at>q.at)continue;if(r.at!=q.at&&(q.weapon.empty()||r.weapon!=q.weapon||r.scope!=q.scope))continue;for(int k=0;k<std::clamp(r.bursts,1,5);k++)t.push_back(r.vm*r.ratio);}recoil::Steady s=recoil::steady(t);s.target=s.value;s.value=recoil::nextStep(q.vm,s.target);return s;}
 double scopeSlider(const aim::Sens& s,const std::string& c);
 void recoilBadge(long long at,const std::string& weapon,double vm,double ratio,std::wstring& title,std::wstring& line){
     // the scope this gun was last fired with (the player picks it on the results once; the badge reuses it)
     auto all=recs();Rec me;me.at=at;me.weapon=weapon;me.vm=vm;me.ratio=ratio;
     for(auto& q:all)if(q.at==at&&!q.scope.empty())me.scope=q.scope; /* found by its picture */
     if(me.scope.empty()&&!weapon.empty())for(auto& q:all)if(q.at!=at&&q.weapon==weapon&&!q.scope.empty()){me.scope=q.scope;break;}
-    recoil::Steady sd=steadyFor(all,me);if(sd.n==0){sd.value=vm*ratio;sd.n=1;}
+    recoil::Steady sd=steadyFor(all,me);if(sd.n==0){sd.target=vm*ratio;sd.value=recoil::nextStep(vm,sd.target);sd.n=1;}
     wchar_t a[16],b2[16];swprintf(a,16,L"%.2f",vm);swprintf(b2,16,L"%.2f",sd.value);std::wstring w16name;for(char c:weapon)w16name+=(wchar_t)(unsigned char)c;
     std::wstring gun=weapon.empty()?std::wstring(i18n::text(L"총을 알아보지 못했습니다")):fmt(L"%ls 인식",w16name.c_str());
     std::wstring l2=sd.n>=3?fmt(L"최근 %d탄창 중간값 · 차이 ±%d%%",sd.n,(int)std::lround(sd.spread*100))+(sd.n<5?fmt(L"%d/5탄창 측정",sd.n).insert(0,L" · "):std::wstring()):fmt(L"%d/5탄창 측정 · 같은 총·부착물로 5탄창을 쏘면 추천이 정확해집니다",sd.n);
@@ -148,7 +148,11 @@ void recoilBadge(long long at,const std::string& weapon,double vm,double ratio,s
      c.vFrom=a;c.vTo=b2;int dv=(int)std::lround((sd.value/std::max(.01,vm)-1)*100);c.vDelta=dv?fmt(dv>0?L"+%d%%":L"%d%%",dv):std::wstring(i18n::text(L"그대로"));
      if(cur>0){c.sLabel=fmt(L"%ls 감도",i18n::text(scopeNames[si]));wchar_t c1[16],c2[16];swprintf(c1,16,L"%.0f",cur);double to=aim::sliderFor(cur,sd.value/std::max(.01,vm));swprintf(c2,16,L"%.0f",to);c.sFrom=c1;c.sTo=c2;int ds=(int)std::lround(to-cur);c.sDelta=ds?fmt(ds>0?L"+%d":L"%d",ds):std::wstring(i18n::text(L"그대로"));}
      else{c.sLabel=i18n::text(L"스코프 감도");c.sFrom=i18n::text(L"스코프를 고르면 표시");}
-     c.hint=i18n::text(L"둘 중 하나만 바꾸세요 · 스코프 감도는 가로도 함께 바뀝니다");}
+     // the hint, the most useful first: too few or disagreeing magazines, then a capped step, then the usual advice
+     wchar_t tg[16];swprintf(tg,16,L"%.2f",sd.target);
+     if(!recoil::sure(sd))c.hint=fmt(L"신뢰도 낮음 · 같은 총으로 %d탄창 더 쏘면 정확해집니다",sd.n<3?3-sd.n:2);
+     else if(std::fabs(sd.value-sd.target)>.005)c.hint=fmt(L"목표 %ls · 한 번에 15%%까지만 바꾸고, 익숙해지면 다시 측정하세요",tg);
+     else c.hint=i18n::text(L"둘 중 하나만 바꾸세요 · 스코프 감도는 가로도 함께 바뀝니다");}
 }
 const bool recoilBadgeHook=(recoilcap::describe=recoilBadge,true);
 double scopeSlider(const aim::Sens& s,const std::string& c){if(c=="t")return s.targeting;if(c=="1")return s.scoping;std::string want="Scope"+c+"X";for(auto& sc:s.scopes)if(sc.first==want)return sc.second;return 0;}
@@ -230,7 +234,7 @@ void paintHome(HDC dc){UINT one=DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS
     const int x0=280,x1=796;
     // 배그 반동 분석: the latest capture's spray pattern draws itself inside the reticle (paintMotion); words and actions on the right
     textAt(dc,i18n::text(L"배그 반동 분석"),{x0,166,552,198},sectionFont,ink,one);
-    textAt(dc,fmt(L"배그 훈련장에서 %ls를 누르고 5탄창을 쏘세요 · 탄창마다 따로 계산합니다",keyName(recoilcap::key()).c_str()),{x0,204,x1,232},smallFont,muted,one);
+    textAt(dc,fmt(L"배그 훈련장 벽 앞에서 %ls를 누르고 화면 안내를 따르세요 · 보정 3초 후 5탄창",keyName(recoilcap::key()).c_str()),{x0,204,x1,232},smallFont,muted,one);
     {auto all=recs();homeSpray.clear();if(!all.empty()){const Rec& q=all[0];int si=scopeIndex(q.scope);std::wstring nm=q.weapon.empty()?std::wstring(i18n::text(L"모르는 총")):w16(q.weapon);homeSpray=trace(q.at).gun;
         recoil::Steady sd=steadyFor(all,q);double to=sd.n?sd.value:q.vm*q.ratio;
         textAt(dc,nm+(si>=0?L" · "+std::wstring(i18n::text(scopeNames[si])):L"")+L" · "+i18n::text(L"수직 감도 추천"),{x0,240,x1,260},captionFont,muted,one);
@@ -469,7 +473,7 @@ void paintAnalysis(HDC dc){UINT one=DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLI
     const COLORREF pal[]={RGB(96,140,255),RGB(96,210,150),RGB(255,186,82),RGB(255,104,134),RGB(172,138,255)};
     // the settings PUBG saved (GameUserSettings.ini, read only)
     aim::Sens sens=recoilcap::pubgSens();Profile pf=profile();card(dc,{36,64,300,540});textAt(dc,i18n::text(L"내 배그 설정"),{52,72,284,96},boldFont,ink,one);textAt(dc,i18n::text(L"배그 설정 파일에서 불러옴"),{52,96,284,116},smallFont,muted,one);
-    recoil::Steady sd=steadyFor(all,*q);if(sd.n==0){sd.value=q->vm*q->ratio;}double mult=sd.value/std::max(.01,q->vm),dv=(mult-1)*100;bool vAct=std::fabs(dv)>=3;
+    recoil::Steady sd=steadyFor(all,*q);if(sd.n==0){sd.target=q->vm*q->ratio;sd.value=recoil::nextStep(q->vm,sd.target);}double mult=sd.value/std::max(.01,q->vm),dv=(mult-1)*100;bool vAct=std::fabs(dv)>=3;
     if(!sens.found){textAt(dc,i18n::text(L"배그 설정 파일을 찾지 못했습니다 · 배그를 한 번 켠 뒤 다시 열어 주세요"),{52,128,284,200},smallFont,muted,DT_LEFT|DT_WORDBREAK);}
     else{struct Row{std::wstring k,v;bool hot;};std::vector<Row> rows;double cm=aim::cm360c(sens.normalConv,pf.dpi,pf.yaw);
         rows.push_back({L"DPI",pf.dpi?std::to_wstring(pf.dpi):L"—",false});rows.push_back({i18n::text(L"일반"),wfixed(sens.normal,0),false});rows.push_back({L"cm/360",cm>0?wfixed(cm,1)+L" cm":L"—",false});

@@ -64,7 +64,11 @@ inline Mask unhexMask(const std::string& s){Mask a;int w=0,h=0;size_t c=s.find('
 // Each spray says "the vertical setting that would have pulled 100 %" (vm x ratio). One hand never pulls the same way
 // twice, so one spray's number wanders a few %. The median of the latest five (same gun, same scope) is what to set; the
 // spread says how far they disagreed. targets: newest first.
-struct Steady {double value=0,spread=0;int n=0;};
+struct Steady {double value=0,spread=0,target=0;int n=0;}; // value: what to set now; target: where the median points (value is a step toward it)
+// One round moves the setting at most 15 %: the hand adapts to a new sensitivity, so a big jump over-corrects; the next
+// capture at the new value aims again. sure: three magazines or more that agree within ±12 %.
+inline double nextStep(double vm,double target){return vm>0&&target>0?vm*std::clamp(target/vm,.85,1.15):target;}
+inline bool sure(const Steady& s){return s.n>=3&&s.spread<=.12;}
 inline Steady steady(const std::vector<double>& targets){Steady s;std::vector<double> v;for(double t:targets){if(t>0)v.push_back(t);if(v.size()==5)break;}if(v.empty())return s;
     s.n=(int)v.size();std::vector<double> o=v;std::sort(o.begin(),o.end());s.value=o.size()%2?o[o.size()/2]:(o[o.size()/2-1]+o[o.size()/2])/2;s.spread=s.value>0?(o.back()-o.front())/2/s.value:0;return s;}
 // ---- the analysis -----------------------------------------------------------------------------------------------
@@ -81,13 +85,15 @@ struct Pt {float x,y;};
 // than 6 % of the travel from the start (-1 = it stayed close).
 struct Burst {double ratio=0,vErr=0,hErr=0,wrong=-1,react=0,phase[3]={0,0,0};int shots=0,breakAt=-1;std::vector<Pt> aim,shot;};
 inline Burst burst(const std::vector<Shift>& s,const std::vector<double>& mx,const std::vector<double>& my,size_t s0,size_t s1,double kH,double kV,int lag,double dt=0,double release=0){Burst b;
-    double pl=0,rc=0,ax=0,ay=0,sax=0,say=0,t0=s[s0-1].t,dur=std::max(1e-6,s[s1].t-t0),ph[3]={0,0,0},pr[3]={0,0,0};int nf=0,wr=0,cnt=0;std::vector<double> cum;b.aim.push_back({0,0});
+    double pl=0,rc=0,ax=0,ay=0,sax=0,say=0,t0=s[s0-1].t,dur=std::max(1e-6,s[s1].t-t0),ph[3]={0,0,0},pr[3]={0,0,0};int nf=0,wr=0,cnt=0;std::vector<double> cum,hv,gv;b.aim.push_back({0,0});
     for(size_t j=s0;j<=s1;j++){size_t k=j>=(size_t)lag?j-lag:0;double camX=-s[j].dx,camY=-s[j].dy,hX=kH*mx[k],hY=kV*my[k],gX=camX-hX,gY=camY-hY;
-        pl+=hY;rc+=gY;ax+=camX;ay+=camY;sax+=ax;say+=ay;nf++;b.aim.push_back({(float)ax,(float)ay});cum.push_back(pl);
+        pl+=hY;rc+=gY;hv.push_back(hY);gv.push_back(gY);ax+=camX;ay+=camY;sax+=ax;say+=ay;nf++;b.aim.push_back({(float)ax,(float)ay});cum.push_back(pl);
         int p=std::min(2,(int)((s[j].t-t0)/dur*3));ph[p]+=hY;pr[p]-=gY;if(std::fabs(gX)>.3&&std::fabs(hX)>.3){cnt++;if(gX*hX>0)wr++;}}
     double travel=-rc;if(travel<=0||pl<=travel*.05||!nf)return b;
     b.ratio=std::clamp(travel/pl,.4,2.5);b.vErr=-say/nf/travel*100;b.hErr=sax/nf/travel*100;b.wrong=cnt>=5?100.0*wr/cnt:-1;
-    for(size_t q=0;q<cum.size();q++)if(cum[q]>=pl*.1){b.react=s[s0+q].t-t0;break;}
+    // the share is read from where the hand has started pulling: the shots before it are the reaction, not the sensitivity
+    {size_t q0=0;for(size_t q=0;q<cum.size();q++)if(cum[q]>=pl*.1){b.react=s[s0+q].t-t0;q0=q;break;}
+     double plS=0,trS=0;for(size_t q=q0;q<hv.size();q++){plS+=hv[q];trS-=gv[q];}if(trS>0&&plS>trS*.05)b.ratio=std::clamp(trS/plS,.4,2.5);}
     for(int p=0;p<3;p++){b.phase[p]=pr[p]>0?ph[p]/pr[p]*100:0;}
     if(dt>0&&release>t0){b.shots=(int)std::floor((release-t0)/dt+1e-9)+1;size_t j=0;for(int k=0;k<b.shots;k++){double tk=t0+k*dt;while(j+1<b.aim.size()-1&&s[s0+j].t<tk)j++;Pt p=b.aim[std::min(j+1,b.aim.size()-1)];b.shot.push_back(p);
         if(b.breakAt<0&&std::hypot(p.x,p.y)>travel*.06)b.breakAt=k+1;}}
@@ -99,7 +105,7 @@ inline Summary summarize(const std::vector<Burst>& v){Summary m;std::vector<doub
     {std::vector<int> br;int sn=0;for(auto& b:v){if(b.ratio<=0)continue;if(b.shots>0){m.shots+=b.shots;sn++;}if(b.breakAt>0)br.push_back(b.breakAt);}if(sn)m.shots/=sn;if(!br.empty()){std::sort(br.begin(),br.end());m.breakAt=br[br.size()/2];}}
     m.vSd=std::sqrt(m.vSd/m.n);m.hSd=std::sqrt(m.hSd/m.n);if(wn)m.wrong=w/wn;std::sort(re.begin(),re.end());m.react=re[re.size()/2];return m;}
 struct Result {bool ok=false;std::string why;     // why: "short" "still" "nopull" "nofire" when not ok
-    double kH=0,kV=0;bool kMeasured=false,reused=false; // reused: too little mouse movement, the last measurement with the same PUBG settings was used        // screen pixels per count, horizontal and vertical
+    double kH=0,kV=0;bool kMeasured=false,reused=false,calibrated=false; // calibrated: kV from the guided up-and-down sweep // reused: too little mouse movement, the last measurement with the same PUBG settings was used        // screen pixels per count, horizontal and vertical
     std::vector<Burst> each;double hComp=-9;      // each magazine in detail; hComp: how much of the sideways kick the hand countered (1 = all, >1 too much, -9 = too little sideways kick to tell)
     std::vector<double> burstRatios;              // one answer per burst (trigger held) long enough to read; the ratio is their median when there are 2+
     double fitH=0,fitV=0,movedH=0,movedV=0;       // how well the camera followed the mouse (r2) and how many counts moved (for the diagnosis file)
@@ -108,20 +114,27 @@ struct Result {bool ok=false;std::string why;     // why: "short" "still" "nopul
 // vm: the current vertical multiplier (PUBG scales y by it), for the vertical pixels per count when only x could be measured.
 // fbH/fbV/fbLag: pixels per count from an earlier capture with the same PUBG sensitivity settings (0 = none), used when
 // this clip has too little movement of its own to measure them.
-inline Result analyse(const std::vector<Shift>& s,const std::vector<Mouse>& m,double vm,double dt=0,double fbH=0,double fbV=0,int fbLag=1){Result r;r.frames=(int)s.size();if(s.size()<12){r.why="short";return r;}
+// calA..calB: the guided sweep (aimed in like the spray, moving up and down, no shots); its frames alone give kV when they moved enough.
+inline Result analyse(const std::vector<Shift>& s,const std::vector<Mouse>& m,double vm,double dt=0,double fbH=0,double fbV=0,int fbLag=1,double calA=0,double calB=0){Result r;r.frames=(int)s.size();if(s.size()<12){r.why="short";return r;}
     size_t n=s.size();std::vector<double> mx(n,0),my(n,0);std::vector<char> fire(n,0);
     // mouse counts and the trigger per frame interval (t[i-1], t[i]]
     {size_t j=0;bool down=false;while(j<m.size()&&m[j].t<=s[0].t){if(m[j].button>0)down=true;if(m[j].button<0)down=false;j++;}
      for(size_t i=1;i<n;i++){bool any=down;while(j<m.size()&&m[j].t<=s[i].t){mx[i]+=m[j].dx;my[i]+=m[j].dy;if(m[j].button>0){down=true;any=true;}if(m[j].button<0)down=false;j++;}fire[i]=any;}}
     for(size_t i=1;i<n;i++){if(fire[i]&&!fire[i-1])r.bursts++;}
     // the screen shows the mouse a frame or two late: the lag (0..4 frames) that best explains the camera by the mouse
+    // after a spray the gun settles back for a moment with no mouse: those frames would read as a weak follow
+    std::vector<char> settle(n,0);{double last=-1;for(size_t i=1;i<n;i++){if(fire[i])last=s[i].t;else if(last>0&&s[i].t-last<.6)settle[i]=1;}}
+    bool calOnly=false;
     auto fit=[&](int lag,bool vertical,double& k,double& r2){double sxy=0,sxx=0,syy=0,moved=0;
-        for(size_t i=1+lag;i<n;i++){if(vertical&&(fire[i]||fire[i-lag]))continue;double c=vertical?s[i].dy:-s[i].dx,u=vertical?-my[i-lag]:mx[i-lag];sxy+=c*u;sxx+=u*u;syy+=c*c;moved+=std::fabs(u);}
+        for(size_t i=1+lag;i<n;i++){if(vertical&&(fire[i]||fire[i-lag]||settle[i]))continue;if(calOnly&&(s[i].t<calA||s[i].t>calB))continue;double c=vertical?s[i].dy:-s[i].dx,u=vertical?-my[i-lag]:mx[i-lag];sxy+=c*u;sxx+=u*u;syy+=c*c;moved+=std::fabs(u);}
         k=sxx>0?sxy/sxx:0;r2=(sxx>0&&syy>0)?sxy*sxy/(sxx*syy):0;return moved;};
     double kH=0,kV=0,rH=0,rV=0,eH=0,eV=0;int lagH=0,lagV=0;
     for(int lag=0;lag<=4;lag++){double k,q,e=fit(lag,false,k,q);if(q>rH){rH=q;kH=k;lagH=lag;eH=e;}e=fit(lag,true,k,q);if(q>rV){rV=q;kV=k;lagV=lag;eV=e;}}
     r.fitH=rH;r.fitV=rV;r.movedH=eH;r.movedV=eV;
     bool hOk=eH>=150&&rH>=.5&&kH>0,vOk=eV>=150&&rV>=.6&&kV>0; // enough counts moved and the camera clearly followed
+    if(calB>calA){calOnly=true;double ck=0,cr=0,ce=0;int cl=0;for(int lag=0;lag<=4;lag++){double k,q,e=fit(lag,true,k,q);if(q>cr){cr=q;ck=k;cl=lag;ce=e;}}calOnly=false;
+        if(ce>=150&&cr>=.6&&ck>0){kV=ck;rV=cr;eV=ce;lagV=cl;vOk=true;hOk=false;r.calibrated=true;r.fitV=rV;r.movedV=eV;}
+        else{vOk=hOk=false;r.fitV=cr;r.movedV=ce;}} /* the sweep is in the spray's own aim state: it wins; when it failed, looks taken in another aim state are not trusted either (a calibrated earlier value, or "still") */
     if(vOk){r.kV=kV;r.kH=hOk?kH:kV/std::max(.1,vm);r.lag=lagV;}else if(hOk){r.kH=kH;r.kV=kH*vm;r.lag=lagH;}else if(fbH>0&&fbV>0){r.kH=fbH;r.kV=fbV;r.lag=std::clamp(fbLag,0,4);r.reused=true;}else{r.why="still";return r;}
     r.kMeasured=!r.reused;
     // the spray: from the first frame with the trigger held to a quarter second after the last (the last pull counts)
@@ -140,7 +153,7 @@ inline Result analyse(const std::vector<Shift>& s,const std::vector<Mouse>& m,do
     r.ratio=std::clamp(r.recoil/r.pull,.4,2.5);
     {std::vector<double> each;size_t i=1;while(i<n){if(!fire[i]){i++;continue;}size_t s0=i;while(i<n&&fire[i])i++;size_t s1=i-1;double te=s[s1].t+.25;while(s1+1<n&&s[s1+1].t<=te&&!fire[s1+1])s1++;
         if(s[s1].t-s[s0-1].t<.35){continue;}Burst bd=burst(s,mx,my,s0,s1,r.kH,r.kV,r.lag,dt,s[i-1].t);if(bd.ratio>0){each.push_back(bd.ratio);r.each.push_back(std::move(bd));}}
-     r.burstRatios=each;if(each.size()>=2){std::sort(each.begin(),each.end());r.ratio=each.size()%2?each[each.size()/2]:(each[each.size()/2-1]+each[each.size()/2])/2;}}
+     r.burstRatios=each;if(!each.empty()){std::sort(each.begin(),each.end());r.ratio=each.size()%2?each[each.size()/2]:(each[each.size()/2-1]+each[each.size()/2])/2;}}
     // the same hand at ratio x the sensitivity: the vertical pull scaled, the horizontal as it was
     double py=0;r.laser.push_back({0,0});for(size_t i=1;i<r.gun.size();i++){double handYi=r.hand[i].y-r.hand[i-1].y;py+=(r.gun[i].y-r.gun[i-1].y)+handYi*r.ratio;r.laser.push_back({r.aim[i].x,(float)py});}
     r.ok=true;return r;}

@@ -22,6 +22,7 @@ for(const file of files){const source=fs.readFileSync(path.join(root,file),'utf8
  while((token=tokens.exec(source))){if(!token[0].startsWith('L"'))continue;let key;try{key=JSON.parse(token[0].slice(1).replace(/\\0/g,'\\u0000'));}catch{continue;}if(!korean.test(key))continue;
   let exclusion='';if(file==='pubg_board.h'&&(key==='시작'||key==='남은'))exclusion='Fixed Korean game OCR recognition token';
   else if((file==='ModeSwitch.cpp'||file==='lang_menu.h')&&key==='한국어')exclusion='Language autonym';
+  else if(file==='sound_boost.h'&&/^.(발소리|총소리)$/.test(key))exclusion='Sample folder name on disk (the player sorts recordings into it)';
   else if(file==='profiles.h')exclusion='Profile display key translated at UI sinks';
   else if(file==='pubg_map.h'&&mapNames.has(key))exclusion='Map display key translated at overlay renderer';
   else if(/raid_(context|events|files|discovery)\.h|pubg_log\.h|tarkov_keys\.h/.test(file)&&!catalog[key])exclusion='Fixed game parser token';

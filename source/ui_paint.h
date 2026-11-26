@@ -131,6 +131,12 @@ inline bool headphones(HDC dc,RECT r,COLORREF c,float stroke){
   Gdiplus::GraphicsPath cup;float l=x-cw/2,t=cupTop;cup.AddArc(l,t,cw,cw,180.f,180.f);cup.AddLine(l+cw,t+rad,l+cw,t+ch-rad);cup.AddArc(l,t+ch-cw,cw,cw,0.f,180.f);cup.CloseFigure();g.DrawPath(&pen,&cup);}
  return true;
 }
+// A check mark drawn as two rounded strokes, centred in r with the same pixel alignment as circle() and exclaim().
+inline bool check(HDC dc,RECT r,COLORREF c){
+ if(!token){return false;}float cx=(r.left+r.right)/2.f,cy=(r.top+r.bottom)/2.f,h=(float)(r.bottom-r.top);
+ Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);Gdiplus::Pen p(color(c),std::max(1.6f,h*.12f));
+ p.SetStartCap(Gdiplus::LineCapRound);p.SetEndCap(Gdiplus::LineCapRound);p.SetLineJoin(Gdiplus::LineJoinRound);
+ Gdiplus::PointF m[]={{cx-h*.22f,cy+h*.01f},{cx-h*.06f,cy+h*.16f},{cx+h*.23f,cy-h*.15f}};g.DrawLines(&p,m,3);return true;}
 // An exclamation mark drawn as shapes (a rounded bar and a dot) centred in r: the update badge's "!". Not text, because
 // GDI+ cannot see the UI font (Pretendard is loaded privately for GDI only), so a text "!" came out empty.
 inline bool exclaim(HDC dc,RECT r,COLORREF c){
@@ -210,7 +216,7 @@ inline bool drawLogo(HDC dc,RECT r,bool red=false){
  if(red){Gdiplus::ColorMatrix m={{{0,0,1,0,0},{0,.62f,0,0,0},{1,0,0,0,0},{0,0,0,1,0},{0,0,0,0,1}}};attributes.SetColorMatrix(&m);}return g.DrawImage(logo,Gdiplus::Rect(r.left,r.top,r.right-r.left,r.bottom-r.top),0,0,logo->GetWidth(),logo->GetHeight(),Gdiplus::UnitPixel,&attributes)==Gdiplus::Ok;
 }
 // Feature icons for the 게임 도우미 rows, the bug icon's line style on the same 24 x 24 grid: 0 bell, 1 banknote, 2 folded
-// map, 3 house, 4 scope. A tinted rounded tile behind (the feature's colour over the row) tells the features apart.
+// map, 3 house, 4 scope, 5 speaker. A tinted rounded tile behind (the feature's colour over the row) tells the features apart.
 inline void feature(HDC dc,RECT tile,int kind,COLORREF ink,COLORREF row){
  if(!token){return;}Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
  {Gdiplus::GraphicsPath t;path(t,tile,14);Gdiplus::LinearGradientBrush b(Gdiplus::Point(tile.left,tile.top),Gdiplus::Point(tile.left,tile.bottom),color(mixColor(row,ink,.22)),color(mixColor(row,ink,.12)));
@@ -224,6 +230,7 @@ inline void feature(HDC dc,RECT tile,int kind,COLORREF ink,COLORREF row){
  else if(kind==2){Gdiplus::PointF m[]={{3.5f,6.5f},{9.f,4.5f},{15.f,6.5f},{20.5f,4.5f},{20.5f,17.5f},{15.f,19.5f},{9.f,17.5f},{3.5f,19.5f}};g.DrawPolygon(&pen,m,8);g.DrawLine(&pen,9.f,4.5f,9.f,17.5f);g.DrawLine(&pen,15.f,6.5f,15.f,19.5f);}
  else if(kind==3){Gdiplus::PointF roof[]={{3.5f,11.5f},{12.f,4.5f},{20.5f,11.5f}};g.DrawLines(&pen,roof,3);Gdiplus::PointF body[]={{5.8f,9.6f},{5.8f,19.5f},{18.2f,19.5f},{18.2f,9.6f}};g.DrawLines(&pen,body,4);
   Gdiplus::GraphicsPath d;path(d,RECT{10,14,14,20},3);g.DrawPath(&pen,&d);}
+ else if(kind==5){Gdiplus::PointF sp[]={{3.5f,9.5f},{7.5f,9.5f},{12.f,5.5f},{12.f,18.5f},{7.5f,14.5f},{3.5f,14.5f}};g.DrawPolygon(&pen,sp,6);g.DrawArc(&pen,11.f,8.5f,7.f,7.f,-55.f,110.f);g.DrawArc(&pen,10.f,5.f,11.5f,14.f,-55.f,110.f);} // 5 speaker
  else{g.DrawEllipse(&pen,4.5f,4.5f,15.f,15.f);g.DrawLine(&pen,12.f,2.f,12.f,7.5f);g.DrawLine(&pen,12.f,16.5f,12.f,22.f);g.DrawLine(&pen,2.f,12.f,7.5f,12.f);g.DrawLine(&pen,16.5f,12.f,22.f,12.f);g.FillEllipse(&fillInk,10.8f,10.8f,2.4f,2.4f);}
 }
 }
