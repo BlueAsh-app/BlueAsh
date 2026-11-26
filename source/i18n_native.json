@@ -3464,20 +3464,20 @@
     "tr": " (yol kaydedilemedi)",
     "zh-TW": " （無法儲存路徑）"
   },
-  "BlueAsh 2.32.0\r\n알림: ": {
-    "ko": "BlueAsh 2.32.0\r\n알림: ",
-    "en": "BlueAsh 2.32.0\r\nAlerts: ",
-    "zh-CN": "BlueAsh 2.32.0\r\n提醒：",
-    "ja": "BlueAsh 2.32.0\r\n通知: ",
-    "ru": "BlueAsh 2.32.0\r\nУведомления: ",
-    "es": "BlueAsh 2.32.0\r\nAlertas: ",
-    "pt-BR": "BlueAsh 2.32.0\r\nAlertas: ",
-    "de": "BlueAsh 2.32.0\r\nAlarme: ",
-    "fr": "BlueAsh 2.32.0\r\nAlertes : ",
-    "it": "BlueAsh 2.32.0\r\nAvvisi: ",
-    "pl": "BlueAsh 2.32.0\r\nAlerty: ",
-    "tr": "BlueAsh 2.32.0\r\nUyarılar: ",
-    "zh-TW": "BlueAsh 2.32.0\r\n提醒："
+  "BlueAsh 2.32.1\r\n알림: ": {
+    "ko": "BlueAsh 2.32.1\r\n알림: ",
+    "en": "BlueAsh 2.32.1\r\nAlerts: ",
+    "zh-CN": "BlueAsh 2.32.1\r\n提醒：",
+    "ja": "BlueAsh 2.32.1\r\n通知: ",
+    "ru": "BlueAsh 2.32.1\r\nУведомления: ",
+    "es": "BlueAsh 2.32.1\r\nAlertas: ",
+    "pt-BR": "BlueAsh 2.32.1\r\nAlertas: ",
+    "de": "BlueAsh 2.32.1\r\nAlarme: ",
+    "fr": "BlueAsh 2.32.1\r\nAlertes : ",
+    "it": "BlueAsh 2.32.1\r\nAvvisi: ",
+    "pl": "BlueAsh 2.32.1\r\nAlerty: ",
+    "tr": "BlueAsh 2.32.1\r\nUyarılar: ",
+    "zh-TW": "BlueAsh 2.32.1\r\n提醒："
   },
   " / 볼륨: ": {
     "ko": " / 볼륨: ",
@@ -29369,21 +29369,6 @@
     "tr": "Çalınıyor…",
     "zh-TW": "正在播放…"
   },
-  "sound-samples%ls 폴더에 WAV 파일이 없습니다": {
-    "ko": "sound-samples%ls 폴더에 WAV 파일이 없습니다",
-    "en": "No WAV file in sound-samples%ls",
-    "zh-CN": "sound-samples%ls 文件夹中没有 WAV 文件",
-    "ja": "sound-samples%ls フォルダーに WAV ファイルがありません",
-    "ru": "В папке sound-samples%ls нет WAV-файла",
-    "es": "No hay ningún archivo WAV en sound-samples%ls",
-    "pt-BR": "Não há arquivo WAV em sound-samples%ls",
-    "de": "Keine WAV-Datei in sound-samples%ls",
-    "fr": "Aucun fichier WAV dans sound-samples%ls",
-    "it": "Nessun file WAV in sound-samples%ls",
-    "pl": "Brak pliku WAV w sound-samples%ls",
-    "tr": "sound-samples%ls klasöründe WAV dosyası yok",
-    "zh-TW": "sound-samples%ls 資料夾中沒有 WAV 檔案"
-  },
   "소리 파일을 읽지 못했습니다": {
     "ko": "소리 파일을 읽지 못했습니다",
     "en": "Couldn't read the sound file",
@@ -29683,5 +29668,20 @@
     "pl": "Przetwarzany jest tylko dźwięk PUBG (Discord, przeglądarka i muzyka bez zmian). W tym czasie mikser głośności pokazuje PUBG jako wyciszony; po wyłączeniu wszystko wraca.",
     "tr": "Yalnızca PUBG'nin sesi işlenir (Discord, tarayıcı ve müzik aynı kalır). İşlem sırasında ses karıştırıcıda PUBG sessiz görünür; kapatınca her şey eski haline döner.",
     "zh-TW": "只處理 PUBG 的聲音（Discord、瀏覽器與音樂保持不變）。處理期間音量混音器中 PUBG 顯示為靜音，關閉後恢復原狀。"
+  },
+  "미리 듣기 소리를 받지 못했습니다. 인터넷 연결을 확인하고 다시 눌러 주세요.": {
+    "ko": "미리 듣기 소리를 받지 못했습니다. 인터넷 연결을 확인하고 다시 눌러 주세요.",
+    "en": "Couldn't download the preview sounds. Check your internet connection and press again.",
+    "zh-CN": "无法下载试听声音。请检查网络连接后再按一次。",
+    "ja": "試聴用の音をダウンロードできませんでした。インターネット接続を確認して、もう一度押してください。",
+    "ru": "Не удалось загрузить звуки для прослушивания. Проверьте подключение к интернету и нажмите ещё раз.",
+    "es": "No se pudieron descargar los sonidos de la vista previa. Revisa tu conexión a internet y vuelve a pulsar.",
+    "pt-BR": "Não foi possível baixar os sons da prévia. Verifique sua conexão com a internet e pressione de novo.",
+    "de": "Die Vorschau-Töne konnten nicht geladen werden. Prüfe deine Internetverbindung und drücke erneut.",
+    "fr": "Impossible de télécharger les sons de l'aperçu. Vérifiez votre connexion Internet et appuyez à nouveau.",
+    "it": "Impossibile scaricare i suoni dell'anteprima. Controlla la connessione a Internet e premi di nuovo.",
+    "pl": "Nie udało się pobrać dźwięków podglądu. Sprawdź połączenie z internetem i naciśnij ponownie.",
+    "tr": "Ön dinleme sesleri indirilemedi. İnternet bağlantını kontrol edip tekrar bas.",
+    "zh-TW": "無法下載試聽聲音。請檢查網路連線後再按一次。"
   }
 }

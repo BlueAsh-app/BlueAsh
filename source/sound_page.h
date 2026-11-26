@@ -160,7 +160,7 @@ void paintRadar(HDC dc){const UINT one=DT_LEFT|DT_VCENTER|DT_SINGLELINE;
         if(painting::token){Gdiplus::Graphics g(dc);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);float px=(pd.left+pd.right)/2.f+1.5f,py=(pd.top+pd.bottom)/2.f;Gdiplus::PointF tri[]={{px-4.5f,py-6},{px+6,py},{px-4.5f,py+6}};
             Gdiplus::SolidBrush w(busy||hov?Gdiplus::Color(255,10,20,40):Gdiplus::Color(255,200,216,255));g.FillPolygon(&w,tri,3);}}
     RECT res={L,338,Rt,374};
-    if(shot.error){std::wstring t=shot.error==1?fmt(L"sound-samples%ls 폴더에 WAV 파일이 없습니다",soundboost::rec::subName(shot.kind)):std::wstring(i18n::text(L"소리 파일을 읽지 못했습니다"));textAt(dc,t,res,smallBold,danger,one|DT_END_ELLIPSIS);}
+    if(shot.error){std::wstring t=shot.error==1?std::wstring(i18n::text(L"미리 듣기 소리를 받지 못했습니다. 인터넷 연결을 확인하고 다시 눌러 주세요.")):std::wstring(i18n::text(L"소리 파일을 읽지 못했습니다"));textAt(dc,t,res,smallBold,danger,one|DT_END_ELLIPSIS);}
     else if(heardAt){RECT d={L,res.top+12,L+12,res.top+24};painting::circle(dc,d,tone,tone);
         textAt(dc,fmt(L"%ls · 약 %dm",i18n::text(direction(shot.az)),(int)shot.dist),{L+22,res.top,Rt,res.bottom},sectionFont,ink,one|DT_END_ELLIPSIS);}
     else textAt(dc,i18n::text(L"버튼을 누르면 무작위 방향에서 한 번 들립니다"),res,smallFont,muted,one|DT_END_ELLIPSIS);
@@ -217,7 +217,12 @@ LRESULT CALLBACK soundPageProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){using namesp
     case WM_SETCURSOR:if((hoverCard>=0&&hoverCard!=sel)||hoverLink||(hoverTab>=0&&hoverTab!=view)||hoverPlay>=0){SetCursor(LoadCursorW(nullptr,IDC_HAND));return TRUE;}if(hoverPoint>=0||drag>=0){SetCursor(LoadCursorW(nullptr,IDC_SIZENS));return TRUE;}break;
     case WM_LBUTTONDOWN:{int x=(short)LOWORD(lp),y=(short)HIWORD(lp);int c=cardAt(x,y);if(c>=0){choose(c);return 0;}
         int t=tabAt(x,y);if(t>=0&&t!=view){view=t;details=false;buttons();InvalidateRect(h,nullptr,FALSE);return 0;}
-        int k=playAt(x,y);if(k>=0){std::wstring dir=soundboost::rec::samples()+soundboost::rec::subName(k);auto shipped=[k]{std::wstring r=unpackBundle();return r.empty()?r:r+(k?L"\\sound\\gunshot":L"\\sound\\footstep");};
+        int k=playAt(x,y);if(k>=0){std::wstring dir=soundboost::rec::samples()+soundboost::rec::subName(k);
+#ifdef BLUEASH_TT
+            if(_wgetenv(L"BLUEASH_NO_SAMPLES"))dir=L"?"; /* test build: act like a PC without the developer's recordings */
+#endif
+            auto shipped=[k]{ /* the data pack's own folder (downloaded at start; it reaches the runtime folder only when a helper starts) */
+                if(!datapack::ready()){datapack::fetch();}return datapack::ready()?datapack::cacheDir()+(k?L"\\sound\\gunshot":L"\\sound\\footstep"):std::wstring();};
             if(sbprev::play(h,k,dir,shipped,sel==Off?-1:sel,sbdsp::customPreset(soundboost::custom()))){waiting=k;InvalidateRect(h,&radarBox,FALSE);}return 0;}
         if(view)return 0;
         if(onLink(x,y)){details=!details;InvalidateRect(h,&graph,FALSE);return 0;}

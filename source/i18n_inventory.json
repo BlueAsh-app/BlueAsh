@@ -9947,7 +9947,7 @@
     "exclusion": ""
   },
   {
-    "key": "BlueAsh 2.32.0\r\n알림: ",
+    "key": "BlueAsh 2.32.1\r\n알림: ",
     "files": [
       "raid_alert.h"
     ],
@@ -11419,7 +11419,7 @@
     "exclusion": ""
   },
   {
-    "key": "sound-samples%ls 폴더에 WAV 파일이 없습니다",
+    "key": "미리 듣기 소리를 받지 못했습니다. 인터넷 연결을 확인하고 다시 눌러 주세요.",
     "files": [
       "sound_page.h"
     ],
