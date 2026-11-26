@@ -15,6 +15,7 @@ const RECT graph={36,138,816,320},plot={92,188,800,290};
 const COLORREF good=RGB(70,208,146),warn=RGB(244,178,84);
 // 미리 듣기: the tab (0 graph, 1 radar), the radar disc, the two play cards, the last sound and when it started
 int view=0,hoverTab=-1,hoverPlay=-1,waiting=-1;RECT tabRects[2]={};sbprev::Result shot;ULONGLONG heardAt=0;
+const RECT enhCard={36,432,816,510},infoRect={36,518,672,552}; // Windows' 음향 강도 이퀄라이제이션 card; the note beside 닫기
 const RECT radarBox={36,138,816,424};const int rcx=184,rcy=292,rr=106;const RECT disc={rcx-rr-4,rcy-rr-4,rcx+rr+4,rcy+rr+4};
 RECT playCard(int k){return {344+k*234,256,344+k*234+222,322};}
 bool radarLive(){return heardAt&&!shot.error&&GetTickCount64()-heardAt<(ULONGLONG)shot.ms+1600;}
@@ -179,16 +180,27 @@ void paint(HDC dc){const UINT one=DT_LEFT|DT_VCENTER|DT_SINGLELINE;
         if(i==1){int w=textWidth(dc,captionFont,i18n::text(L"추천"))+20;RECT pill={r.right-16-w,r.top-10,r.right-16,r.top+10};roundBox(dc,pill,good,good,10);textAt(dc,i18n::text(L"추천"),pill,captionFont,RGB(6,30,20),DT_CENTER|DT_VCENTER|DT_SINGLELINE);}}
     if(view)paintRadar(dc);else{paintGraph(dc);paintBelow(dc);}
     std::wstring dev,why=soundboost::info(dev);bool failed=soundboost::state==soundboost::Failed;
-    textAt(dc,failed?why+L" · "+i18n::text(L"프리셋을 다시 고르거나 배그를 다시 켜면 다시 시도합니다."):std::wstring(i18n::text(L"배그 소리만 처리합니다. 디스코드·브라우저·음악 소리는 바뀌지 않습니다. 처리하는 동안 Windows 볼륨 믹서에는 배그가 음소거로 보이며(원래 소리 대신 처리한 소리를 내보내기 때문), 끄면 원래대로 돌아옵니다. 독점 전체 화면에서는 적용 알림이 보이지 않을 수 있습니다.")),
-        {36,508,816,550},captionFont,failed?danger:muted,DT_LEFT|DT_TOP|DT_WORDBREAK);
-    textAt(dc,i18n::text(L"Windows 스피커 속성 > 고급 기능의 같은 체크와 연결됩니다. 큰 소리와 작은 소리의 차이를 줄여 음량을 고르게 맞춥니다."),{88,474,816,496},captionFont,muted,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);}
+    // Windows' own 음향 강도 이퀄라이제이션 as a card: the Windows mark, the name with a "Windows 기본 기능" pill, what it is
+    // and that it is switched right here (the switch control sits on the card's right)
+    {RECT card=enhCard;roundBox(dc,card,rowFill,line,16);RECT tile={card.left+18,card.top+16,card.left+62,card.top+60};
+     roundBox(dc,tile,RGB(16,30,64),RGB(36,58,104),12);
+     int cx=(tile.left+tile.right)/2,cy=(tile.top+tile.bottom)/2;COLORREF w=RGB(110,170,255); /* the Windows mark: four tiles */
+     for(int k=0;k<4;k++){int x=k%2?cx+1:cx-9,y=k/2?cy+1:cy-9;roundBox(dc,{x,y,x+8,y+8},w,w,2);}
+     int tx=tile.right+16;const wchar_t* name=i18n::text(L"음향 강도 이퀄라이제이션");int nw=std::min(textWidth(dc,boldFont,name),300);
+     textAt(dc,name,{tx,card.top+12,tx+nw,card.top+36},boldFont,ink,one|DT_END_ELLIPSIS);
+     const wchar_t* tag=i18n::text(L"Windows 기본 기능");int pw=textWidth(dc,captionFont,tag)+20;RECT pill={tx+nw+10,card.top+14,tx+nw+10+pw,card.top+34};
+     roundBox(dc,pill,RGB(22,40,84),RGB(52,84,150),10);textAt(dc,tag,pill,captionFont,RGB(150,190,255),DT_CENTER|DT_VCENTER|DT_SINGLELINE);
+     textAt(dc,i18n::text(L"Windows에 원래 있는 기능입니다. 오른쪽 스위치로 바로 켜고 끌 수 있습니다."),{tx,card.top+38,card.right-96,card.top+58},smallFont,mint,one|DT_END_ELLIPSIS);
+     textAt(dc,i18n::text(L"큰 소리와 작은 소리의 차이를 줄여 음량을 고르게 맞춥니다 · 스피커 속성 > 고급 기능과 같은 설정"),{tx,card.top+58,card.right-96,card.top+76},captionFont,muted,one|DT_END_ELLIPSIS);}
+    textAt(dc,failed?why+L" · "+i18n::text(L"프리셋을 다시 고르거나 배그를 다시 켜면 다시 시도합니다."):std::wstring(i18n::text(L"배그 소리만 처리합니다(디스코드·브라우저·음악은 그대로). 처리 중에는 볼륨 믹서에 배그가 음소거로 보이며, 끄면 원래대로 돌아옵니다.")),
+        infoRect,captionFont,failed?danger:muted,DT_LEFT|DT_TOP|DT_WORDBREAK);}
 // 음향 강도 이퀄라이제이션 is read and written on a worker thread (the Settings call can take a moment); the answer comes back here.
 void enh(HWND h,int want){std::thread([h,want]{HRESULT co=CoInitializeEx(nullptr,COINIT_MULTITHREADED);bool v=want==1;int r=soundboost::loudness(want<0?nullptr:&v);if(SUCCEEDED(co))CoUninitialize();PostMessageW(h,WM_APP+211,(WPARAM)(r+1),want);}).detach();}
 }
 LRESULT CALLBACK soundPageProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){using namespace soundpage;
     switch(msg){
     case WM_CREATE:page=h;sel=soundboost::on()?soundboost::presetSaved():Off;details=hoverLink=false;drag=hoverCard=hoverPoint=hoverTab=hoverPlay=waiting=-1;view=0;heardAt=0;shot={};note.clear();
-        pageSwitch(h,i18n::text(L"음향 강도 이퀄라이제이션"),36,440,780,36,75);enhKnown=false;enh(h,-1);
+        {HWND sw=pageSwitch(h,i18n::text(L"음향 강도 이퀄라이제이션"),enhCard.right-76,enhCard.top+20,56,36,75);SetPropW(sw,L"BlueAsh.OnRow",(HANDLE)1);} /* the switch only (56 wide); the card draws the name */enhKnown=false;enh(h,-1);
         pageButton(h,i18n::text(L"기본값으로"),36,556,140,78);pageButton(h,i18n::text(L"닫기"),696,556,120,180);buttons();
         SetTimer(h,1,500,nullptr);soundboost::changed=[]{if(pageWindow&&mainPage==19)InvalidateRect(pageWindow,nullptr,FALSE);};return 0;
     case WM_APP+211:{int r=(int)wp-1;if(r>=0)checkBox(h,75,r==1);
@@ -197,7 +209,7 @@ LRESULT CALLBACK soundPageProc(HWND h,UINT msg,WPARAM wp,LPARAM lp){using namesp
     case WM_APP+212:{auto* r=(sbprev::Result*)lp;if(r->error==3){delete r;return 0;}shot=*r;delete r;waiting=-1;heardAt=GetTickCount64();if(!shot.error)SetTimer(h,3,16,nullptr);InvalidateRect(h,&radarBox,FALSE);return 0;}
     case WM_TIMER:if(wp==2){KillTimer(h,2);note.clear();InvalidateRect(h,view?&radarBox:&graph,FALSE);return 0;}
         if(wp==3){if(!radarLive())KillTimer(h,3);if(view){InvalidateRect(h,&disc,FALSE);RECT cards={344,256,800,322};InvalidateRect(h,&cards,FALSE);}return 0;}
-        {RECT st={300,18,816,50},info={36,504,816,552};InvalidateRect(h,&st,FALSE);InvalidateRect(h,&info,FALSE);}return 0;
+        {RECT st={300,18,816,50},info=infoRect;InvalidateRect(h,&st,FALSE);InvalidateRect(h,&info,FALSE);}return 0;
     case WM_MOUSEMOVE:{int x=(short)LOWORD(lp),y=(short)HIWORD(lp);if(drag>=0){dragTo(x,y);return 0;}
         int c=cardAt(x,y),p=pointAt(x,y),tb=tabAt(x,y),k=playAt(x,y);bool l=onLink(x,y);if(c!=hoverCard||p!=hoverPoint||l!=hoverLink||tb!=hoverTab||k!=hoverPlay){hoverCard=c;hoverPoint=p;hoverLink=l;hoverTab=tb;hoverPlay=k;InvalidateRect(h,nullptr,FALSE);}
         TRACKMOUSEEVENT t={sizeof(t),TME_LEAVE,h,0};TrackMouseEvent(&t);return 0;}

@@ -11,7 +11,9 @@
 # -Promote and -Direct also put the release on GitHub (publish-github.ps1: public copy, commit, tag v<version>, GitHub Release with the setup .exe) unless
 # -NoGitHub or -NoDeploy; the download site (blueash.pages.dev) reads check.txt, so it follows the relay by itself.
 # -Exe: publish a build made elsewhere (BLUEASH_OUT=... sh source/build.sh), e.g. while the running copy locks BlueAsh.exe.
-param([string[]]$Notes=@(),[switch]$NoDeploy,[string]$Exe='',[switch]$Promote,[switch]$Direct,[switch]$NoGitHub)
+# -Replace (with -Direct): publish again under the version already out (same version number, new build) — installs that
+# already have that version are not offered it; new downloads and installs updating from older versions get it.
+param([string[]]$Notes=@(),[switch]$NoDeploy,[string]$Exe='',[switch]$Promote,[switch]$Direct,[switch]$NoGitHub,[switch]$Replace)
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.IO.Compression,System.IO.Compression.FileSystem
 $root=Split-Path $PSScriptRoot -Parent
@@ -37,7 +39,7 @@ function CheckFiles{HistoryText;$u=New-Object Text.UTF8Encoding($false);if(Test-
  $b=$(if(Test-Path -LiteralPath $betaPath){$betaPath}else{$stablePath});if(Test-Path -LiteralPath $b){[IO.File]::WriteAllText((Join-Path $updates 'check-beta.txt'),(CheckText $b),$u)}}
 function Published($path){if(Test-Path -LiteralPath $path){return [version](Get-Content -LiteralPath $path -Raw -Encoding UTF8|ConvertFrom-Json).version};return [version]'0.0.0'}
 
-function GitHub($v){if($NoDeploy -or $NoGitHub){return};& (Join-Path $PSScriptRoot 'publish-github.ps1') -Version $v}
+function GitHub($v){if($NoDeploy -or $NoGitHub){return};& (Join-Path $PSScriptRoot 'publish-github.ps1') -Version $v -Replace:$Replace}
 
 if($Promote){
  if(!(Test-Path -LiteralPath $betaPath)){throw '베타로 올린 버전이 없습니다. 먼저 release.ps1 -Notes ... 로 베타를 올리세요.'}
@@ -57,7 +59,8 @@ $exe=$(if($Exe){$Exe}else{Join-Path $root 'BlueAsh.exe'})
 $vi=[Diagnostics.FileVersionInfo]::GetVersionInfo($exe);$fileVersion="$($vi.FileMajorPart).$($vi.FileMinorPart).$($vi.FileBuildPart)"
 if($fileVersion -ne $version){throw "BlueAsh.exe 파일 버전($fileVersion)이 appVersion($version)과 다릅니다. 버전을 올린 뒤 다시 빌드하세요."}
 $latest=@((Published $stablePath),(Published $betaPath)|Sort-Object)[-1]
-if([version]$version -le (Published $stablePath)){throw "$version 은(는) 이미 배포된 $(Published $stablePath) 보다 새롭지 않습니다. 버전을 올리세요."}
+if($Replace){if(!$Direct){throw '-Replace는 -Direct와 함께 씁니다.'};if([version]$version -ne (Published $stablePath)){throw "-Replace는 지금 배포된 $(Published $stablePath) 과 같은 버전만 다시 올립니다."}}
+elseif([version]$version -le (Published $stablePath)){throw "$version 은(는) 이미 배포된 $(Published $stablePath) 보다 새롭지 않습니다. 버전을 올리세요."}
 if(!$Direct -and [version]$version -lt $latest){throw "$version 은(는) 베타 $latest 보다 오래된 버전입니다."}
 
 # Self-test of the exact exe being published, in a scratch folder (the running BlueAsh's own files stay untouched).
@@ -90,6 +93,6 @@ if($Direct){AddHistory ([pscustomobject]$manifest)}
 # GPL-3.0: the source of this exact build goes out with it (relay/public/source, linked from NOTICE.txt and README.txt).
 # The download site offers the setup program (an .exe), not the update ZIP.
 & (Join-Path $PSScriptRoot 'build-installer.ps1') -Out (Join-Path $root 'relay\public\download') -Exe $exe
-& (Join-Path $PSScriptRoot 'source-zip.ps1') -Version $version -Out (Join-Path $root 'relay\public\source')
+& (Join-Path $PSScriptRoot 'source-zip.ps1') -Version $version -Out (Join-Path $root 'relay\public\source') -Replace:$Replace
 Deploy
 if($Direct){GitHub $version}

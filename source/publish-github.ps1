@@ -8,7 +8,7 @@
 # stored GitHub sign-in (Git Credential Manager asks once); the Release uses the GitHub CLI's sign-in (gh auth login,
 # once). Safe to run again for the same version: the Release's file and notes are replaced. -WhatIf only shows what
 # would change. -ReleaseOnly skips the public copy and the push (the tag must already be on GitHub) and only makes the Release.
-param([Parameter(Mandatory=$true)][string]$Version,[string]$Public=(Join-Path ([Environment]::GetFolderPath('Desktop')) 'BlueAsh-public'),[switch]$WhatIf,[switch]$ReleaseOnly)
+param([Parameter(Mandatory=$true)][string]$Version,[string]$Public=(Join-Path ([Environment]::GetFolderPath('Desktop')) 'BlueAsh-public'),[switch]$WhatIf,[switch]$ReleaseOnly,[switch]$Replace)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent;$repo='https://github.com/BlueAsh-app/BlueAsh.git'
 function G([string]$dir){& git.exe -C $dir @args;if($LASTEXITCODE){throw "git $($args -join ' ') 실패 ($LASTEXITCODE)"}}
@@ -48,6 +48,7 @@ $body=@("**$leaf** 를 받아 실행하세요 (download and run **$leaf**). 다�
 $nf=Join-Path ([IO.Path]::GetTempPath()) "blueash-release-$Version.md";[IO.File]::WriteAllText($nf,($body -join "`n"),(New-Object Text.UTF8Encoding $false))
 try{$null=Gh release view "v$Version" --repo $ghRepo
  if($LASTEXITCODE){Gh release create "v$Version" $setup --repo $ghRepo --verify-tag --latest --title "BlueAsh $Version" --notes-file $nf}
+ elseif($Replace){Gh release upload "v$Version" $setup --repo $ghRepo --clobber;if(!$LASTEXITCODE){Gh release edit "v$Version" --repo $ghRepo --notes-file $nf}} # same version, new build: the setup file and notes are replaced
  else{throw "GitHub Release v$Version 이 이미 있습니다. 기존 파일을 덮어쓰지 않습니다."}
  if($LASTEXITCODE){throw "GitHub Release v$Version 를 만들지 못했습니다 ($LASTEXITCODE). 다시: source/publish-github.ps1 -Version $Version"}}
 finally{}

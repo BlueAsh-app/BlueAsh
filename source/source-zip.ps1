@@ -3,15 +3,16 @@
 # not part of the program users get) and BlueAsh.exe itself. Written to <Out>/BlueAsh-<version>-source.zip and to
 # <Out>/BlueAsh-source-latest.zip; release.ps1 calls it so the relay serves the source next to every update
 # (NOTICE.txt, README.txt and the download page link it). Build steps for readers: source/BUILDING.txt.
-param([Parameter(Mandatory=$true)][string]$Version,[Parameter(Mandatory=$true)][string]$Out)
+param([Parameter(Mandatory=$true)][string]$Version,[Parameter(Mandatory=$true)][string]$Out,[switch]$Replace) # -Replace: the same version republished (release.ps1 -Replace) overwrites its source ZIP
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.IO.Compression,System.IO.Compression.FileSystem
 $root=Split-Path $PSScriptRoot -Parent
 $files=@(& git -C $root -c core.quotepath=off ls-files)|Where-Object{$_ -notmatch '^(AGENTS\.md|CLAUDE\.md|RULES\.md|\.claude/|\.codex/|docs/|relay/|brand/|BlueAsh\.exe$|t\.exe$)'}
 if($LASTEXITCODE -or $files.Count -lt 50){throw 'git ls-files를 읽지 못했습니다.'}
-[void][IO.Directory]::CreateDirectory($Out);$target=Join-Path $Out "BlueAsh-$Version-source.zip";if(Test-Path -LiteralPath $target){throw "소스 ZIP이 이미 있습니다: $target"}
+[void][IO.Directory]::CreateDirectory($Out);$target=Join-Path $Out "BlueAsh-$Version-source.zip";$final=$target;if(Test-Path -LiteralPath $target){if(!$Replace){throw "소스 ZIP이 이미 있습니다: $target"};$target="$final.new";if(Test-Path -LiteralPath $target){Remove-Item -LiteralPath $target}}
 $zip=[IO.Compression.ZipFile]::Open($target,'Create')
 try{foreach($f in $files){$src=Join-Path $root $f;if(Test-Path -LiteralPath $src -PathType Leaf){[void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,$src,"BlueAsh-$Version-source/$f",'Optimal')}}}finally{$zip.Dispose()}
+if($target -ne $final){Move-Item -LiteralPath $target -Destination $final -Force;$target=$final}
 $size=(Get-Item -LiteralPath $target).Length
 # Cloudflare serves static files up to 25 MiB.
 if($size -gt 25MB){throw "소스 ZIP이 $([Math]::Round($size/1MB,1)) MB로 25 MB 제한을 넘습니다."}

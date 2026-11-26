@@ -11499,6 +11499,38 @@
     "exclusion": ""
   },
   {
+    "key": "음향 강도 이퀄라이제이션",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "Windows 기본 기능",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "Windows에 원래 있는 기능입니다. 오른쪽 스위치로 바로 켜고 끌 수 있습니다.",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "큰 소리와 작은 소리의 차이를 줄여 음량을 고르게 맞춥니다 · 스피커 속성 > 고급 기능과 같은 설정",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
     "key": "프리셋을 다시 고르거나 배그를 다시 켜면 다시 시도합니다.",
     "files": [
       "sound_page.h"
@@ -11507,23 +11539,7 @@
     "exclusion": ""
   },
   {
-    "key": "배그 소리만 처리합니다. 디스코드·브라우저·음악 소리는 바뀌지 않습니다. 처리하는 동안 Windows 볼륨 믹서에는 배그가 음소거로 보이며(원래 소리 대신 처리한 소리를 내보내기 때문), 끄면 원래대로 돌아옵니다. 독점 전체 화면에서는 적용 알림이 보이지 않을 수 있습니다.",
-    "files": [
-      "sound_page.h"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
-    "key": "Windows 스피커 속성 > 고급 기능의 같은 체크와 연결됩니다. 큰 소리와 작은 소리의 차이를 줄여 음량을 고르게 맞춥니다.",
-    "files": [
-      "sound_page.h"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
-    "key": "음향 강도 이퀄라이제이션",
+    "key": "배그 소리만 처리합니다(디스코드·브라우저·음악은 그대로). 처리 중에는 볼륨 믹서에 배그가 음소거로 보이며, 끄면 원래대로 돌아옵니다.",
     "files": [
       "sound_page.h"
     ],
