@@ -1,2 +1,2 @@
-﻿BlueAsh 2.32.1 — 오류 문구 보고·알림 배지·새로고침 (2026-11-18)
+﻿BlueAsh 2.33.0 — 오류 문구 보고·알림 배지·새로고침 (2026-11-18)
 Built to a scratch path (the repository BlueAsh.exe is the running copy and was not replaced).

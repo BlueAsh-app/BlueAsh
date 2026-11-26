@@ -228,7 +228,9 @@ void stopNow(){quit=true;recording=false;if(worker.joinable())worker.join();if(k
 void watch(){bool was=false;while(!quit){bool down=(GetAsyncKeyState(VK_HOME)&0x8000)!=0;DWORD pid=gamePid;
     if(down&&!was&&pid){if(!recording){if(worker.joinable())worker.join();recording=true;try{worker=std::thread(run,pid);if(win)PostMessageW(win,WM_APP+250,1,0);}catch(...){recording=false;}}else recording=false;}
     was=down;Sleep(30);}}
-void poll(DWORD pid){gamePid=pid;if(!keys.joinable()&&GetFileAttributesW(samples().c_str())!=INVALID_FILE_ATTRIBUTES)keys=std::thread(watch);if(!pid&&recording)recording=false;}
+// The Home-key recorder is off (2.33.0): the preview's recordings ship in the data pack. Turn it back on only for
+// making new samples, by starting watch() here again.
+void poll(DWORD pid){gamePid=pid;if(!pid&&recording)recording=false;}
 // the toast on PUBG: 1 started, 2 saved (lp = seconds), 3 failed
 void toastFor(WPARAM what,LPARAM sec){DWORD pid=gamePid;HWND g=pid?wgc::window(pid):nullptr;if(!g)return;toast.hold=what==1?2500:4500;wchar_t b[160];
     if(what==2)swprintf(b,160,i18n::text(L"%d초 · BlueAsh 폴더의 sound-samples에 저장했습니다"),(int)sec);

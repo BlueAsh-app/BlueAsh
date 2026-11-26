@@ -55,14 +55,20 @@ inline std::vector<float> place(const std::vector<float>& m,double az,double dis
         size_t nearAt=pre+i,farAt=pre+i+itd;out[nearAt*2+(rightNear?1:0)]+=(float)n2;out[farAt*2+(rightNear?0:1)]+=(float)f2;
         for(int k=0;k<4;k++){size_t d=pre+i+(size_t)(tapMs[k]*stretch*.001*R);double e=a1*wet*std::pow(.6,k);out[d*2+(k&1)]+=(float)e;out[d*2+1-(k&1)]+=(float)(e*.8);}}
     return out;}
-// kind 0 footstep (2..8 m), 1 shot (15..150 m): how much quieter it is there than in the recording. A footstep stays at the
-// recording's own level (what PUBG played), so 적용 안 함 is the game's loudness and the presets are heard against it.
-inline double gainAt(int kind,double dist){return kind?std::min(1.0,12/dist):1;}
-inline double minDist(int kind){return kind?15:2;}
-inline double maxDist(int kind){return kind?150:8;}
-// The placed sound through a preset (3 = 사용자 지정, from custom; -1 = 적용 안 함, left as it is), as 16-bit PCM WAV bytes for PlaySound.
+// kind 0 footstep (2..25 m), 1 shot (20..150 m): how much quieter it is there than in the recording. The nearest footstep is
+// the recording's own level (what PUBG played); farther ones fall off from there.
+inline double gainAt(int kind,double dist){return kind?std::min(1.0,12/dist):dist<=2?1:1/(1+(dist-2)/4);}
+inline double minDist(int kind){return kind?20:2;}
+inline double maxDist(int kind){return kind?150:25;}
+// the distance test's three steps per kind
+inline double testDist(int kind,int i){static const double d[2][3]={{2,10,25},{20,80,150}};return d[kind?1:0][std::clamp(i,0,2)];}
+// the recording as it is (no direction or distance), with the same lead-in silence the chain's fade-in needs
+inline std::vector<float> asIs(const std::vector<float>& m){size_t pre=(size_t)(.15*sbdsp::Rate);std::vector<float> out((pre+m.size()+(size_t)(.1*sbdsp::Rate))*2,0.f);
+    for(size_t i=0;i<m.size();i++){out[(pre+i)*2]=m[i];out[(pre+i)*2+1]=m[i];}return out;}
+// The sound through a preset (3 = 사용자 지정, from custom; -1 = 적용 안 함, left as it is), as 16-bit PCM WAV bytes.
+// dist <= 0: the recording as it is; otherwise placed at az, dist.
 inline std::vector<char> render(const std::vector<float>& mono,int kind,double az,double dist,int preset,const sbdsp::Preset& custom){
-    std::vector<float> st=place(mono,az,dist,gainAt(kind,dist));
+    std::vector<float> st=dist<=0?asIs(mono):place(mono,az,dist,gainAt(kind,dist));
     if(preset>=0){auto chain=std::make_unique<sbdsp::Chain>();chain->setCustom(custom);chain->setPreset(preset);chain->enable(true);chain->process(st.data(),st.size()/2);}
     uint32_t data=(uint32_t)(st.size()*2);std::vector<char> w(44+data);auto put32=[&](size_t p,uint32_t v){memcpy(&w[p],&v,4);};auto put16=[&](size_t p,uint16_t v){memcpy(&w[p],&v,2);};
     memcpy(&w[0],"RIFF",4);put32(4,36+data);memcpy(&w[8],"WAVEfmt ",8);put32(16,16);put16(20,1);put16(22,2);put32(24,48000);put32(28,48000*4);put16(32,4);put16(34,16);memcpy(&w[36],"data",4);put32(40,data);
@@ -90,14 +96,14 @@ inline std::vector<float> sample(const std::wstring& path){static std::wstring h
     int i=next;next^=1;cache[i]=readWav(path);had[i]=path;at[i]=a.ftLastWriteTime;return cache[i];}
 // Returns false while the previous click is still being rendered. The answer arrives as WM_APP+212 (lParam: new Result).
 // dir: the player's own recordings; fallback (asked on the worker thread): the data pack's recordings in the runtime folder
-inline bool play(HWND to,int kind,const std::wstring& dir,std::function<std::wstring()> fallback,int preset,const sbdsp::Preset& custom){
+// dist: how far the sound is, in a random direction (0 = the recording as it is)
+inline bool play(HWND to,int kind,const std::wstring& dir,std::function<std::wstring()> fallback,int preset,const sbdsp::Preset& custom,double dist){
     if(busy.exchange(true))return false;
     int gen=generation;std::thread([=]{auto* r=new Result;r->kind=kind;std::wstring path=firstWav(dir);if(path.empty()&&fallback)path=firstWav(fallback());
         if(path.empty())r->error=1;
         else{std::lock_guard<std::mutex> g(lock);std::vector<float> m=sample(path);
             if(m.empty())r->error=2;
-            else{static std::mt19937 rng{(unsigned)GetTickCount64()};std::uniform_real_distribution<double> u(0,1);
-                r->az=u(rng)*2*sbdsp::Pi;double lo=minDist(kind),hi=maxDist(kind);r->dist=std::round(lo+(hi-lo)*std::pow(u(rng),1.3));
+            else{static std::mt19937 rng{(unsigned)GetTickCount64()};r->az=dist>0?std::uniform_real_distribution<double>(0,2*sbdsp::Pi)(rng):0;r->dist=dist; /* a random direction at the chosen distance */
                 r->ms=(int)(m.size()*1000/48000);std::vector<char> w=render(m,kind,r->az,r->dist,preset,custom);
                 if(gen!=generation)r->error=3;else outPlay(w,gen);}}
         busy=false;if(!PostMessageW(to,WM_APP+212,0,(LPARAM)r))delete r;}).detach();

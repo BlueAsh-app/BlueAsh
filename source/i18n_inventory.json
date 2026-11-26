@@ -9947,7 +9947,7 @@
     "exclusion": ""
   },
   {
-    "key": "BlueAsh 2.32.1\r\n알림: ",
+    "key": "BlueAsh 2.33.0\r\n알림: ",
     "files": [
       "raid_alert.h"
     ],
@@ -11163,6 +11163,38 @@
     "exclusion": ""
   },
   {
+    "key": "큰 소리와 작은 소리의 차이를 얼마나 줄일지 정합니다. 높일수록 작은 소리가 상대적으로 커지고, 낮추면 원래 소리의 강약이 살아납니다. 큰 소리는 어느 값이든 게임 원래 크기를 넘지 않습니다.",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "조용할 때 작은 소리 전체를 얼마나 키울지 정합니다(최대 +6 dB). 발소리가 멀게 느껴지면 올리고, 잡음이 거슬리면 내리세요. 큰 소리가 난 직후에는 키우지 않습니다.",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "Windows 스피커 속성 > 고급 기능의 같은 이름 설정입니다. 배그만이 아니라 이 스피커로 나오는 모든 소리에 적용되며, 여기서 바꾸면 Windows 설정도 함께 바뀝니다.",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "처리하는 동안 Windows 볼륨 믹서에는 배그가 음소거로 보입니다(원래 소리 대신 처리한 소리를 내보내기 때문). 끄면 원래대로 돌아옵니다. 독점 전체 화면에서는 적용 알림이 보이지 않을 수 있습니다.",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
     "key": "소리 변화",
     "files": [
       "sound_page.h"
@@ -11171,7 +11203,23 @@
     "exclusion": ""
   },
   {
-    "key": "미리 듣기",
+    "key": "거리별 테스트",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "총소리",
+    "files": [
+      "sound_page.h"
+    ],
+    "localized": true,
+    "exclusion": ""
+  },
+  {
+    "key": "발소리",
     "files": [
       "sound_page.h"
     ],
@@ -11299,39 +11347,7 @@
     "exclusion": ""
   },
   {
-    "key": "앞 오른쪽",
-    "files": [
-      "sound_page.h"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
-    "key": "오른쪽",
-    "files": [
-      "sound_page.h"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
-    "key": "뒤 오른쪽",
-    "files": [
-      "sound_page.h"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
     "key": "뒤",
-    "files": [
-      "sound_page.h"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
-    "key": "뒤 왼쪽",
     "files": [
       "sound_page.h"
     ],
@@ -11347,7 +11363,7 @@
     "exclusion": ""
   },
   {
-    "key": "앞 왼쪽",
+    "key": "오른쪽",
     "files": [
       "sound_page.h"
     ],
@@ -11355,7 +11371,7 @@
     "exclusion": ""
   },
   {
-    "key": "어느 방향에서 들리는지 맞혀 보세요",
+    "key": "거리별 소리 테스트",
     "files": [
       "sound_page.h"
     ],
@@ -11379,7 +11395,7 @@
     "exclusion": ""
   },
   {
-    "key": "발소리",
+    "key": "앞 오른쪽",
     "files": [
       "sound_page.h"
     ],
@@ -11387,7 +11403,7 @@
     "exclusion": ""
   },
   {
-    "key": "총소리",
+    "key": "뒤 오른쪽",
     "files": [
       "sound_page.h"
     ],
@@ -11395,7 +11411,7 @@
     "exclusion": ""
   },
   {
-    "key": "가까이 · 2~8m",
+    "key": "뒤 왼쪽",
     "files": [
       "sound_page.h"
     ],
@@ -11403,15 +11419,7 @@
     "exclusion": ""
   },
   {
-    "key": "멀리 · 15~150m",
-    "files": [
-      "sound_page.h"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
-    "key": "재생 중…",
+    "key": "앞 왼쪽",
     "files": [
       "sound_page.h"
     ],
@@ -11435,23 +11443,7 @@
     "exclusion": ""
   },
   {
-    "key": "%ls · 약 %dm",
-    "files": [
-      "sound_page.h"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
-    "key": "버튼을 누르면 무작위 방향에서 한 번 들립니다",
-    "files": [
-      "sound_page.h"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
-    "key": "레이더의 점이 소리가 난 곳입니다. 가까울수록 크고, 뒤에서 나면 먹먹하게 들립니다.",
+    "key": "거리를 누르면 무작위 방향에서 그만큼 떨어진 소리가 들립니다. 멀수록 작고 먹먹해집니다.",
     "files": [
       "sound_page.h"
     ],
@@ -11515,15 +11507,7 @@
     "exclusion": ""
   },
   {
-    "key": "Windows에 원래 있는 기능입니다. 오른쪽 스위치로 바로 켜고 끌 수 있습니다.",
-    "files": [
-      "sound_page.h"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
-    "key": "큰 소리와 작은 소리의 차이를 줄여 음량을 고르게 맞춥니다 · 스피커 속성 > 고급 기능과 같은 설정",
+    "key": "여기서 바로 켜고 끌 수 있습니다 · 큰 소리와 작은 소리를 고르게 맞춥니다",
     "files": [
       "sound_page.h"
     ],
@@ -11532,14 +11516,6 @@
   },
   {
     "key": "프리셋을 다시 고르거나 배그를 다시 켜면 다시 시도합니다.",
-    "files": [
-      "sound_page.h"
-    ],
-    "localized": true,
-    "exclusion": ""
-  },
-  {
-    "key": "배그 소리만 처리합니다(디스코드·브라우저·음악은 그대로). 처리 중에는 볼륨 믹서에 배그가 음소거로 보이며, 끄면 원래대로 돌아옵니다.",
     "files": [
       "sound_page.h"
     ],

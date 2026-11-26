@@ -21,7 +21,8 @@ int main(){
     auto front=sbprev::place(click,0,5,1),back=sbprev::place(click,sbdsp::Pi,5,1);
     CHECK(std::fabs(energy(front,0)-energy(front,1))<energy(front,0)*.05,"ahead: both ears alike");
     CHECK(bright(back,0)<bright(front,0)*.8,"behind: duller than ahead");
-    CHECK(sbprev::gainAt(1,150)<sbprev::gainAt(1,20),"a farther shot is quieter");CHECK(sbprev::gainAt(0,8)==1,"a footstep keeps the recording's level");
+    CHECK(sbprev::gainAt(1,150)<sbprev::gainAt(1,20)&&sbprev::gainAt(0,25)<sbprev::gainAt(0,10),"farther is quieter");CHECK(sbprev::gainAt(0,2)==1,"the nearest footstep keeps the recording's level");
+    {auto raw=sbprev::render(click,0,0,0,-1,sbdsp::customPreset(sbdsp::Custom()));CHECK(raw.size()==44+(7200+4800+4800)*4,"as-is: lead-in, the sound, a short tail");}
     // a 16-bit stereo 44.1 kHz WAV reads back as mono at 48 kHz
     wchar_t tmp[MAX_PATH];GetTempPathW(MAX_PATH,tmp);std::wstring path=std::wstring(tmp)+L"blueash-preview-test.wav";
     {FILE* f=_wfopen(path.c_str(),L"wb");uint32_t n=4410,data=n*4,riff=36+data,rate=44100,bps=rate*4,sz=16;uint16_t fmt=1,ch=2,align=4,bits=16;
